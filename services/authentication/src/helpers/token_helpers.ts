@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs"
 
 const ACCESS_TOKEN_PRIVATE_KEY = getPemKey("path to pem"); // load a pem file - no need for public since 
 const ACCESS_TOKEN_PUBLIC_KEY = getPemKey("path to pem"); //  for verifying access tokens
+const XSRF_TOKEN_KEY = "some-key(like around 32 bytes +)"
 const REFRESH_TOKEN_KEY = "sym-key"; // symmetric key since only the auth service will access and verify it
 const AUDIENCE = "SecureWebIotPlatform"; // the audience for the tokens - can be used to verify that the token is intended for this service
 
@@ -22,7 +23,7 @@ interface RefreshTokenClaims {
     sub: string; // user id
     aud: string; // audience
     iss: string; // issuer
-    exp: number; // expiration time in seconds
+    exp: Seconds; // expiration time in seconds
     iat: number; // issued at time in seconds
     jti: string; // unique identifier for the token - used for blocklisting
 }
@@ -30,8 +31,64 @@ interface AccessTokenClaims {
     sub: string; // user id
     aud: string; // audience
     iss: string; // issuer
-    exp: number; // expiration time in seconds
+    exp: Seconds; // expiration time in seconds
     iat: number; // issued at time in seconds
+}
+
+interface Tokens {
+    accessToken: string;
+    refreshToken: string;
+    xsrfToken: string;
+}
+
+type Seconds = number; // just easier to understand that the values are in seconds
+
+export class TokenBundle {
+
+    /**
+     * 
+     * @param userId  - the user id to add to the token claims
+     * @returns Tokens - the generated access token, refresh token and xsrf token
+     * @description creates a new token bundle for the given user id - used for login - the access token will have a issuer of "LOGIN" and the refresh token will have a issuer of "LOGIN" as well since it is being issued on login - the xsrf token will have a issuer of "XSRF" and its subject will be the jti of the refresh token and it will expire at the same time as the refresh token
+     */
+    static CreateBundle(userId: string): Tokens & { expiry: Seconds } { // expiry date for the xsrf token to match the refresh token
+        const accessToken = CreateAccessToken(userId, "LOGIN");
+        const { token: refreshToken, jti, expiry } = CreateRefreshToken(userId);
+        const xsrfToken = CreateXsrfToken(jti, expiry); // xsrf token should expire at the same time as the refresh token
+
+        return {
+            accessToken,
+            refreshToken,
+            xsrfToken,
+            expiry
+        }
+    }
+
+
+    /**
+     * 
+     * @param claims - the claims of the previous refresh token
+     * @returns Tokens - the new access token, refresh token and xsrf token
+     * @description creates a new token bundle from the claims of the previous refresh token
+     */
+    static async RefreshTokens(claims: RefreshTokenClaims): Promise<Tokens & { expiry: Seconds }> { // for token rotation
+        try {
+            const { exp: oldExpiry } = claims;
+            const { token: refreshToken, jti: newJti, expiry } = CreateRefreshFromClaims(claims); // create a new refresh token and a new jwt for the XSRF token
+            const accessToken = CreateAccessToken(claims.sub, "REFRESH");
+            const xsrfToken = CreateXsrfToken(newJti, expiry); // xsrf token should expire at the same time as the refresh token
+            await BlockToken(claims.jti, oldExpiry); // blocklist the old refresh token - we want to do this before returning the new tokens to prevent
+            return {
+                accessToken,
+                refreshToken,
+                xsrfToken,
+                expiry
+            }
+        } catch (error) {
+            throw new Error(`Error refreshing tokens`, { cause: error });
+        }
+
+    }
 }
 
 
@@ -44,7 +101,7 @@ interface AccessTokenClaims {
  * @description - generates a refresh token with the given inputs and return the token and its jti.
  * * the jti is used xsrf token creation and for later blocklisting but the jti is alread in the token claims so it can be extracted when needed
  */
-function createRefreshToken(userId: string, expire: Date, issuer: string) { // the actual function to generate refresh tokens
+function createRefreshToken(userId: string, expire: Date, issuer: string): { token: string, jti: string, expiry: Seconds } { // the actual function to generate refresh tokens
     if (!userId) {
         throw new Error(ErrNoUserId);
     }
@@ -56,17 +113,18 @@ function createRefreshToken(userId: string, expire: Date, issuer: string) { // t
     }
     try {
         const jwtId = randomUUID(); // generate uuid - going to be used for the blocklisting - because just doing it by userid would kill after the first refresh
+        const expireInSeconds: Seconds = Math.floor(expire.getTime() / 1000);
         const registeredClaims = {
             sub: userId,
             aud: AUDIENCE,
             iss: issuer,
-            exp: Math.floor(expire.getTime() / 1000), // convert to seconds
+            exp: expireInSeconds, // expiration time in seconds
             iat: Math.floor(Date.now() / 1000), // issued at time
             jti: jwtId, // unique identifier for the token - used for blocklisting
         }
         const token = jwt.sign(registeredClaims, REFRESH_TOKEN_KEY, { algorithm: 'HS256', audience: AUDIENCE });
         return {
-            token, jti: jwtId
+            token, jti: jwtId, expiry: expireInSeconds
         }
     } catch (err) {
         throw new Error(`Error generating refresh token`, { cause: err });
@@ -80,8 +138,8 @@ function createRefreshToken(userId: string, expire: Date, issuer: string) { // t
  * @returns the generated refresh token and its jti 
  */
 export function CreateRefreshToken(userId: string) { // create a refresh token on login - wrapper for generateRefreshToken
-    const weekFromNow = new Date(Date.now() + WEEK_IN_SECONDS * 1000);
-    return createRefreshToken(userId, weekFromNow, "Login");
+    const weekFromNowMil = new Date(Date.now() + WEEK_IN_SECONDS * 1000); // week from now in milliseconds
+    return createRefreshToken(userId, weekFromNowMil, "LOGIN");
 }
 
 /**
@@ -96,7 +154,7 @@ export function CreateRefreshFromClaims(claims: RefreshTokenClaims) { // create 
         throw new Error("Claims are required to create refresh token from claims");
     }
     const { sub, exp } = claims;
-    return createRefreshToken(sub, new Date(exp * 1000), "refresh");
+    return createRefreshToken(sub, new Date(exp * 1000), "REFRESH");
 }
 
 
@@ -131,12 +189,35 @@ export function CreateAccessToken(userId: string, issuer: string): string {
 }
 
 
+export function CreateXsrfToken(jti: string, expiry: Seconds): string { //good thing about the xsrf token is that it dosent need to be blocked since its tied to a single refresh token and is dead when the refrehs token is dead
+    if (!jti) {
+        throw new Error("JTI is required to create XSRF token");
+    }
+    if (!expiry) {
+        throw new Error("Expiry is required to create XSRF token");
+    }
+    try {
+        const registeredClaims = {
+            sub: jti,
+            aud: AUDIENCE,
+            iss: "XSRF",
+            exp: expiry, // xsrf tokens expire at the given expiry date
+            iat: Math.floor(Date.now() / 1000), // issued at time
+        }
+        const token = jwt.sign(registeredClaims, XSRF_TOKEN_KEY, { algorithm: 'HS256', audience: AUDIENCE });
+        return token;
+    } catch (error) {
+        throw new Error(`Error generating XSRF token`, { cause: error });
+    }
+
+}
 /**
  * 
  * @param token  - the accress token to verify
  * @returns the claims of the token if it is valid, otherwise null - will return null if the token is expired or invalid for any reason
  * @description verifies an access token and returns the claims if it is valid, otherwise returns null - will return null if the token is expired or invalid for any reason
- */
+ * @throws Error if theres an error during verification that isnt related to token invalidity or expiration 
+*/
 
 export function VerifyAccessToken(token: string): AccessTokenClaims | null { // null and val will act as truthy
     if (!token) {
@@ -161,7 +242,8 @@ export function VerifyAccessToken(token: string): AccessTokenClaims | null { // 
  * @param token - the refresh token to verify
  * @returns the claims of the token if it is valid, otherwise null - will return null if the token is expired or invalid for any reason
  * @description verifies a refresh token and returns the claims if it is valid, otherwise returns null - will return null if the token is expired or invalid for any reason
- */
+ * @throws Error if theres an error during verification that isnt related to token invalidity or expiration 
+*/
 
 export function VerifyRefreshToken(token: string): RefreshTokenClaims | null {// null and val will act as truthy
     if (!token) {
@@ -181,11 +263,41 @@ export function VerifyRefreshToken(token: string): RefreshTokenClaims | null {//
     }
 }
 
+/**
+ * 
+ * @param token - the xsrf token to verify
+ * @param jti  - the jti to compare with the sub claim in the token - should be derived from the refresh token
+ * @returns - true if the xsrf token is valid and its sub matches the jti - false if otherwise 
+ * @throws Error if theres verification errors or token invalidity 
+ */
+
+export function VerifyXsrfToken(token: string, jti: string): boolean { // verify the xsrf token by verifying its signature and checking if the jti in its claims matches the given jti
+    if (!token) {
+        throw new Error("Token is required to verify XSRF token");
+    }
+    if (!jti) {
+        throw new Error("JTI is required to verify XSRF token");
+    }
+    try {
+        const claims = jwt.verify(token, XSRF_TOKEN_KEY, { algorithms: ['HS256'], audience: AUDIENCE }) as jwt.JwtPayload;
+        return claims.sub === jti; // check if the jti in the claims matches the given jti
+    } catch (error) {
+        if (error instanceof jwt.TokenExpiredError) {
+            return false; // token is expired - treat as invalid
+        }
+        if (error instanceof jwt.JsonWebTokenError) { // if theres any token invalidity like signature is different or the token is malformed
+            logger.warn({ token }, `Invalid XSRF token ${error.message}`); // log the invalid token for debugging - should be safe since these tokens are all invalid to the system
+        }
+        throw new Error(`Error verifying XSRF token`, { cause: error });
+    }
+}
+
 
 /**
  * @param jti the unique identifier of the token to check
  * @returns true if the token is blocklisted, false otherwise
  * @description checks if a token is blocklisted by checking if the jti is in the blocklist - used for refresh tokens only
+ * @throws Error if theres an error during the blocklist check
  */
 export async function IsBlocked(jti: string): Promise<boolean> { // check if a token is blocklisted - used for refresh tokens
     if (!jti) {
@@ -205,8 +317,9 @@ export async function IsBlocked(jti: string): Promise<boolean> { // check if a t
  * @param jti the unique identifier of the token to block
  * @param exp the expiration time of the token to block
  * @description adds a token to the blocklist by addiing its jti to the list of blocked tokens
+ * @throws Error if theres an error during the blocklisting process
  */
-export async function BlockToken(jti: string, exp: number): Promise<void> { // blocklist a token - used for refresh tokens
+export async function BlockToken(jti: string, exp: Seconds): Promise<void> { // blocklist a token - used for refresh tokens
     // set the blocklist key to expire at the same time as the token - so we don't have to worry about cleaning up expired blocklist entries
     if (!jti) {
         throw new Error("JTI is required to block token");
@@ -224,6 +337,8 @@ export async function BlockToken(jti: string, exp: number): Promise<void> { // b
         throw new Error(`Error blocking token`, { cause: err });
     }
 }
+
+
 
 /**
  * 
