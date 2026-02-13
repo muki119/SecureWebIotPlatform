@@ -24,7 +24,6 @@
   },
   "dependencies": {
     "express": "^5.2.1",
-    "express-session": "^1.19.0",
     "jsonwebtoken": "^9.0.3",
     "pino": "^10.3.0",
     "redis": "^5.10.0"

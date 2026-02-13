@@ -1,4 +1,4 @@
-export interface User {
+export interface User { // this application wont utilise a username field i think , should probably be email instead
     id?: string, // uuidv4+
     firstName: string,
     lastName: string,
@@ -6,11 +6,4 @@ export interface User {
     password: string,
     createdAt: Date,
     deletedAt?: Date | null
-}
-
-
-declare module 'express-session' {
-    interface SessionData {
-        user: User | null
-    }
 }

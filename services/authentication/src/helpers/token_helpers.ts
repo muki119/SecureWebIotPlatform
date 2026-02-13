@@ -19,7 +19,14 @@ const ErrNoIssuer = "Issuer is required to generate token";
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60; // one week in seconds
 const ACCESS_TOKEN_EXPIRATION = 15 * 60; // access tokens expire in 15 minutes - in seconds
 
-interface RefreshTokenClaims {
+declare global {
+    namespace Express {
+        interface Request {
+            user?: AccessTokenClaims; // the user information from the access token claims - will be used in the controllers to access the users information
+        }
+    }
+}
+export interface RefreshTokenClaims {
     sub: string; // user id
     aud: string; // audience
     iss: string; // issuer
@@ -27,7 +34,7 @@ interface RefreshTokenClaims {
     iat: number; // issued at time in seconds
     jti: string; // unique identifier for the token - used for blocklisting
 }
-interface AccessTokenClaims {
+export interface AccessTokenClaims {
     sub: string; // user id
     aud: string; // audience
     iss: string; // issuer

@@ -1,5 +1,13 @@
-import express, { Router } from "express";
-
+import { Router } from "express";
+import {
+    LoginController,
+    LogoutController,
+    RefreshController,
+    RegisterController,
+    ForgotPasswordController,
+    ResetPasswordController,
+    CredentialChangeController
+} from "../controllers";
 
 export const authRoutes = Router();
 
