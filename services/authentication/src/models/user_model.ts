@@ -36,6 +36,10 @@ export default class UserModel extends PostgresDatabaseModel<User> {
             `
                 const values = [item.email, item.password, item.forename, item.surname]
                 const result = await conn.query(insertQuery, values)
+                const commitTransaction = await conn.query("COMMIT") // commit the transaction
+                if (commitTransaction.command !== "COMMIT") {
+                    throw new Error("Failed to commit transaction")
+                }
                 return result.rows[0]
             } catch (err) {
                 conn.query("ROLLBACK") // if there was an error, roll back the transaction
