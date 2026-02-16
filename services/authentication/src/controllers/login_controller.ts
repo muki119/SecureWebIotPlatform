@@ -2,13 +2,17 @@ import type { Request, Response, NextFunction } from 'express';
 import { RefreshTokenCookieOptions, XsrfTokenCookieOptions, tokenNames } from "../config/cookies"
 import LoginService from '../services/login_service';
 import { TokenBundle } from "../helpers/token_helpers"
+import { validationResult } from 'express-validator';
 
-
-export default function LoginController(req: Request, res: Response, next: NextFunction) {
+export default async function LoginController(req: Request, res: Response, next: NextFunction) {
     try {
         // should go through validator first
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(401).json({ message: 'Invalid email or password' }); // only ammount of info that should be given is that the inputs are invalid
+        }
         const { email, password } = req.body;
-        const userId = LoginService(email, password); // returns a token if the successful login - otherwise null - does throw error if something goes wrong
+        const userId = await LoginService(email, password); // returns a token if the successful login - otherwise null - does throw error if something goes wrong
         if (!userId) { // if no token then the email or password is wrong
             return res.status(401).json({ message: 'Invalid email or password' });
         }

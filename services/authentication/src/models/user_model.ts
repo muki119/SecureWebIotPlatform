@@ -1,4 +1,4 @@
-import type { ModelSchema, UpdatePatch } from "../types/models";
+import type { ModelSchema, UpdatePatch, ModelDTO } from "../types/models";
 import { PostgresDatabaseModel } from "../types/models"
 import { Pool, PoolClient } from "pg";
 import { PostgresPool } from "../config/postgres";
@@ -7,11 +7,11 @@ import { PostgresPool } from "../config/postgres";
 export interface User extends ModelSchema { // this application wont utilise a username field i think , should probably be email instead
     id: string,
     forename: string,
-    lastName: string,
+    surname: string,
     email: string,
     password: string,
     createdAt: Date,
-    deletedAt?: Date | null
+    deletedAt: Date | null
 }
 export default class UserModel extends PostgresDatabaseModel<User> {
 
@@ -19,7 +19,7 @@ export default class UserModel extends PostgresDatabaseModel<User> {
         super(db)
     }
 
-    public async create(item: Omit<User, "id" | "createdAt"> & { id?: string }): Promise<User> {
+    public async create(item: ModelDTO<User>): Promise<User> {
         // item should be pre- validated and sanitised - either way the database should have contraints to prevent too much bad
         // like max chars 
 
@@ -30,11 +30,11 @@ export default class UserModel extends PostgresDatabaseModel<User> {
                     throw new Error("Failed to begin transaction")
                 }
                 const insertQuery = `
-                INSERT INTO users (email, passwordHash, forename,surname)
+                INSERT INTO users (email, password, forename,surname)
                 VALUES ($1, $2, $3, $4)
                 RETURNING id, email, forename, surname, createdAt
             `
-                const values = [item.email, item.password, item.forename, item.lastName]
+                const values = [item.email, item.password, item.forename, item.surname]
                 const result = await conn.query(insertQuery, values)
                 return result.rows[0]
             } catch (err) {
@@ -48,7 +48,7 @@ export default class UserModel extends PostgresDatabaseModel<User> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                SELECT id, email, forename, surname, createdAt
+                SELECT id, email, forename, surname,password, createdAt
                 FROM users
                 WHERE id = $1 AND deletedAt IS NULL
             `
@@ -114,7 +114,7 @@ export default class UserModel extends PostgresDatabaseModel<User> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                SELECT id, email, forename, surname, createdAt
+                SELECT id, email, forename, surname, createdAt,password
                 FROM users
                 WHERE email = $1 AND deletedAt IS NULL
             `

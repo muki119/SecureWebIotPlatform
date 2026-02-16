@@ -5,4 +5,4 @@ export { default as RegisterController } from "./register_controller";
 export { default as ForgotPasswordController } from "./forgot_password_controller";
 export { default as ResetPasswordController } from "./reset_password_controller";
 export { default as CredentialChangeController } from "./credential_change_controller";
-
+export { default as GetUserController } from "./get_user_controller"
