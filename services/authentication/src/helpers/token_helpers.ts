@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { RedisClient } from "../config/redis";
-import { logger } from "../config/logger";
+import logger from "../config/logger";
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs"
 // going to need the redis client for a blocklist - for refresh tokens , no need for access tokens since they are short lived and we can just wait for them to expire

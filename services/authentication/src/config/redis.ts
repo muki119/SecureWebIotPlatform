@@ -1,5 +1,5 @@
 import { createClientPool } from 'redis';
-import { logger } from './logger';
+import logger from './logger';
 
 
 export interface RedisConfig {

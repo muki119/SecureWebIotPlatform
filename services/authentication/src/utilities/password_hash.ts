@@ -1,5 +1,5 @@
 import { scryptSync, timingSafeEqual, randomBytes } from "node:crypto"
-import { logger } from "../config/logger"
+import logger from "../config/logger"
 
 
 

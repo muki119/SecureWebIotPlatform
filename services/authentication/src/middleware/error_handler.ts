@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { logger } from '../config/logger';
+import logger from '../config/logger';
 
 export default function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
     // i think error should also have the function name where it was thrown
