@@ -5,8 +5,8 @@ import logger from './logger';
 export interface RedisConfig {
     host: string;
     port: number;
-    password?: string;
-    db?: number;
+    password: string;
+    db: number;
 }
 
 export function ConnectToRedis(config: RedisConfig) {

@@ -20,7 +20,7 @@ export function ConnectToPostgres(config: pg.PoolConfig): pg.Pool {
 const defaultConfig: pg.PoolConfig = {
     host: process.env.POSTGRES_HOST || "localhost",
     port: process.env.POSTGRES_PORT ? parseInt(process.env.POSTGRES_PORT) : 5432,
-    user: process.env.POSTGRES_USER || "auth_service",
+    user: process.env.POSTGRES_USER || "postgres",
     password: process.env.POSTGRES_PASSWORD || "",
     database: process.env.POSTGRES_DB || "authentication_service",
 }
