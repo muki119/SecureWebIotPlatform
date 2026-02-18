@@ -1,5 +1,25 @@
 import { checkSchema } from "express-validator";
 
+const NAME_MIN_LENGTH = 1;
+const NAME_MAX_LENGTH = 90;
+export const UserConstraints = {
+
+    forename: {
+        minLength: NAME_MIN_LENGTH,
+        maxLength: NAME_MAX_LENGTH
+    },
+    surname: {
+        minLength: NAME_MIN_LENGTH,
+        maxLength: NAME_MAX_LENGTH
+    },
+    password: {
+        minLength: 8, // minimum password length is 8 charachters - Following NIST guidelines
+        maxLength: 128, // maximum is 128 charachters - to allow for max security while ensuring a at worst performance
+    },
+} as const
+
+
+
 export const RegisterValidator = checkSchema({
     forename: {
         optional: false,
@@ -11,7 +31,7 @@ export const RegisterValidator = checkSchema({
             }
         },
         isLength: {
-            options: { max: 90, min: 1 }
+            options: { max: NAME_MAX_LENGTH, min: NAME_MIN_LENGTH }
         },
         isAlphanumeric: {
             options: ["en-GB", { ignore: " -" }]
@@ -24,7 +44,7 @@ export const RegisterValidator = checkSchema({
         isString: true,
         trim: true,
         isLength: {
-            options: { min: 1, max: 90 },
+            options: { min: NAME_MIN_LENGTH, max: NAME_MAX_LENGTH },
         },
         notEmpty: {
             options: {
@@ -59,7 +79,7 @@ export const RegisterValidator = checkSchema({
         isString: true,
         trim: true,
         isLength: {
-            options: { min: 8, max: 128 },
+            options: { min: UserConstraints.password.minLength, max: UserConstraints.password.maxLength },
         },
         notEmpty: {
             options: {
@@ -100,7 +120,7 @@ export const LoginValidator = checkSchema({
         isString: true,
         trim: true,
         isLength: {
-            options: { min: 8, max: 128 },
+            options: { min: UserConstraints.password.minLength, max: UserConstraints.password.maxLength },
         },
         notEmpty: {
             options: {
@@ -142,7 +162,7 @@ export const ResetPasswordValidator = checkSchema({
         isString: true,
         trim: true,
         isLength: {
-            options: { min: 8, max: 128 },
+            options: { min: UserConstraints.password.minLength, max: UserConstraints.password.maxLength },
         },
         notEmpty: {
             options: {
@@ -221,7 +241,7 @@ export const CredentialChangeValidator = checkSchema({
         isString: true,
         trim: true,
         isLength: {
-            options: { min: 8, max: 128 },
+            options: { min: UserConstraints.password.minLength, max: UserConstraints.password.maxLength },
         },
         notEmpty: {
             options: {
