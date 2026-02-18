@@ -32,7 +32,7 @@ export default class UserModel extends PostgresDatabaseModel<User> {
                 const insertQuery = `
                 INSERT INTO users (email, password, forename,surname)
                 VALUES ($1, $2, $3, $4)
-                RETURNING id, email, forename, surname, createdAt
+                RETURNING id, email, forename, surname, created_at
             `
                 const values = [item.email, item.password, item.forename, item.surname]
                 const result = await conn.query(insertQuery, values)
@@ -52,9 +52,25 @@ export default class UserModel extends PostgresDatabaseModel<User> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                SELECT id, email, forename, surname,password, createdAt
+                SELECT id, email, forename, surname,password, created_at
                 FROM users
-                WHERE id = $1 AND deletedAt IS NULL
+                WHERE id = $1 AND deleted_at IS NULL
+            `
+                const result = await conn.query(query, [id])
+                return result.rows[0] || null
+            } catch (err) {
+                throw new Error("Failed to find user by id: ", { cause: err })
+            }
+        })
+    }
+
+    public async findByIdWithoutPassword(id: string): Promise<Omit<User, "password"> | null> { // same as find by id but without the password field for security reasons
+        return this.poolWrap(async (conn) => {
+            try {
+                const query = `
+                SELECT id, email, forename, surname, created_at
+                FROM users
+                WHERE id = $1 AND deleted_at IS NULL
             `
                 const result = await conn.query(query, [id])
                 return result.rows[0] || null
@@ -76,8 +92,8 @@ export default class UserModel extends PostgresDatabaseModel<User> {
                 const query = `
                 UPDATE users
                 SET ${setString}
-                WHERE id = $1 AND deletedAt IS NULL
-                RETURNING id, email, forename, surname, createdAt
+                WHERE id = $1 AND deleted_at IS NULL
+                RETURNING id, email, forename, surname, created_at
             `
                 const result = await conn.query(query, [id, ...values])
                 const commitTransaction = await conn.query("COMMIT") // commit the transaction
@@ -96,8 +112,8 @@ export default class UserModel extends PostgresDatabaseModel<User> {
             try {
                 const query = `
                 UPDATE users
-                SET deletedAt = NOW()
-                WHERE id = $1 AND deletedAt IS NULL
+                SET deleted_at = NOW()
+                WHERE id = $1 AND deleted_at IS NULL
             `
                 const beginTransaction = await conn.query("BEGIN") // begin a transaction - acid
                 if (beginTransaction.command !== "BEGIN") {
@@ -118,9 +134,9 @@ export default class UserModel extends PostgresDatabaseModel<User> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                SELECT id, email, forename, surname, createdAt,password
+                SELECT id, email, forename, surname, created_at, password
                 FROM users
-                WHERE email = $1 AND deletedAt IS NULL
+                WHERE email = $1 AND deleted_at IS NULL
             `
                 const result = await conn.query(query, [email])
                 return result.rows[0] || null
@@ -136,7 +152,7 @@ export default class UserModel extends PostgresDatabaseModel<User> {
                 const query = `
                 SELECT 1
                 FROM users
-                WHERE id = $1 AND deletedAt IS NULL
+                WHERE id = $1 AND deleted_at IS NULL
             `
                 const result = await conn.query(query, [id])
                 return Boolean(result.rowCount) // if row count isnt null or 0 then it exists
@@ -151,7 +167,7 @@ export default class UserModel extends PostgresDatabaseModel<User> {
                 const query = `
                     SELECT 1
                     FROM users
-                    WHERE email = $1 AND deletedAt IS NULL
+                    WHERE email = $1 AND deleted_at IS NULL
                 `
                 const result = await conn.query(query, [email])
                 return Boolean(result.rowCount) // if row count isnt null or 0 then it exists
