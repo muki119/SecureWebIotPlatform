@@ -1,5 +1,5 @@
 import type { UpdatePatch } from "../types/models";
-import { User, userModel } from "../models/user_model";
+import { type User, userModel } from "../models/user_model";
 
 
 export default function CredentialChangeService(changes: UpdatePatch<User>, userId: string) {

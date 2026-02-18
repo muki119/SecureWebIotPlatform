@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { UpdatePatch, UpdateSet } from '../types/models';
-import { User } from '../models/user_model';
+import type { User } from '../models/user_model';
 import { validationResult } from 'express-validator';
 export default function CredentialChangeController(req: Request, res: Response, next: NextFunction) {
     try {

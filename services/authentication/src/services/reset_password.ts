@@ -1,7 +1,8 @@
 import { VerifyResetToken } from "../helpers/password_reset_helpers";
 import { userModel } from "../models/user_model";
-import { HashPassword } from "../utilities/password_hash";
-import { ServiceResult } from "../types/service";
+import { HashPassword, VerifyPassword } from "../utilities/password_hash";
+import type { ServiceResult } from "../types/service";
+
 
 export default async function ResetPasswordService(resetToken: string, newPassword: string): Promise<ServiceResult> {
     try {

@@ -1,4 +1,4 @@
-import { userModel, User } from "../models/user_model";
+import { userModel, type User } from "../models/user_model";
 
 
 export default async function GetUserService(userId: string): Promise<User | null> {

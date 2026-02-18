@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 import GetUserService from "../services/get_user";
 export default async function GetUserController(req: Request, res: Response, next: NextFunction) {
     try {

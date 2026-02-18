@@ -1,7 +1,7 @@
-import { userModel, User } from "../models/user_model";
+import { userModel, type User } from "../models/user_model";
 import { HashPassword } from "../utilities/password_hash";
-import { ModelDTO } from "../types/models";
-import { ServiceResult } from "../types/service";
+import type { ModelDTO } from "../types/models";
+import type { ServiceResult } from "../types/service";
 export default async function RegisterService(user: ModelDTO<User>): Promise<ServiceResult> {
     try {
 

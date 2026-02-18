@@ -1,6 +1,6 @@
 import type { ModelSchema, UpdatePatch, ModelDTO } from "../types/models";
 import { PostgresDatabaseModel } from "../types/models"
-import { Pool, PoolClient } from "pg";
+import { Pool, type PoolClient } from "pg";
 import { PostgresPool } from "../config/postgres";
 
 
