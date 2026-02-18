@@ -67,6 +67,9 @@ export function VerifyPassword(plaintext: string, hash: string): boolean {
             throw new Error("Invalid hash format")
         }
         const [_, Nstr, rstr, pstr, salt, hashedPassword] = splitHash;
+        if (!Nstr || !rstr || !pstr || !salt || !hashedPassword) {
+            throw new Error("Invalid hash format")
+        }
         const hashToCompare = scryptSync(plaintext, Buffer.from(salt, "base64"), SCRYPT_CONFIG.keylen, { N: parseInt(Nstr, 10), r: parseInt(rstr, 10), p: parseInt(pstr, 10) });
         return timingSafeEqual(hashToCompare, Buffer.from(hashedPassword, "base64")) // to prevent timing attacks
 
