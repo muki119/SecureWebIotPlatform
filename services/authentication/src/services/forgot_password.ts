@@ -1,6 +1,6 @@
 import { userModel } from "../models/user_model"
 import { CreateResetToken } from "../helpers/password_reset_helpers"
-import { ServiceResult } from "../types/service"
+import type { ServiceResult } from "../types/service"
 
 export default async function ForgotpasswordService(email: string): Promise<ServiceResult & { token?: string }> {
     // typically 
