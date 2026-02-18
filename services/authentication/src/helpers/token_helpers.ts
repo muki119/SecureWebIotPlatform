@@ -6,10 +6,10 @@ import { readFileSync } from "node:fs"
 // going to need the redis client for a blocklist - for refresh tokens , no need for access tokens since they are short lived and we can just wait for them to expire
 
 
-const ACCESS_TOKEN_PRIVATE_KEY = getPemKey("path to pem"); // load a pem file - no need for public since 
-const ACCESS_TOKEN_PUBLIC_KEY = getPemKey("path to pem"); //  for verifying access tokens
-const XSRF_TOKEN_KEY = "some-key(like around 32 bytes +)"
-const REFRESH_TOKEN_KEY = "sym-key"; // symmetric key since only the auth service will access and verify it
+const ACCESS_TOKEN_PRIVATE_KEY = getPemKey(process.env.ACCESS_TOKEN_PRIVATE_KEY_PATH || ""); // load a pem file - no need for public since 
+const ACCESS_TOKEN_PUBLIC_KEY = getPemKey(process.env.ACCESS_TOKEN_PUBLIC_KEY_PATH || ""); //  for verifying access tokens
+const XSRF_TOKEN_KEY = process.env.XSRF_TOKEN_KEY || ""
+const REFRESH_TOKEN_KEY = process.env.REFRESH_TOKEN_KEY || ""; // symmetric key since only the auth service will access and verify it
 const AUDIENCE = "SecureWebIotPlatform"; // the audience for the tokens - can be used to verify that the token is intended for this service
 
 const ErrNoUserId = "User ID is required to generate token";
@@ -129,7 +129,7 @@ function createRefreshToken(userId: string, expire: Date, issuer: string): { tok
             iat: Math.floor(Date.now() / 1000), // issued at time
             jti: jwtId, // unique identifier for the token - used for blocklisting
         }
-        const token = jwt.sign(registeredClaims, REFRESH_TOKEN_KEY, { algorithm: 'HS256', audience: AUDIENCE });
+        const token = jwt.sign(registeredClaims, REFRESH_TOKEN_KEY, { algorithm: 'HS256' });
         return {
             token, jti: jwtId, expiry: expireInSeconds
         }
@@ -188,7 +188,7 @@ export function CreateAccessToken(userId: string, issuer: string): string {
             exp: Math.floor(Date.now() / 1000) + ACCESS_TOKEN_EXPIRATION, // access tokens expire in 15 minutes
             iat: Math.floor(Date.now() / 1000), // issued at time
         }
-        const token = jwt.sign(registeredClaims, ACCESS_TOKEN_PRIVATE_KEY, { algorithm: 'RS256', audience: AUDIENCE });
+        const token = jwt.sign(registeredClaims, ACCESS_TOKEN_PRIVATE_KEY, { algorithm: 'RS256' });
         return token;
     } catch (err) {
         throw new Error(`Error generating access token`, { cause: err });
@@ -211,7 +211,7 @@ export function CreateXsrfToken(jti: string, expiry: Seconds): string { //good t
             exp: expiry, // xsrf tokens expire at the given expiry date
             iat: Math.floor(Date.now() / 1000), // issued at time
         }
-        const token = jwt.sign(registeredClaims, XSRF_TOKEN_KEY, { algorithm: 'HS256', audience: AUDIENCE });
+        const token = jwt.sign(registeredClaims, XSRF_TOKEN_KEY, { algorithm: 'HS256' });
         return token;
     } catch (error) {
         throw new Error(`Error generating XSRF token`, { cause: error });
