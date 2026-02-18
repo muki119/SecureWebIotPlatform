@@ -16,12 +16,12 @@ export const authRoutes = Router();
 
 
 authRoutes.post("/login", LoginValidator, LoginController);
-authRoutes.post("/logout", LogoutController);
-authRoutes.post("/refresh", RefreshController);
+authRoutes.delete("/logout", LogoutController);
+authRoutes.get("/refresh", RefreshController);
 authRoutes.post("/register", RegisterValidator, RegisterController);
 authRoutes.post("/forgot-password", ForgotPasswordValidator, ForgotPasswordController); // creates a id in redis attached to the account and sends an email with the id as a query parameter to the reset password page, when the user clicks on the link in the email it will take them to the reset password page where they can enter their new password and the id will be used to verify that the request is valid and then the password will be updated in the database and the id will be deleted from redis
 authRoutes.post("/reset-password", ResetPasswordValidator, ResetPasswordController); // only needs password and the id in the redis as a query parameter, the id will be used to verify that the request is valid and then the password will be updated in the database and the id will be deleted from redis
-authRoutes.post("/credential-change", ValidSessionMiddleware, CredentialChangeValidator, CredentialChangeController); // should be dynamic based on what credential is being changed, for example if email is being changed then we need to send a verification email to the new email address and if password is being changed then we need to send a verification email to the old email address
+authRoutes.put("/credential-change", ValidSessionMiddleware, CredentialChangeValidator, CredentialChangeController); // should be dynamic based on what credential is being changed, for example if email is being changed then we need to send a verification email to the new email address and if password is being changed then we need to send a verification email to the old email address
 authRoutes.get("/me", ValidSessionMiddleware, GetUserController)
 // login - returns access token, refresh token, xsrf token in cookie and header
 // logout - no need for xsrf token, just need to clear the cookie
