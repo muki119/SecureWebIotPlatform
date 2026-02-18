@@ -2,11 +2,13 @@ import express from 'express';
 import errorHandler from './src/middleware/error_handler';
 import { authRoutes } from './src/routes/auth_routes';
 import logger from './src/config/logger';
+import cookieParser from 'cookie-parser';
 const app = express();
 
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 app.use('/auth/v1', authRoutes);
 
