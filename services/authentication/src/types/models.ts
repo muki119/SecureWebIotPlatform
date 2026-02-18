@@ -1,4 +1,4 @@
-import { Pool, PoolClient } from "pg"
+import { Pool, type PoolClient } from "pg"
 
 /**
  * ModelSchema is the general shape of all models in the database, they can have any fields but must have an id and createdAt field
@@ -50,12 +50,14 @@ type DbOperation<T> = (conn: PoolClient) => Promise<T>
  * to easily manage the allocation and release of connections from the pool.
  * 
  */
-export declare class PostgresDatabaseModel<T extends ModelSchema> implements IDatabaseModelOperations<T> {
+export abstract class PostgresDatabaseModel<T extends ModelSchema> implements IDatabaseModelOperations<T> {
     protected db: Pool
-    constructor(db: Pool)
-    protected poolWrap: <U>(operation: DbOperation<U>) => Promise<U>;
-    public create(item: ModelDTO<T>): Promise<T>;
-    public findById(id: string): Promise<T | null>
-    public update(id: string, patch: UpdatePatch<T>): Promise<T>
-    public delete(id: string): Promise<void>
+    constructor(db: Pool) {
+        this.db = db
+    };
+    protected abstract poolWrap: <U>(operation: DbOperation<U>) => Promise<U>;
+    public abstract create(item: ModelDTO<T>): Promise<T>;
+    public abstract findById(id: string): Promise<T | null>;
+    public abstract update(id: string, patch: UpdatePatch<T>): Promise<T>;
+    public abstract delete(id: string): Promise<void>;
 }
