@@ -33,7 +33,7 @@ export async function CreateResetToken(userId: string): Promise<ResetToken> { //
     const token = generateResetToken()
     try {
 
-        await invalidateResetToken(userId) // invalidate any existing tokens for this user - enforce one token at a time
+        await InvalidateResetToken(userId) // invalidate any existing tokens for this user - enforce one token at a time
         await RedisClient.set(`${TOKEN_TO_USERID}:${token}`, userId, { expiration: { type: "PX", value: RESET_TOKEN_TTL_MS } })
         await RedisClient.set(`${USERID_TO_TOKEN}:${userId}`, token, { expiration: { type: "PX", value: RESET_TOKEN_TTL_MS } })
 
@@ -67,7 +67,7 @@ export async function VerifyResetToken(token: ResetToken): Promise<string | null
  * @throws error if there is an issue while interacting with redis
  * @description - invalidates any existing reset tokens for a given userid
  */
-async function invalidateResetToken(userId: string) {
+export async function InvalidateResetToken(userId: string) {
     // basically find the token corresponding to the userid and delete it
     try {
         const token = await RedisClient.get(`${USERID_TO_TOKEN}:${userId}`) // find the token for the user id 

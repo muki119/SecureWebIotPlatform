@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import ResetPasswordService from '../services/reset_password';
 import { validationResult } from 'express-validator';
+import logger from '../config/logger';
 
 export default async function ResetPasswordController(req: Request, res: Response, next: NextFunction) {
     try {
@@ -8,18 +9,20 @@ export default async function ResetPasswordController(req: Request, res: Respons
 
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
-            return res.status(400).json({ message: "Invalid Password or Token " }).end();
+            return res.status(400).json({ message: "Invalid Credentials" }).end();
         }
-        const newPassword = req.body.newPassword;
+
+        const password = req.body.password;
         const resetToken = req.query.token as string;
-        if (!newPassword || !resetToken) {
+        if (!password || !resetToken) {
             return res.status(400).json({ message: "Missing required fields" }).end();
         }
-        const result = await ResetPasswordService(resetToken, newPassword);
+        const result = await ResetPasswordService(resetToken, password);
         if (!result.success) {
             return res.status(400).json({ message: result.message }).end();
         }
         res.status(200).json({ message: result.message }).end();
+        logger.info({ userId: result.userId }, `Password reset successful`);
         // should validate the new password 
         // verify that token exists in redis db
         // get the tokens corresponding userid 
