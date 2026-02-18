@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { VerifyRefreshToken, VerifyXsrfToken, TokenBundle } from '../helpers/token_helpers';
 import { tokenNames, RefreshTokenCookieOptions, XsrfTokenCookieOptions, ClearCookies } from '../config/cookies';
+import logger from '../config/logger';
 export default async function RefreshController(req: Request, res: Response, next: NextFunction) {
     try {
         // get the refresh token from the cookie
@@ -8,7 +9,10 @@ export default async function RefreshController(req: Request, res: Response, nex
         // comapre the xsrf tokens 
         // verify both xsrf and refreh tokens for validity and expiry
         // if both the xsrf sub and refresh jti are the same then proceed to generate a new pair 
-
+        if (!req.cookies) {
+            logger.warn({ req }, "Refresh attempt with missing cookies")
+            return res.status(401).json({ message: 'No cookies found' });
+        }
         const { refreshToken, xsrfToken } = req.cookies;
         const xsrfTokenHeader = req.headers[tokenNames.XSRF_HEADER_NAME] as string;
 
@@ -37,6 +41,7 @@ export default async function RefreshController(req: Request, res: Response, nex
         res.cookie(tokenNames.XRSFTOKEN_COOKIE_NAME, newTokenBundle.xsrfToken, XsrfTokenCookieOptions(newTokenBundle.expiry));
         res.json({ accessToken: newTokenBundle.accessToken });
         res.end();
+        return;
 
 
     } catch (err) {

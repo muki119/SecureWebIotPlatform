@@ -19,7 +19,7 @@ export default async function ForgotPasswordController(req: Request, res: Respon
         }
         const result = await ForgotpasswordService(email)
         if (result.message == "Email is required") {
-            logger.warn({ email, req }, "Forgot password attempt with missing email")
+            logger.warn({ req }, "Forgot password attempt with missing email")
         }
         logger.info({ email, result }, "Forgot password attempt")
         res.status(200).json({ message: "If the email exists in our system, a reset token will be sent" }).end(); // for security , dosent matter the result

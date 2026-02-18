@@ -3,6 +3,7 @@ import { RefreshTokenCookieOptions, XsrfTokenCookieOptions, tokenNames } from ".
 import LoginService from '../services/login_service';
 import { TokenBundle } from "../helpers/token_helpers"
 import { validationResult } from 'express-validator';
+import logger from '../config/logger';
 
 export default async function LoginController(req: Request, res: Response, next: NextFunction) {
     try {
@@ -24,6 +25,8 @@ export default async function LoginController(req: Request, res: Response, next:
         res.cookie(tokenNames.XRSFTOKEN_COOKIE_NAME, xsrfToken, XsrfTokenCookieOptions(expiry));
         res.json({ accessToken });
         res.end();
+        logger.info({ userId }, "User has logged in");
+        return;
     } catch (err) {
         next(err)
     }
