@@ -3,12 +3,16 @@ import errorHandler from './src/middleware/error_handler';
 import { authRoutes } from './src/routes/auth_routes';
 import logger from './src/config/logger';
 import cookieParser from 'cookie-parser';
+import { RedisClient } from './src/config/redis';
+import { PostgresPool } from './src/config/postgres';
 const app = express();
 
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.disable('x-powered-by')
+
 
 app.use('/auth/v1', authRoutes);
 
@@ -19,9 +23,13 @@ var server = app.listen(3000, () => {
 });
 process.on("SIGINT", () => {
     if (server) {
-        server.close(() => {
+        server.close(async () => {
             logger.info("Authentication Service has been stopped.");
-            process.exit(0);
+
+            if (RedisClient && RedisClient.isOpen) {
+                await RedisClient.quit();
+            }
+            await PostgresPool.end();
         });
     }
     logger.info(`Shutting down , with grace...`);
