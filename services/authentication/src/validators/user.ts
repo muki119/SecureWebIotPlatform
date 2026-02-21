@@ -1,5 +1,7 @@
 import { checkSchema } from "express-validator";
-
+import type { Schema } from "express-validator"
+import { PASSWORD_CONSTRAINTS } from "../utilities/password_hash"
+import type { DefaultSchemaKeys } from "express-validator/lib/middlewares/schema";
 const NAME_MIN_LENGTH = 1;
 const NAME_MAX_LENGTH = 90;
 export const UserConstraints = {
@@ -13,18 +15,17 @@ export const UserConstraints = {
         maxLength: NAME_MAX_LENGTH
     },
     password: {
-        minLength: 8, // minimum password length is 8 charachters - Following NIST guidelines
-        maxLength: 128, // maximum is 128 charachters - to allow for max security while ensuring a at worst performance
+        minLength: PASSWORD_CONSTRAINTS.minLength, // minimum password length is 8 charachters - Following NIST guidelines
+        maxLength: PASSWORD_CONSTRAINTS.maxLength, // maximum is 128 charachters - to allow for max security while ensuring a at worst performance
     },
 } as const
 
-
-
-export const RegisterValidator = checkSchema({
+const UserSchema: Schema<DefaultSchemaKeys> = {
     forename: {
         optional: false,
         isString: true,
         trim: true,
+        escape: true,
         notEmpty: {
             options: {
                 ignore_whitespace: true
@@ -43,6 +44,7 @@ export const RegisterValidator = checkSchema({
         optional: false,
         isString: true,
         trim: true,
+        escape: true,
         isLength: {
             options: { min: NAME_MIN_LENGTH, max: NAME_MAX_LENGTH },
         },
@@ -78,6 +80,7 @@ export const RegisterValidator = checkSchema({
         optional: false,
         isString: true,
         trim: true,
+        escape: true,
         isLength: {
             options: { min: UserConstraints.password.minLength, max: UserConstraints.password.maxLength },
         },
@@ -92,166 +95,32 @@ export const RegisterValidator = checkSchema({
         },
         errorMessage: "Invalid Password.",
     }
+} as const
 
 
-
-}, ["body"]) // email,password,forename,surname in body
+export const RegisterValidator = checkSchema(UserSchema, ["body"]) // email,password,forename,surname in body
 
 export const LoginValidator = checkSchema({
-    email: {
-        optional: false,
-        isString: true,
-        trim: true,
-        notEmpty: {
-            options: {
-                ignore_whitespace: false, // whitespace is not allowed
-            },
-        },
-        isEmail: true,
-        normalizeEmail: {
-            options: {
-                all_lowercase: true, // convert to lowercase
-            },
-        },
-        errorMessage: "Invalid Email Address.",
-    },
-    password: {
-        optional: false,
-        isString: true,
-        trim: true,
-        isLength: {
-            options: { min: UserConstraints.password.minLength, max: UserConstraints.password.maxLength },
-        },
-        notEmpty: {
-            options: {
-                ignore_whitespace: false, // whitespace is not allowed
-            },
-        },
-        isAlphanumeric: {
-            // allow [a-zA-Z0-9] and _
-            options: ["en-GB", { ignore: "_" }], // include underscore
-        },
-        errorMessage: "Invalid Password.",
-    }
+    email: UserSchema.email,
+    password: UserSchema.password
 }, ["body"]) // email and password in body
 
 export const ForgotPasswordValidator = checkSchema({
-    email: {
-        optional: false,
-        isString: true,
-        trim: true,
-        notEmpty: {
-            options: {
-                ignore_whitespace: false, // whitespace is not allowed
-            },
-        },
-        isEmail: true,
-        normalizeEmail: {
-            options: {
-                all_lowercase: true, // convert to lowercase
-            },
-        },
-        errorMessage: "Invalid Email Address.",
-    }
+    email: UserSchema.email
 }, ["body"]) // only email in body
 
 export const ResetPasswordValidator = checkSchema({
-    password: {
-        in: ["body"],
-        optional: false,
-        isString: true,
-        trim: true,
-        isLength: {
-            options: { min: UserConstraints.password.minLength, max: UserConstraints.password.maxLength },
-        },
-        notEmpty: {
-            options: {
-                ignore_whitespace: false, // whitespace is not allowed
-            },
-        },
-        isAlphanumeric: {
-            // allow [a-zA-Z0-9] and _
-            options: ["en-GB", { ignore: "_" }], // include underscore
-        },
-        errorMessage: "Invalid Password.",
-    },
+    password: UserSchema.password,
     token: {
         in: ["query"],
+        escape: true,
         optional: false,
         isString: true,
     }
 }, ["body", "query"]) // password in body and id query param
 
-export const CredentialChangeValidator = checkSchema({
-    forename: {
-        optional: true,
-        isString: true,
-        trim: true,
-        notEmpty: {
-            options: {
-                ignore_whitespace: true
-            }
-        },
-        isLength: {
-            options: { max: 90, min: 1 }
-        },
-        isAlphanumeric: {
-            options: ["en-GB", { ignore: " -" }]
-        },
-        errorMessage: "Invalid Forename."
-
-    },
-    surname: {
-        optional: true,
-        isString: true,
-        trim: true,
-        isLength: {
-            options: { min: 1, max: 90 },
-        },
-        notEmpty: {
-            options: {
-                ignore_whitespace: false, // whitespace is not allowed
-            },
-        },
-        isAlpha: {
-            // allow [a-zA-Z0-9] and _
-            options: ["en-GB", { ignore: ["-", "_"] }], // include underscore
-        },
-        errorMessage: "Invalid Surname.",
-    },
-    email: {
-        optional: true,
-        isString: true,
-        trim: true,
-        notEmpty: {
-            options: {
-                ignore_whitespace: false, // whitespace is not allowed
-            },
-        },
-        isEmail: true,
-        normalizeEmail: {
-            options: {
-                all_lowercase: true, // convert to lowercase
-            },
-        },
-        errorMessage: "Invalid Email Address.",
-    },
-    password: {
-        optional: true,
-        isString: true,
-        trim: true,
-        isLength: {
-            options: { min: UserConstraints.password.minLength, max: UserConstraints.password.maxLength },
-        },
-        notEmpty: {
-            options: {
-                ignore_whitespace: false, // whitespace is not allowed
-            },
-        },
-        isAlphanumeric: {
-            // allow [a-zA-Z0-9] and _
-            options: ["en-GB", { ignore: "_" }], // include underscore
-        },
-        errorMessage: "Invalid Password.",
-    }
-}) // all opptional 
+/** 
+ * credentials change will fall in the format of patch where it would contain
+ * {field: , value: }
+ * where field is one of email, password, forename or surname and value is the new value for that field
+ */
