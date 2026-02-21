@@ -228,7 +228,7 @@ export function CreateXsrfToken(jti: string, expiry: Seconds): string { //good t
 
 export function VerifyAccessToken(token: string): AccessTokenClaims | null { // null and val will act as truthy
     if (!token) {
-        throw new Error("Token is required to verify access token");
+        return null; // if theres no token then just treat it as invalid and return null
     }
     try {
         const r = jwt.verify(token, ACCESS_TOKEN_PUBLIC_KEY, { algorithms: ['RS256'], audience: AUDIENCE }) as AccessTokenClaims;
@@ -238,7 +238,8 @@ export function VerifyAccessToken(token: string): AccessTokenClaims | null { // 
             return null; // token is expired - treat as invalid
         }
         if (error instanceof jwt.JsonWebTokenError) { // if theres any token invalidity like signature is different or the token is malformed
-            logger.warn({ token }, `Invalid Access token ${error.message}`); // log the invalid token for debugging - should be safe since these tokens are all invalid to the system
+            logger.warn({ token }, `Invalid Access token: ${error.message}`); // log the invalid token for debugging - should be safe since these tokens are all invalid to the system
+            return null;
         }
         throw new Error(`Error verifying access token`, { cause: error });
     }
@@ -254,7 +255,7 @@ export function VerifyAccessToken(token: string): AccessTokenClaims | null { // 
 
 export function VerifyRefreshToken(token: string): RefreshTokenClaims | null {// null and val will act as truthy
     if (!token) {
-        throw new Error("Token is required to verify refresh token");
+        return null; // if theres no token then just treat it as invalid and return null
     }
     try {
         const r = jwt.verify(token, REFRESH_TOKEN_KEY, { algorithms: ['HS256'], audience: AUDIENCE }) as RefreshTokenClaims;
@@ -264,7 +265,8 @@ export function VerifyRefreshToken(token: string): RefreshTokenClaims | null {//
             return null; // token is expired - treat as invalid
         }
         if (error instanceof jwt.JsonWebTokenError) { // if theres any token invalidity like signature is different or the token is malformed
-            logger.warn({ token }, `Invalid refresh token ${error.message}`); // log the invalid token for debugging - should be safe since these tokens are all invalid to the system
+            logger.warn({ token }, `Invalid refresh token: ${error.message}`); // log the invalid token for debugging - should be safe since these tokens are all invalid to the system
+            return null;
         }
         throw new Error(`Error verifying refresh token`, { cause: error });
     }
@@ -293,7 +295,8 @@ export function VerifyXsrfToken(token: string, jti: string): boolean { // verify
             return false; // token is expired - treat as invalid
         }
         if (error instanceof jwt.JsonWebTokenError) { // if theres any token invalidity like signature is different or the token is malformed
-            logger.warn({ token }, `Invalid XSRF token ${error.message}`); // log the invalid token for debugging - should be safe since these tokens are all invalid to the system
+            logger.warn({ token }, `Invalid XSRF token: ${error.message}`); // log the invalid token for debugging - should be safe since these tokens are all invalid to the system
+            return false;
         }
         throw new Error(`Error verifying XSRF token`, { cause: error });
     }

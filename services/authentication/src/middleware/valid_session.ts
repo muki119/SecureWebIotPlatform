@@ -13,12 +13,12 @@ export default function ValidSessionMiddleware(req: Request, res: Response, next
             return res.status(401).json({ message: "Unauthorized" });
         }
         const token = authHeader.split(' ')[1];
-        if (!token) { return res.status(401).json({ message: "Unauthorized" }); }
+        if (!token || token === "null") { return res.status(401).json({ message: "Unauthorized" }); }
         const payload = VerifyAccessToken(token);
         if (!payload) { return res.status(401).json({ message: "Unauthorized" }); }
         req.user = payload; // this will be used in the controllers to access the users information
         next();
     } catch (error) {
-        next(error);
+        next(new Error("Cannot Validate Session", { cause: error instanceof Error ? error : undefined }));
     }
 }

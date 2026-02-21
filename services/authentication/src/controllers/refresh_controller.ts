@@ -10,10 +10,15 @@ export default async function RefreshController(req: Request, res: Response, nex
         // verify both xsrf and refreh tokens for validity and expiry
         // if both the xsrf sub and refresh jti are the same then proceed to generate a new pair 
         if (!req.cookies) {
-            logger.warn({ req }, "Refresh attempt with missing cookies")
+            logger.info({ user_agent: req.headers['user-agent'] }, "Refresh attempt with missing cookies")
             return res.status(401).json({ message: 'No cookies found' });
         }
         const { refreshToken, xsrfToken } = req.cookies;
+
+        if (!refreshToken || !xsrfToken) {
+            logger.info({ tokens: { refreshToken: { missing: !refreshToken }, xsrfToken: { missing: !xsrfToken } }, user_agent: req.headers['user-agent'] }, "Refresh attempt with missing refresh token or xsrf token")
+            return res.status(401).json({ message: 'Missing tokens' });
+        }
         const xsrfTokenHeader = req.headers[tokenNames.XSRF_HEADER_NAME] as string;
 
         if (xsrfToken !== xsrfTokenHeader) {

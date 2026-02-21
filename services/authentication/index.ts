@@ -18,8 +18,8 @@ app.use('/auth/v1', authRoutes);
 
 app.use(errorHandler);
 
-var server = app.listen(3000, () => {
-    logger.info("Authentication Service is running on port 3000");
+var server = app.listen(process.env.PORT || 3000, () => {
+    logger.info(`Authentication Service is running on port ${process.env.PORT || 3000}`);
 });
 process.on("SIGINT", () => {
     if (server) {
@@ -27,7 +27,7 @@ process.on("SIGINT", () => {
             logger.info("Authentication Service has been stopped.");
 
             if (RedisClient && RedisClient.isOpen) {
-                await RedisClient.quit();
+                await RedisClient.close();
             }
             await PostgresPool.end();
         });

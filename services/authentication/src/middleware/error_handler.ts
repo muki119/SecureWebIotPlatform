@@ -14,6 +14,10 @@ export default function errorHandler(err: Error, req: Request, res: Response, ne
             name: err.name, // to get the type of error (e.g. SyntaxError, TypeError, etc.)
             message: isSyntaxError ? "Invalid JSON payload" : err.message,
             stack: isSyntaxError ? undefined : err.stack, // because syntax errors can contain the entire request body in the stack trace, which can contain sensitive info
+            cause: err.cause ? {
+                name: (err.cause as Error).name,
+                message: (err.cause as Error).message,
+            } : undefined
         }
     }
 
