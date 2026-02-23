@@ -1,5 +1,5 @@
 export type ServiceResult = {
     success: boolean;
-    message: string;
+    message?: string;
     [key: string]: any;
 }

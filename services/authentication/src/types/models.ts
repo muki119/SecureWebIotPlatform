@@ -27,7 +27,7 @@ export type ModelDTO<T extends ModelSchema> = Omit<T, "id" | "createdAt" | "dele
 export interface IDatabaseModelOperations<T extends ModelSchema> { // all database models should implement this basic interface for ease of use and ability to change db if needed
     create(item: ModelDTO<T>): Promise<T>,
     findById(id: string): Promise<T | null>,
-    update(id: string, patch: UpdatePatch<T>): Promise<T>,
+    update(id: string, patch: UpdatePatch<T>): Promise<UpdateResult<T>>,
     delete(id: string): Promise<void>
 }
 
@@ -41,7 +41,7 @@ export type UpdatePatch<T extends ModelSchema> = UpdateSet<T>[] // basically and
  */
 export type UpdateSet<T extends ModelSchema> = { [K in keyof ModelDTO<T>]-?: { field: K, value: ModelDTO<T>[K] } }[keyof ModelDTO<T>]
 
-
+export type UpdateResult<T extends ModelSchema> = { success: boolean, message?: string, updatedItem?: T } // the result of an update operation - success or failure and an optional message and the updated user if the update was successful
 type DbOperation<T> = (conn: PoolClient) => Promise<T>
 /**
  * PostgresDatabase model is a base class for all models that interface with the postgres database.
@@ -58,6 +58,6 @@ export abstract class PostgresDatabaseModel<T extends ModelSchema> implements ID
     protected abstract poolWrap: <U>(operation: DbOperation<U>) => Promise<U>;
     public abstract create(item: ModelDTO<T>): Promise<T>;
     public abstract findById(id: string): Promise<T | null>;
-    public abstract update(id: string, patch: UpdatePatch<T>): Promise<T>;
+    public abstract update(id: string, patch: UpdatePatch<T>): Promise<UpdateResult<T>>;
     public abstract delete(id: string): Promise<void>;
 }

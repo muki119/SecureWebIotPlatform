@@ -15,7 +15,7 @@ export default async function RegisterService(user: ModelDTO<User>): Promise<Ser
         const createdUser = await userModel.create(user) // will be used to send to stream for record creation in other services- like the domain service - to be added
 
         // send id email and full name to stream for record creation in other services- like the domain service 
-        return { success: true, message: "User registered successfully" }
+        return { success: true, }
     } catch (error) {
         throw new Error("Error in register service", { cause: error })
     }

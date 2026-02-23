@@ -1,4 +1,4 @@
-import type { ModelSchema, UpdatePatch, ModelDTO } from "../types/models";
+import type { ModelSchema, UpdatePatch, ModelDTO, UpdateResult } from "../types/models";
 import { PostgresDatabaseModel } from "../types/models"
 import { Pool, type PoolClient } from "pg";
 import { PostgresPool } from "../config/postgres";
@@ -18,6 +18,13 @@ export default class UserModel extends PostgresDatabaseModel<User> {
     constructor(db: Pool) {
         super(db)
     }
+
+    private fieldsMap = new Map<keyof ModelDTO<User>, string>([
+        ["email", "string"],
+        ["forename", "string"],
+        ["surname", "string"],
+        ["password", "string"]
+    ]) // the fields and their corresponding expected data types - for validation in updates 
 
     public async create(item: ModelDTO<User>): Promise<User> {
         // item should be pre- validated and sanitised - either way the database should have contraints to prevent too much bad
@@ -79,11 +86,27 @@ export default class UserModel extends PostgresDatabaseModel<User> {
             }
         })
     }
-    public async update(id: string, patch: UpdatePatch<User>): Promise<User> {
+    public async update(id: string, patch: UpdatePatch<User>): Promise<UpdateResult<User>> {
         // go through each change in the patch and build a query to update the record with all the changes
         return this.poolWrap(async (conn) => {
             try {
-                const setString = patch.map((change, index) => `${change.field} = $${index + 2}`).join(", ") // build the set string for the update query - starts at $2 because $1 is the id in the where clause
+                var setStringArr: string[] = []
+                var seenSet = new Set<keyof ModelDTO<User>>()
+                for (let i = 0; i < patch.length; i++) {
+                    const change = patch[i]!
+                    if (!this.fieldsMap.has(change.field)) {
+                        return { success: false, message: `Invalid field ${change.field} in update patch` }// if not in the allowed fields then return unsuccessful result - its not bad enough to warrant a thrown error
+                    }
+                    if (seenSet.has(change.field)) {
+                        return { success: false, message: `Duplicate field ${change.field} in update patch` }
+                    }
+                    if (typeof change.value !== this.fieldsMap.get(change.field)) {
+                        return { success: false, message: `Invalid data type for field ${change.field}: expected ${this.fieldsMap.get(change.field)}, got ${typeof change.value}` }
+                    }
+                    seenSet.add(change.field)
+                    setStringArr.push(`${change.field} = $${i + 2}`)
+                }// build the set string for the update query - starts at $2 because $1 is the id in the where clause
+                const setString = setStringArr.join(", ")
                 const values = patch.map(change => change.value) // get the values for the update query
                 const beginTransaction = await conn.query("BEGIN") // begin a transaction - acid
                 if (beginTransaction.command !== "BEGIN") {
@@ -100,7 +123,10 @@ export default class UserModel extends PostgresDatabaseModel<User> {
                 if (commitTransaction.command !== "COMMIT") {
                     throw new Error("Failed to commit transaction")
                 }
-                return result.rows[0]
+                if (result.rowCount === 0) {
+                    return { success: false, message: "User not found or no changes applied" }
+                }
+                return { success: true, updatedItem: result.rows[0] }
             } catch (err) {
                 conn.query("ROLLBACK")
                 throw new Error("Failed to update user: ", { cause: err })
