@@ -77,7 +77,7 @@ export function VerifyPassword(plaintext: string, hash: string): boolean {
         return timingSafeEqual(hashToCompare, Buffer.from(hashedPassword, "base64")) // to prevent timing attacks
 
     } catch (err) {
-        logger.error({ err }, "Error verifying password")
+        logger.error({ error: { message: (err as Error).message, stack: (err as Error).stack } }, "Error verifying password")
         return false
     }
 
