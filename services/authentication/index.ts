@@ -5,6 +5,7 @@ import logger from './src/config/logger';
 import cookieParser from 'cookie-parser';
 import { RedisClient } from './src/config/redis';
 import { PostgresPool } from './src/config/postgres';
+import requestMetricsMiddleware from './src/middleware/request_metrics';
 const app = express();
 
 
@@ -12,11 +13,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.disable('x-powered-by')
-
+app.use(requestMetricsMiddleware);
 
 app.use('/auth/v1', authRoutes);
 
 app.use(errorHandler);
+
 
 var server = app.listen(process.env.PORT || 3000, () => {
     logger.info(`Authentication Service is running on port ${process.env.PORT || 3000}`);
