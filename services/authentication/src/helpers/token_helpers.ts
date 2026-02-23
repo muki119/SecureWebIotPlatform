@@ -59,9 +59,10 @@ export class TokenBundle {
      * @description creates a new token bundle for the given user id - used for login - the access token will have a issuer of "LOGIN" and the refresh token will have a issuer of "LOGIN" as well since it is being issued on login - the xsrf token will have a issuer of "XSRF" and its subject will be the jti of the refresh token and it will expire at the same time as the refresh token
      */
     static CreateBundle(userId: string): Tokens & { expiry: Seconds } { // expiry date for the xsrf token to match the refresh token
-        const accessToken = CreateAccessToken(userId, "LOGIN");
+        const issuer = "LOGIN";
+        const accessToken = CreateAccessToken(userId, issuer);
         const { token: refreshToken, jti, expiry } = CreateRefreshToken(userId);
-        const xsrfToken = CreateXsrfToken(jti, expiry); // xsrf token should expire at the same time as the refresh token
+        const xsrfToken = CreateXsrfToken(jti, expiry, issuer); // xsrf token should expire at the same time as the refresh token
 
         return {
             accessToken,
@@ -81,9 +82,10 @@ export class TokenBundle {
     static async RefreshTokens(claims: RefreshTokenClaims): Promise<Tokens & { expiry: Seconds }> { // for token rotation
         try {
             const { exp: oldExpiry } = claims;
+            const issuer = "REFRESH";
             const { token: refreshToken, jti: newJti, expiry } = CreateRefreshFromClaims(claims); // create a new refresh token and a new jwt for the XSRF token
-            const accessToken = CreateAccessToken(claims.sub, "REFRESH");
-            const xsrfToken = CreateXsrfToken(newJti, expiry); // xsrf token should expire at the same time as the refresh token
+            const accessToken = CreateAccessToken(claims.sub, issuer);
+            const xsrfToken = CreateXsrfToken(newJti, expiry, issuer); // xsrf token should expire at the same time as the refresh token
             await BlockToken(claims.jti, oldExpiry); // blocklist the old refresh token - we want to do this before returning the new tokens to prevent
             return {
                 accessToken,
@@ -196,7 +198,7 @@ export function CreateAccessToken(userId: string, issuer: string): string {
 }
 
 
-export function CreateXsrfToken(jti: string, expiry: Seconds): string { //good thing about the xsrf token is that it dosent need to be blocked since its tied to a single refresh token and is dead when the refrehs token is dead
+export function CreateXsrfToken(jti: string, expiry: Seconds, issuer: string): string { //good thing about the xsrf token is that it dosent need to be blocked since its tied to a single refresh token and is dead when the refrehs token is dead
     if (!jti) {
         throw new Error("JTI is required to create XSRF token");
     }
@@ -207,7 +209,7 @@ export function CreateXsrfToken(jti: string, expiry: Seconds): string { //good t
         const registeredClaims = {
             sub: jti,
             aud: AUDIENCE,
-            iss: "XSRF",
+            iss: issuer,
             exp: expiry, // xsrf tokens expire at the given expiry date
             iat: Math.floor(Date.now() / 1000), // issued at time
         }
