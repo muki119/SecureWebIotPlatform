@@ -6,16 +6,16 @@ export default function ValidSessionMiddleware(req: Request, res: Response, next
     // check if access token is present in the header
     // passes the payload into request object
     // any errors will be passed to the error handling middleware
-
+    const unauthorisedResponse = () => res.status(401).json({ message: "Unauthorised" }).end();
     try {
         const authHeader = req.headers['authorization'];
         if (!authHeader) { // if theres no auth header , some one is trying to access without a token
-            return res.status(401).json({ message: "Unauthorized" });
+            return unauthorisedResponse();
         }
         const token = authHeader.split(' ')[1];
-        if (!token || token === "null") { return res.status(401).json({ message: "Unauthorized" }); }
+        if (!token || token === "null") { return unauthorisedResponse(); }
         const payload = VerifyAccessToken(token);
-        if (!payload) { return res.status(401).json({ message: "Unauthorized" }); }
+        if (!payload) { return unauthorisedResponse(); }
         req.user = payload; // this will be used in the controllers to access the users information
         next();
     } catch (error) {
