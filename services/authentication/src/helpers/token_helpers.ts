@@ -12,7 +12,7 @@ import type { AccessTokenClaims, RefreshTokenClaims, Tokens, Seconds } from "@se
 const ACCESS_TOKEN_PRIVATE_KEY = GetPemKey("ACCESS_TOKEN_PRIVATE_KEY_PATH"); // load a pem file - no need for public since 
 const XSRF_TOKEN_KEY = GetEnvString("XSRF_TOKEN_KEY"); // process.env.XSRF_TOKEN_KEY || ""
 const REFRESH_TOKEN_KEY = GetEnvString("REFRESH_TOKEN_KEY"); // symmetric key since only the auth service will access and verify it
-const AUDIENCE = "SecureWebIotPlatform"; // the audience for the tokens - can be used to verify that the token is intended for this service
+const AUDIENCE = GetEnvString("TOKEN_AUDIENCE", "SecureWebIotPlatform"); // the audience for the tokens - can be used to verify that the token is intended for this service
 
 const ErrNoUserId = "User ID is required to generate token";
 const ErrNoExpire = "Expiration time is required to generate token";
