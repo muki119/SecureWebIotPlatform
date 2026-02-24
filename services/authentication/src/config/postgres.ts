@@ -1,5 +1,6 @@
 import pg from "pg"
 import logger from "./logger"
+import { GetEnvString, GetEnvNumber } from "@services/common/utilities";
 
 
 
@@ -26,11 +27,11 @@ export function ConnectToPostgres(config: pg.PoolConfig): pg.Pool {
 
 
 const defaultConfig: pg.PoolConfig = {
-    host: process.env.POSTGRES_HOST || "localhost",
-    port: process.env.POSTGRES_PORT ? parseInt(process.env.POSTGRES_PORT) : 5432,
-    user: process.env.POSTGRES_USER || "postgres",
-    password: process.env.POSTGRES_PASSWORD || "",
-    database: process.env.POSTGRES_DB || "authentication_service",
+    host: GetEnvString("POSTGRES_HOST", "localhost"),
+    port: GetEnvNumber("POSTGRES_PORT", 5432),
+    user: GetEnvString("POSTGRES_USER", "postgres"),
+    password: GetEnvString("POSTGRES_PASSWORD", ""),
+    database: GetEnvString("POSTGRES_DB", "authentication_service"),
 }
 
 

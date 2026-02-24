@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import type { UpdatePatch, UpdateSet } from '../types/models';
+import type { UpdatePatch } from '@services/common/types';
 import type { User } from '../models/user_model';
 import { LogWarningDefault } from '../utilities/logging_utilities';
 import CredentialChangeService from '../services/credential_change';

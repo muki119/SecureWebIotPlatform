@@ -1,4 +1,4 @@
-import type { UpdatePatch } from "../types/models";
+import type { UpdatePatch } from "@services/common/types";
 import { type User, userModel } from "../models/user_model";
 import type { ServiceResult } from "../types/service";
 

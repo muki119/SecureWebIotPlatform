@@ -1,6 +1,7 @@
 import { hostname } from "os";
 import pino from "pino";
 import pinoLoki, { type LokiOptions } from "pino-loki";
+import { GetEnvString } from "@services/common/utilities";
 import { pid } from "process";
 
 
@@ -14,7 +15,7 @@ const transport = pino.transport({
     }
 })
 const logger = pino({
-    level: process.env.LOG_LEVEL || "info",
+    level: GetEnvString("LOG_LEVEL", "info"),
     base: {
         pid: pid
     }

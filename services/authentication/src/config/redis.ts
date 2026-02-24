@@ -1,5 +1,6 @@
 import { createClientPool } from 'redis';
 import logger from './logger';
+import { GetEnvString, GetEnvNumber } from "@services/common/utilities";
 
 
 export interface RedisConfig {
@@ -32,8 +33,8 @@ export function ConnectToRedis(config: RedisConfig) {
 }
 
 export const RedisClient = ConnectToRedis({
-    host: process.env.REDIS_HOST || "localhost",
-    port: Number(process.env.REDIS_PORT) || 6379,
-    password: process.env.REDIS_PASSWORD || "", // add password if needed
-    db: Number(process.env.REDIS_DB) || 0,
+    host: GetEnvString("REDIS_HOST", "localhost"),
+    port: GetEnvNumber("REDIS_PORT", 6379),
+    password: GetEnvString("REDIS_PASSWORD", ""), // add password if needed
+    db: GetEnvNumber("REDIS_DB", 0),
 });

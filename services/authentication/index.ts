@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import { RedisClient } from './src/config/redis';
 import { PostgresPool } from './src/config/postgres';
 import requestMetricsMiddleware from './src/middleware/request_metrics';
+import { GetEnvNumber } from "@services/common/utilities"
 const app = express();
 
 
@@ -19,9 +20,9 @@ app.use('/auth/v1', authRoutes);
 
 app.use(errorHandler);
 
-
-var server = app.listen(process.env.PORT || 3000, () => {
-    logger.info(`Authentication Service is running on port ${process.env.PORT || 3000}`);
+const Port = GetEnvNumber("PORT", 3000);
+var server = app.listen(Port, () => {
+    logger.info(`Authentication Service is running on port ${Port}`);
 });
 process.on("SIGINT", () => {
     if (server) {

@@ -3,13 +3,15 @@ import { RedisClient } from "../config/redis";
 import logger from "../config/logger";
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs"
+import { GetEnvString, GetPemKey } from "@services/common/utilities"
+import { CreateVerifyAccessTokenInstance } from "@services/common/helpers"
+import type { AccessTokenClaims, RefreshTokenClaims, Tokens, Seconds } from "@services/common/types"
 // going to need the redis client for a blocklist - for refresh tokens , no need for access tokens since they are short lived and we can just wait for them to expire
 
 
-const ACCESS_TOKEN_PRIVATE_KEY = getPemKey(process.env.ACCESS_TOKEN_PRIVATE_KEY_PATH || ""); // load a pem file - no need for public since 
-const ACCESS_TOKEN_PUBLIC_KEY = getPemKey(process.env.ACCESS_TOKEN_PUBLIC_KEY_PATH || ""); //  for verifying access tokens
-const XSRF_TOKEN_KEY = process.env.XSRF_TOKEN_KEY || ""
-const REFRESH_TOKEN_KEY = process.env.REFRESH_TOKEN_KEY || ""; // symmetric key since only the auth service will access and verify it
+const ACCESS_TOKEN_PRIVATE_KEY = GetPemKey("ACCESS_TOKEN_PRIVATE_KEY_PATH"); // load a pem file - no need for public since 
+const XSRF_TOKEN_KEY = GetEnvString("XSRF_TOKEN_KEY"); // process.env.XSRF_TOKEN_KEY || ""
+const REFRESH_TOKEN_KEY = GetEnvString("REFRESH_TOKEN_KEY"); // symmetric key since only the auth service will access and verify it
 const AUDIENCE = "SecureWebIotPlatform"; // the audience for the tokens - can be used to verify that the token is intended for this service
 
 const ErrNoUserId = "User ID is required to generate token";
@@ -19,36 +21,6 @@ const ErrNoIssuer = "Issuer is required to generate token";
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60; // one week in seconds
 const ACCESS_TOKEN_EXPIRATION = 15 * 60; // access tokens expire in 15 minutes - in seconds
 
-declare global {
-    namespace Express {
-        interface Request {
-            user?: AccessTokenClaims; // the user information from the access token claims - will be used in the controllers to access the users information
-        }
-    }
-}
-export interface RefreshTokenClaims {
-    sub: string; // user id
-    aud: string; // audience
-    iss: string; // issuer
-    exp: Seconds; // expiration time in seconds
-    iat: number; // issued at time in seconds
-    jti: string; // unique identifier for the token - used for blocklisting
-}
-export interface AccessTokenClaims {
-    sub: string; // user id
-    aud: string; // audience
-    iss: string; // issuer
-    exp: Seconds; // expiration time in seconds
-    iat: number; // issued at time in seconds
-}
-
-interface Tokens {
-    accessToken: string;
-    refreshToken: string;
-    xsrfToken: string;
-}
-
-type Seconds = number; // just easier to understand that the values are in seconds
 
 export class TokenBundle {
 
@@ -228,24 +200,7 @@ export function CreateXsrfToken(jti: string, expiry: Seconds, issuer: string): s
  * @throws Error if theres an error during verification that isnt related to token invalidity or expiration 
 */
 
-export function VerifyAccessToken(token: string): AccessTokenClaims | null { // null and val will act as truthy
-    if (!token) {
-        return null; // if theres no token then just treat it as invalid and return null
-    }
-    try {
-        const r = jwt.verify(token, ACCESS_TOKEN_PUBLIC_KEY, { algorithms: ['RS256'], audience: AUDIENCE }) as AccessTokenClaims;
-        return r;
-    } catch (error) {
-        if (error instanceof jwt.TokenExpiredError) {
-            return null; // token is expired - treat as invalid
-        }
-        if (error instanceof jwt.JsonWebTokenError) { // if theres any token invalidity like signature is different or the token is malformed
-            logger.warn({ token }, `Invalid Access token: ${error.message}`); // log the invalid token for debugging - should be safe since these tokens are all invalid to the system
-            return null;
-        }
-        throw new Error(`Error verifying access token`, { cause: error });
-    }
-}
+export const VerifyAccessToken = CreateVerifyAccessTokenInstance(logger); // create a verify access token function with the logger instance - this way we can log invalid tokens with the correct logger configuration without having to pass the logger around everywhere
 
 /**
  * 
@@ -347,25 +302,5 @@ export async function BlockToken(jti: string, exp: Seconds): Promise<void> { // 
         await RedisClient.set(jti, "blocked", { expiration: { type: "EX", value: ttl } }); // set the blocklist key to expire at the same time as the token
     } catch (err) {
         throw new Error(`Error blocking token`, { cause: err });
-    }
-}
-
-
-
-/**
- * 
- * @param keyPath 
- * @returns string - the PEM key as a string
- * @description - loads the PEM key from the given path and returns it as a string - used for loading the private and public keys for access tokens
- */
-function getPemKey(keyPath: string): string {
-    if (!keyPath) {
-        throw new Error("Key path is required to load PEM key");
-    }
-    try {
-        const keyData = readFileSync(keyPath, "utf-8");
-        return keyData;
-    } catch (err) {
-        throw new Error(`Error loading PEM key`, { cause: err });
     }
 }

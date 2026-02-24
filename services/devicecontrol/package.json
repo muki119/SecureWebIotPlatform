@@ -1,5 +1,5 @@
 {
-  "name": "Domain control service",
+  "name": "@services/devicecontrol",
   "version": "0.0.0",
   "description": "The device control service for the secure web iot platform",
   "homepage": "https://github.com/muki119/SecureWebIotPlatform#readme",

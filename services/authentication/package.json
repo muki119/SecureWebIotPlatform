@@ -1,5 +1,5 @@
 {
-  "name": "authentication",
+  "name": "@services/authentication",
   "version": "0.0.0",
   "description": "The Authentication server for the secure web iot platform",
   "homepage": "https://github.com/muki119/SecureWebIotPlatform#readme",

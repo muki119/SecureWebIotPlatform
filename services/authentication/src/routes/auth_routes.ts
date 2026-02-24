@@ -10,10 +10,12 @@ import {
     GetUserController,
     MetricsController
 } from "../controllers";
-import ValidSessionMiddleware from "../middleware/valid_session";
+import { SessionMiddleware } from "@services/common/middleware"
+import logger from "../config/logger";
 import { LoginValidator, RegisterValidator, ForgotPasswordValidator, ResetPasswordValidator } from "../validators/user"
 
 export const authRoutes = Router();
+const ValidSessionMiddleware = new SessionMiddleware(logger).middleware // only allow valid sessions to access these routes, also attaches the user information to the request object from the access token claims so that it can be used in the controllers
 
 
 authRoutes.post("/login", LoginValidator, LoginController);

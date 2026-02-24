@@ -1,4 +1,5 @@
 import type { CookieOptions } from "express"
+import { GetEnvString } from "@services/common/utilities"
 
 
 export const tokenNames = {
@@ -7,7 +8,7 @@ export const tokenNames = {
     REFRESH_TOKEN_COOKIE_NAME: "refreshToken"
 } as const
 
-const isSecure = process.env.NODE_ENV === "production"
+const isSecure = GetEnvString("NODE_ENV") === "production"
 
 export const RefreshTokenCookieOptions = (maxAge: number): CookieOptions => {
     return {

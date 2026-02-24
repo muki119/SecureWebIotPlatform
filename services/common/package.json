@@ -1,0 +1,26 @@
+{
+  "name": "@services/common",
+  "version": "1.0.0",
+  "description": "The common code shared between services like types ,middleware and utilities. Intended to stadardise a fair ammount of the codebase and reduce compatibility issues",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "exports": {
+    "./types": "./types/index.ts",
+    "./utilities": "./utilities/index.ts",
+    "./middleware": "./middleware/index.ts",
+    "./helpers": "./helpers/index.ts"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/pg": "^8.16.0",
+    "@types/pg-pool": "^2.0.7",
+    "jsonwebtoken": "^9.0.3"
+  }
+}

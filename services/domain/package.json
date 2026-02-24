@@ -1,5 +1,5 @@
 {
-  "name": "Domain Service",
+  "name": "@services/domain",
   "version": "0.0.0",
   "description": "The Domain service for the secure web iot platform",
   "homepage": "https://github.com/muki119/SecureWebIotPlatform#readme",

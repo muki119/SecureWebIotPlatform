@@ -1,5 +1,5 @@
 {
-  "name": "Ledger Service",
+  "name": "@services/ledger",
   "version": "0.0.0",
   "description": "The Ledger service for the secure web iot platform",
   "homepage": "https://github.com/muki119/SecureWebIotPlatform#readme",
