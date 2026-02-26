@@ -1,4 +1,4 @@
-import { AccessTokenClaims } from "../types";
+import type { AccessTokenClaims } from "../types";
 import { GetPemKey, GetEnvString } from "../utilities/getEnv";
 import jwt from "jsonwebtoken";
 const ACCESS_TOKEN_PUBLIC_KEY = GetPemKey("ACCESS_TOKEN_PUBLIC_KEY_PATH"); //  for verifying access tokens
