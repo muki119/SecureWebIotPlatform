@@ -1,4 +1,5 @@
-import { scryptSync, timingSafeEqual, randomBytes } from "node:crypto"
+import { scryptSync, scrypt, timingSafeEqual, randomBytes } from "node:crypto"
+import { promisify } from "node:util"
 import logger from "../config/logger"
 
 
@@ -8,6 +9,9 @@ const SALT_LENGTH = 16 // 128 bits - enough for entropy
 export const PASSWORD_CONSTRAINTS = { minLength: 8, maxLength: 96 }
 const ErrMinPasswordLength = `Password must be at least ${PASSWORD_CONSTRAINTS.minLength} characters long`
 const ErrMaxPasswordLength = `Password must be at most ${PASSWORD_CONSTRAINTS.maxLength} characters long`
+
+const scryptAsync = promisify(scrypt)
+const saltGenAsync = promisify(randomBytes)
 /**
  * 
  * @param plaintext 
@@ -24,7 +28,7 @@ const ErrMaxPasswordLength = `Password must be at most ${PASSWORD_CONSTRAINTS.ma
  * and also to allow for future changes in the hashing algorithm if needed without affecting existing passwords
  */
 
-export function HashPassword(plaintext: string): string {
+export async function HashPassword(plaintext: string): Promise<string> {
 
     if (plaintext.length < PASSWORD_CONSTRAINTS.minLength) {
         throw new Error(ErrMinPasswordLength)
@@ -33,8 +37,9 @@ export function HashPassword(plaintext: string): string {
         throw new Error(ErrMaxPasswordLength)
     }
     try {
-        const salt = randomBytes(SALT_LENGTH); //
-        const derivedKey = scryptSync(plaintext, salt, SCRYPT_CONFIG.keylen, { N: SCRYPT_CONFIG.N, r: SCRYPT_CONFIG.r, p: SCRYPT_CONFIG.p }); // N - CPU/memory cost parameter, r - block size parameter, p - parallelization parameter
+        const salt = await saltGenAsync(SALT_LENGTH);
+
+        const derivedKey = await scryptAsync(plaintext, salt, SCRYPT_CONFIG.keylen, { N: SCRYPT_CONFIG.N, r: SCRYPT_CONFIG.r, p: SCRYPT_CONFIG.p }) as Buffer;
         const fString = `$${SCRYPT_CONFIG.N}$${SCRYPT_CONFIG.r}$${SCRYPT_CONFIG.p}$${salt.toString("base64")}$${derivedKey.toString("base64")}` // the formatted string - to be stored in the database§
 
         return fString
@@ -54,7 +59,7 @@ export function HashPassword(plaintext: string): string {
  * The hash is expected to be in the format of $n$p$r$salt$hash
  */
 
-export function VerifyPassword(plaintext: string, hash: string): boolean {
+export async function VerifyPassword(plaintext: string, hash: string): Promise<boolean> {
     if (plaintext.length < PASSWORD_CONSTRAINTS.minLength) {
         throw new Error(ErrMinPasswordLength)
     }
@@ -73,7 +78,7 @@ export function VerifyPassword(plaintext: string, hash: string): boolean {
         if (!Nstr || !rstr || !pstr || !salt || !hashedPassword) {
             throw new Error("Invalid hash format")
         }
-        const hashToCompare = scryptSync(plaintext, Buffer.from(salt, "base64"), SCRYPT_CONFIG.keylen, { N: parseInt(Nstr, 10), r: parseInt(rstr, 10), p: parseInt(pstr, 10) });
+        const hashToCompare = await scryptAsync(plaintext, Buffer.from(salt, "base64"), SCRYPT_CONFIG.keylen, { N: parseInt(Nstr, 10), r: parseInt(rstr, 10), p: parseInt(pstr, 10) }) as Buffer;
         return timingSafeEqual(hashToCompare, Buffer.from(hashedPassword, "base64")) // to prevent timing attacks
 
     } catch (err) {

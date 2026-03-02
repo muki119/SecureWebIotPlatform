@@ -7,47 +7,47 @@ export const generatePassword = (length: number) => {
     return randomBytes(length).toString("base64url").slice(0, length) // slice to ensure the password is exactly the desired length
 }
 describe("Testing Password Hashing", () => {
-    test("Hashes password correctly given valid password", () => {
+    test("Hashes password correctly given valid password", async () => {
         const validPassword = generatePassword(randomInt(PASSWORD_CONSTRAINTS.minLength, PASSWORD_CONSTRAINTS.maxLength))
-        const hash = HashPassword(validPassword)
+        const hash = await HashPassword(validPassword)
         expect(hash).toBeDefined()
     })
     test("Returns error when given no password", () => {
-        expect(() => HashPassword("")).toThrow()
+        expect(async () => await HashPassword("")).rejects.toThrow()
     })
     test("Returns error when given a password that is too short", () => {
         const shortPassword = generatePassword(randomInt(1, PASSWORD_CONSTRAINTS.minLength - 1))
-        expect(() => HashPassword(shortPassword)).toThrow()
+        expect(async () => await HashPassword(shortPassword)).rejects.toThrow()
     })
     test("Returns error when given a password that is too long", () => {
         const longPassword = generatePassword(randomInt(PASSWORD_CONSTRAINTS.maxLength + 1, PASSWORD_CONSTRAINTS.maxLength + 20))
-        expect(() => HashPassword(longPassword)).toThrow()
+        expect(async () => await HashPassword(longPassword)).rejects.toThrow()
     })
 
 })
 
 describe("Testing Password Verification", () => {
-    test("Verifies correct password successfully", () => {
+    test("Verifies correct password successfully", async () => {
         const password = generatePassword(randomInt(PASSWORD_CONSTRAINTS.minLength, PASSWORD_CONSTRAINTS.maxLength))
-        const hash = HashPassword(password)
-        const isValid = VerifyPassword(password, hash)
+        const hash = await HashPassword(password)
+        const isValid = await VerifyPassword(password, hash)
         expect(isValid).toBe(true)
     })
-    test("Fails to verify incorrect password", () => {
+    test("Fails to verify incorrect password", async () => {
         const password = generatePassword(randomInt(PASSWORD_CONSTRAINTS.minLength, PASSWORD_CONSTRAINTS.maxLength))
         const wrongPassword = generatePassword(randomInt(PASSWORD_CONSTRAINTS.minLength, PASSWORD_CONSTRAINTS.maxLength))
-        const hash = HashPassword(password)
-        const isValid = VerifyPassword(wrongPassword, hash)
+        const hash = await HashPassword(password)
+        const isValid = await VerifyPassword(wrongPassword, hash)
         expect(isValid).toBe(false)
     })
-    test("Fails to verify when given empty password", () => {
+    test("Fails to verify when given empty password", async () => {
         const password = generatePassword(randomInt(PASSWORD_CONSTRAINTS.minLength, PASSWORD_CONSTRAINTS.maxLength))
-        const hash = HashPassword(password)
-        expect(() => VerifyPassword("", hash)).toThrow()
+        const hash = await HashPassword(password)
+        expect(async () => await VerifyPassword("", hash)).rejects.toThrow()
     })
-    test("Fails to verify when given empty hash", () => {
+    test("Fails to verify when given empty hash", async () => {
         const password = generatePassword(randomInt(PASSWORD_CONSTRAINTS.minLength, PASSWORD_CONSTRAINTS.maxLength))
-        expect(() => VerifyPassword(password, "")).toThrow()
+        expect(async () => await VerifyPassword(password, "")).rejects.toThrow()
     })
 })
 
