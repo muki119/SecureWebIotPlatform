@@ -2,7 +2,6 @@ import jwt from 'jsonwebtoken';
 import { RedisClient } from "../config/redis";
 import logger from "../config/logger";
 import { randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs"
 import { GetEnvString, GetPemKey } from "@services/common/utilities"
 import { CreateVerifyAccessTokenInstance } from "@services/common/helpers"
 import type { AccessTokenClaims, RefreshTokenClaims, Tokens, Seconds } from "@services/common/types"
