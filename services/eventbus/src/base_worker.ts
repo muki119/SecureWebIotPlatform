@@ -7,15 +7,17 @@
  */
 
 import process from "node:process"
-import { EventListener, EventBusConfig, EventBusHandler } from "./event_bus_components"
+import { EventListener } from "@services/eventbus"
+import type { EventBusConfig, EventBusHandler } from "@services/eventbus"
 
-export enum MessageFlags {
-    CREATE,// comes only from the parent
-    START,// comes only from the parent
-    STOP, // comes only from the parent
-    ERROR, // this flag is only thrown by the child process 
-    PING,
-    PONG
+export const MessageFlags = {
+    CREATE: "CREATE",
+    START: "START",
+    STOP: "STOP",
+    ERROR: "ERROR",
+    DEBUG: "DEBUG",
+    PING: "PING",
+    PONG: "PONG"
 }
 
 
@@ -45,7 +47,7 @@ export abstract class BaseWorker { // this is everything that a worker should ha
      */
     public start() { // begins listening for proc messages 
         process.title = "EventBus Worker Process";
-        process.on("message", (message: { flag: MessageFlags, value?: any }) => {
+        process.on("message", (message: { flag: string, value?: any }) => {
             if (process.send === undefined) {
                 throw new Error("Process does not have ipc channel");
             }
@@ -101,4 +103,8 @@ export abstract class BaseWorker { // this is everything that a worker should ha
      * i kinda modeled this function after like Class based react components lol
      */
     protected abstract onCreate(value?: any): Promise<void> | void;
+
+    protected sendDebugMessage(message: { [k: string]: any }): void {
+        process.send!({ flag: MessageFlags.DEBUG, value: message })
+    }
 }

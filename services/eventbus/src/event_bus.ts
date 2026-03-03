@@ -1,6 +1,6 @@
-import { EventBusConfig, EventSender, EventMessage } from "./event_bus_components"
+import { type EventBusConfig, EventSender, type EventMessage } from "@services/eventbus"
 import { ChildProcess, fork } from "node:child_process"
-import { MessageFlags } from "./base_worker"
+import { MessageFlags } from "@services/eventbus"
 
 
 /**
@@ -20,6 +20,7 @@ export class EventBus { // comprises of the listener proccess and the sender fun
     private listenerProcess: ChildProcess | null = null; // the listener process spawned
     private sender: EventSender;
     private workerFile: string;
+    public handleDebugMessage: ((message: any) => void) | null = null; // handler for debug messages from worker process
 
     constructor(config: EventBusConfig, logger: any, workerDir: string) {
         this.config = config;
@@ -29,6 +30,7 @@ export class EventBus { // comprises of the listener proccess and the sender fun
         this.listenerProcess = fork(this.workerFile, [], { env: process.env });
         this.sender = new EventSender(this.config);
     }
+
 
     /**
      * 
@@ -55,19 +57,27 @@ export class EventBus { // comprises of the listener proccess and the sender fun
         return this.sender.send(stream, { ...message, timestamp: new Date().toISOString() } as EventMessage);
     }
 
+
     async init() {
         await this.sender.init()
         if (!this.listenerProcess) {
             throw new Error("Listener process not initialized");
         }
         this.listenerProcess.send({ flag: MessageFlags.CREATE, value: this.config });
-        this.listenerProcess.on("message", (message: { flag: MessageFlags, value?: any }) => { // find if error
+        this.listenerProcess.on("message", (message: { flag: string, value?: any }) => { // find if error
             switch (message.flag) { // this just creates some listner handlers - once this is set up then you dont have to add additional listeners
                 case MessageFlags.ERROR:
                     this.logger.error("Error from listener process: " + message.value);
                     break;
                 case MessageFlags.PONG:
                     this.logger.info("Received PONG from listener process");
+                    break;
+                case MessageFlags.DEBUG:
+                    if (this.handleDebugMessage) {
+                        this.handleDebugMessage(message.value);
+                    } else {
+                        this.logger.debug("Received debug message from listener process: " + JSON.stringify(message.value));
+                    }
                     break;
                 default:
                     this.logger.warn("Unknown message flag received from listener process: " + message.flag);

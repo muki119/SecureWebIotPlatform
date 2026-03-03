@@ -1,17 +1,24 @@
 {
   "name": "services",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "The serivces package . Contains all service and their shared code",
   "keywords": [],
-  "author": "",
   "license": "ISC",
+  "author": "Mugagga Kimera",
   "type": "module",
+  "main": "index.js",
   "workspaces": [
+    "eventbus",
     "authentication",
     "common",
     "devicecontrol",
     "domain",
     "ledger"
-  ]
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "vitest": "^4.0.18"
+  }
 }

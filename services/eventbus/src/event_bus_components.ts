@@ -1,4 +1,5 @@
-import { RedisClientOptions, RedisClientType, RedisDefaultModules, createClient } from "redis";
+import type { RedisClientOptions } from "redis";
+import { createClient } from "redis";
 export interface RedisConfig {
     host: string;
     port: number;
@@ -131,7 +132,7 @@ export class EventListener { // this will only act as a listner
     private listening: boolean;
     private maxCount: number;
     private semaphore: semaphore; // to limit the number of concurrent message processing to maxCount
-
+    private blockMs = 2 * 1000
     constructor(config: EventBusConfig) {
         this.config = config;
         this.consumerGroup = config.consumerGroup;
@@ -222,6 +223,17 @@ export class EventListener { // this will only act as a listner
 
     }
 
+
+    get blockTime() {
+        return this.blockMs;
+    }
+    set blockTime(ms: number) {
+        if (ms < 0) {
+            throw new Error("Block time must be a positive number");
+        }
+        this.blockMs = ms;
+    }
+
     /**
      * @description - begins listening for messages on the registered streams
      */
@@ -237,7 +249,7 @@ export class EventListener { // this will only act as a listner
                     this.consumerGroup,
                     this.consumerName,
                     streams,
-                    { COUNT: this.maxCount, BLOCK: 2 * 1000 }
+                    { COUNT: this.maxCount, BLOCK: this.blockTime }
                 ) as IncommingStream[] | null;
                 if (!incommingStreams) {
                     continue;
