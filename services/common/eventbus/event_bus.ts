@@ -1,4 +1,4 @@
-import { EventBusConfig, EventSender } from "./event_bus_components"
+import { EventBusConfig, EventSender, EventMessage } from "./event_bus_components"
 import { ChildProcess, fork } from "node:child_process"
 import { MessageFlags } from "./base_worker"
 
@@ -36,8 +36,23 @@ export class EventBus { // comprises of the listener proccess and the sender fun
      * @param message - the message to send
      * @returns a promise of nothing lol
      */
-    async send(stream: string, message: any) {
-        return this.sender.send(stream, message);
+    async send(stream: string, message: Omit<EventMessage, "timestamp">) {
+        if (!stream || !message) {
+            throw new Error("Stream and message must be provided", {
+                cause: {
+                    stream,
+                    message
+                }
+            })
+        }
+        if (!message.action) {
+            throw new Error("Message must have an action", {
+                cause: {
+                    message
+                }
+            })
+        }
+        return this.sender.send(stream, { ...message, timestamp: new Date().toISOString() } as EventMessage);
     }
 
     async init() {

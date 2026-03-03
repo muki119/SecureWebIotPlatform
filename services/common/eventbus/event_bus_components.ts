@@ -15,16 +15,40 @@ export type EventBusConfig = {
     maxConcurrent: number;
 };
 
-type EventPayload = {
-    id: string;
-    values: Map<string, any>;
+/**
+ * @description - the event payload message structure
+ * - there must be an action to specify what is being done
+ * - the userId is optional if the operations is related to a user 
+ * - datafield is the action requires some data
+ */
+export type EventMessage = {
+    action: string;
+    timestamp: string;
+    [dataField: string]: string; // because messages are fairly flat and dont allow nested objects
 }
-type Stream = string;
+
+
+
+export type EventPayload = ({
+    id: string;
+    message: {
+        [x: string]: string;
+    } | EventMessage;
+    millisElapsedFromDelivery?: number | undefined;
+    deliveriesCounter?: number | undefined;
+} | null)
+
+
+export type IncommingStream = {
+    name: string;
+    messages: EventPayload[];
+}
+
 export type EventBusHandler = (payload: EventPayload) => Promise<void>;
 
-type EventBusMessage = {
-    [key: string]: any;
-}
+type Stream = string;
+
+
 
 /**
  * 
@@ -69,15 +93,22 @@ export class EventSender { // this will only act as a sender - might have to be 
      * @param message - the message to send 
      * @description - sends a message to a given stream
      */
-    public async send(stream: Stream, message: EventBusMessage) {
-        if (!stream || !message) {
-            throw new Error("Stream and message must be provided", {
-                cause: {
-                    missing: !stream ? "stream" : "message"
-                }
-            });
-        }
+    public async send(stream: Stream, message: EventMessage) {
         try {
+            if (!stream || !message) {
+                throw new Error("Stream and message must be provided", {
+                    cause: {
+                        missing: !stream ? "stream" : "message"
+                    }
+                });
+            }
+            if (!message.action) {
+                throw new Error("Message must have an action", {
+                    cause: {
+                        message
+                    }
+                });
+            }
             const id = await this.conn.xAdd(stream, "*", message);
             if (!id) {
                 throw new Error("Failed to add message to stream " + stream);
@@ -122,7 +153,7 @@ export class EventListener { // this will only act as a listner
             const streams = Array.from(this.handlerTable.keys());
             for (const stream of streams) {
                 try {
-                    await this.listenerConn.xGroupCreate(stream, this.consumerGroup, "0-0", { MKSTREAM: true });
+                    await this.listenerConn.xGroupCreate(stream, this.consumerGroup, "0-0", { MKSTREAM: true }); // makes the consumer groupsand the streams if they dont exist - self building
                 } catch (error: any) {
                     if (!error.message.includes("BUSYGROUP")) { // if the group already exists then ignore the error
                         throw new Error(`Error creating consumer group for stream "${stream}"`, { cause: error });
@@ -148,7 +179,6 @@ export class EventListener { // this will only act as a listner
                 stream.id,
                 { COUNT: this.maxCount }
             )
-            //console.log("pending messages: " + JSON.stringify(messages));
             if (!messages || messages.messages.length === 0) {
                 continue;
             }
@@ -208,13 +238,32 @@ export class EventListener { // this will only act as a listner
                     this.consumerName,
                     streams,
                     { COUNT: this.maxCount, BLOCK: 2 * 1000 }
-                );
+                ) as IncommingStream[] | null;
                 if (!incommingStreams) {
                     continue;
                 }
-                for (const stream of incommingStreams) { // for every stream with messages
-                    this.processStream(stream) // process stream - no need to await it because semaphore will handle maximum in queue
+
+                if (!incommingStreams || !incommingStreams.length) {
+                    continue;
                 }
+
+                if (!Array.isArray(incommingStreams)) {
+                    throw new Error("Invalid data format for incomming streams", {
+                        cause: {
+                            incommingStreams
+                        }
+                    });
+                }
+                incommingStreams.forEach((stream) => {
+                    if (!stream) {
+                        throw new Error("Invalid stream data", {
+                            cause: {
+                                incommingStreams
+                            }
+                        });
+                    }
+                    this.processStream(stream as IncommingStream)
+                })
             }
         } catch (error: any) {
             throw new Error(`Error while listening for messages`, { cause: error });
@@ -227,8 +276,8 @@ export class EventListener { // this will only act as a listner
      * @param stream - the stream object containing the messages to process
      * @description - processes messages for a stream by calling its handler and then acknowledging once completed
      */
-    private async processStream(stream: { [key: string]: any }): Promise<void> {
-        const streamName = stream.key || stream.name;// depending on if its from pending messages or new messages the key might be different
+    private async processStream(stream: IncommingStream): Promise<void> {
+        const streamName = stream.name;// depending on if its from pending messages or new messages the key might be different - just for safety
         try {
             if (!stream) {
                 throw new Error("Invalid stream");
@@ -241,12 +290,11 @@ export class EventListener { // this will only act as a listner
             for (const message of stream.messages) {
                 await this.semaphore.acquire(); // wait for a slot to be available for processing
                 handler(message).then(() => { // trying to make this as async as possible -> just handles a message and then releases a semaphore slot-> its async so it will just fire the handler and then go on to a next message , but if no slot left it will hold until
-                    this.nonBlockingConn.xAck(streamName, this.consumerGroup, message.id);
+                    this.nonBlockingConn.xAck(streamName, this.consumerGroup, message!.id);
                 }).finally(() => {
                     this.semaphore.release();
                 });
             }
-            console.log("Finished processing messages for stream " + streamName);
         } catch (error: any) {
             throw new Error(`Error processing stream "${streamName}"`, { cause: error });
         }

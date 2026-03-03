@@ -19,6 +19,10 @@ export enum MessageFlags {
 }
 
 
+/**
+ * @description This is the base worker frame that every serivce MUST extend to make their own worker and add their own stream handlers
+ * Twas hell to make
+ */
 export abstract class BaseWorker { // this is everything that a worker should have - the purpose of this is that each service will make their own class that extends this baseworker and then it will add their specific handlers 
     // this all could be fixed if this wasnt in js/ts lol 
 
@@ -66,7 +70,7 @@ export abstract class BaseWorker { // this is everything that a worker should ha
                         return;
                     }
                     this.listenerInstance.listen().catch((error) => {
-                        process.send({ flag: MessageFlags.ERROR, value: error.message });
+                        process.send!({ flag: MessageFlags.ERROR, value: error.message });
                     });
                     break;
                 case MessageFlags.STOP:
@@ -75,7 +79,7 @@ export abstract class BaseWorker { // this is everything that a worker should ha
                         return;
                     }
                     this.listenerInstance.close().catch((error) => {
-                        process.send({ flag: MessageFlags.ERROR, value: error.message });
+                        process.send!({ flag: MessageFlags.ERROR, value: error.message });
                     });
                     break;
                 case MessageFlags.PING:
