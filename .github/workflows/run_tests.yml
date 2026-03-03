@@ -28,9 +28,9 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v3 # set up node 
         with:
-          node-version: "22.2"
+          node-version: "22"
 
-      - name: Install workspace dependencies
+      - name: Install service workspace dependencies
         working-directory: services
         run: npm ci # install root workspace dependencies - this is needed for the packages to be linked correctly
       
@@ -41,5 +41,4 @@ jobs:
           TEST_REDIS_PORT: 6379
           TEST_REDIS_DB: 0
         run: |
-          npm ci 
           npx vitest run
