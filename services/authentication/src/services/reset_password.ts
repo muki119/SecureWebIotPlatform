@@ -16,7 +16,7 @@ export default async function ResetPasswordService(resetToken: string, newPasswo
             return { success: false, message: "User not found" }
         }
 
-        if (VerifyPassword(newPassword, userExists.password)) {
+        if (await VerifyPassword(newPassword, userExists.password)) {
             return { success: false, message: "New password cannot be the same as the old password" }
         }
         const passwordHash = await HashPassword(newPassword)
