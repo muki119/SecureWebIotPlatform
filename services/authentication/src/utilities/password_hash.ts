@@ -7,8 +7,9 @@ import logger from "../config/logger"
 const SCRYPT_CONFIG = { N: 16384, r: 8, p: 1, keylen: 64 }
 const SALT_LENGTH = 16 // 128 bits - enough for entropy
 export const PASSWORD_CONSTRAINTS = { minLength: 8, maxLength: 96 }
-const ErrMinPasswordLength = `Password must be at least ${PASSWORD_CONSTRAINTS.minLength} characters long`
-const ErrMaxPasswordLength = `Password must be at most ${PASSWORD_CONSTRAINTS.maxLength} characters long`
+export const ErrMinPasswordLength = `Password must be at least ${PASSWORD_CONSTRAINTS.minLength} characters long`
+export const ErrMaxPasswordLength = `Password must be at most ${PASSWORD_CONSTRAINTS.maxLength} characters long`
+export const ErrHashRequired = "Hash is required for verification"
 
 const scryptAsync = promisify(scrypt)
 const saltGenAsync = promisify(randomBytes)
@@ -67,7 +68,7 @@ export async function VerifyPassword(plaintext: string, hash: string): Promise<b
         throw new Error(ErrMaxPasswordLength)
     }
     if (!hash) {
-        throw new Error("Hash is required for verification")
+        throw new Error(ErrHashRequired)
     }
     try {
         const splitHash = hash.split("$");
