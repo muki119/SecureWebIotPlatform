@@ -1,7 +1,8 @@
 name: Run Codebase Tests
 on:
   push:
-    branches: [$default_branch]
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -11,15 +12,29 @@ jobs:
       matrix:
         testableDirs: ["services/authentication", "services/eventbus"] # basically go into these dirs and npm install and run tests 
     
+
+    services:
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
-      - uses: actions/checkout@v6 # get the code from the repo
+      - uses: actions/checkout@v5 # get the code from the repo
       - name: Set up Node
         uses: actions/setup-node@v3 # set up node 
         with:
-          node-version: "latest"
+          node-version: "22.2"
       - name: Install dependencies and run tests
         working-directory: ${{ matrix.testableDirs }}
+        env:
+          TEST_REDIS_HOST: localhost
+          TEST_REDIS_PORT: 6379
+          TEST_REDIS_DB: 0
         run: |
           npm ci 
-          npm install
-          npx vitest
+          npx vitest run
