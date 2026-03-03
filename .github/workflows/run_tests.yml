@@ -1,0 +1,25 @@
+name: Run Codebase Tests
+on:
+  push:
+    branches: [$default_branch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        testableDirs: ["services/authentication", "services/eventbus"] # basically go into these dirs and npm install and run tests 
+    
+    steps:
+      - uses: actions/checkout@v6 # get the code from the repo
+      - name: Set up Node
+        uses: actions/setup-node@v3 # set up node 
+        with:
+          node-version: "latest"
+      - name: Install dependencies and run tests
+        working-directory: ${{ matrix.testableDirs }}
+        run: |
+          npm ci 
+          npm install
+          npx vitest
