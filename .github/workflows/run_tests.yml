@@ -29,6 +29,11 @@ jobs:
         uses: actions/setup-node@v3 # set up node 
         with:
           node-version: "22.2"
+
+      - name: Install workspace dependencies
+        working-directory: services
+        run: npm ci # install root workspace dependencies - this is needed for the packages to be linked correctly
+      
       - name: Install dependencies and run tests
         working-directory: ${{ matrix.testableDirs }}
         env:
