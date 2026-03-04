@@ -10,6 +10,9 @@
       "require": "./src/index.ts"
     }
   },
+  "scripts": {
+    "test": "npx vitest run"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

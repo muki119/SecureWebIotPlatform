@@ -14,6 +14,7 @@ export const MessageFlags = {
     CREATE: "CREATE",
     START: "START",
     STOP: "STOP",
+    STOPPED: "STOPPED",
     ERROR: "ERROR",
     DEBUG: "DEBUG",
     PING: "PING",
@@ -39,6 +40,20 @@ export abstract class BaseWorker { // this is everything that a worker should ha
      */
     protected handler(stream: string, handler: EventBusHandler) {
         return this.listenerInstance?.registerHandler(stream, handler)
+    }
+
+    private async stop() {
+        console.log("worker process shutting down")
+        if (!this.listenerInstance) {
+            process.send!({ flag: MessageFlags.ERROR, value: "EventListener instance must be created before stopping" });
+        }
+        await this.listenerInstance!.close().then(() => {
+            process.send!({ flag: MessageFlags.STOPPED });
+            process.exit(0);
+        }).catch((error) => {
+            process.send!({ flag: MessageFlags.ERROR, value: error.message });
+            process.exit(1);// since the intention is to stop the process if there is an error during shutdown  exit with code 1 to show an error
+        })
     }
 
     /**
@@ -76,13 +91,7 @@ export abstract class BaseWorker { // this is everything that a worker should ha
                     });
                     break;
                 case MessageFlags.STOP:
-                    if (!this.listenerInstance) {
-                        process.send({ flag: MessageFlags.ERROR, value: "EventListener instance must be created before stopping" });
-                        return;
-                    }
-                    this.listenerInstance.close().catch((error) => {
-                        process.send!({ flag: MessageFlags.ERROR, value: error.message });
-                    });
+                    this.stop();
                     break;
                 case MessageFlags.PING:
                     process.send({ flag: MessageFlags.PONG });
@@ -92,7 +101,10 @@ export abstract class BaseWorker { // this is everything that a worker should ha
                     break;
             }
         })
+        process.on("SIGINT", this.stop)
+        process.on("SIGTERM", this.stop)
     }
+
     /**
      * 
      * @param value 

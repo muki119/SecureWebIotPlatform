@@ -79,10 +79,20 @@ export class EventBus { // comprises of the listener proccess and the sender fun
                         this.logger.debug("Received debug message from listener process: " + JSON.stringify(message.value));
                     }
                     break;
+
+                case MessageFlags.STOPPED:
+                    this.logger.info("Listener process has stopped");
+                    this.isListening = false;
+                    break;
                 default:
                     this.logger.warn("Unknown message flag received from listener process: " + message.flag);
             }
         })
+    }
+    async waitForStop() {
+        while (this.isListening) {
+            await new Promise(resolve => setTimeout(resolve, 100)); // wait for 100ms before checking again
+        }
     }
     /**
      * 
@@ -107,7 +117,7 @@ export class EventBus { // comprises of the listener proccess and the sender fun
      * @returns nothing lol
      * @description - stops the listener process
      */
-    stop() {
+    async stop() {
         if (!this.listenerProcess) {
             throw new Error("Listener process not initialized");
         }
@@ -116,7 +126,7 @@ export class EventBus { // comprises of the listener proccess and the sender fun
             return;
         }
         this.listenerProcess.send({ flag: MessageFlags.STOP });
-        this.isListening = false;
-        this.logger.info("Stopping listener manager");
+        await this.waitForStop();
+        this.logger.info("Stopping listener process");
     }
 }
