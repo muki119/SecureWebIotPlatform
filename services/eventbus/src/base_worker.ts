@@ -52,6 +52,7 @@ export abstract class BaseWorker { // this is everything that a worker should ha
             process.exit(0);
         }).catch((error) => {
             process.send!({ flag: MessageFlags.ERROR, value: error.message });
+            process.send!({ flag: MessageFlags.STOPPED });
             process.exit(1);// since the intention is to stop the process if there is an error during shutdown  exit with code 1 to show an error
         })
     }
