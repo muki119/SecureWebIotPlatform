@@ -3,6 +3,7 @@
   "compilerOptions": {
     // File Layout
     "outDir": "./dist",
+    "rootDir": "./src",
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
@@ -41,5 +42,6 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
     "noEmit": true
-  }
+  },
+  "include": ["src"], // only src needs to be compiled
 }
