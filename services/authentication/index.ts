@@ -48,6 +48,9 @@ process.on("SIGINT", () => {
  * Naming conventions
  * For file names - snake_case
  * for function names - non export camelcase
+ * for classes - PascalCase
+ * for static class functions - PascalCase
+ * for non static class functions - camelCase
  * for exported functions - PascalCase
  * for variables - camelCase
  * for constants - UPPER_SNAKE_CASE
