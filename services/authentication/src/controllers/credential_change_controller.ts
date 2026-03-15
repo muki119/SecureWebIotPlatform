@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { UpdatePatch } from '@services/common/types';
-import type { User } from '../models/user_model';
+import type { IUser } from '../models/user_model';
 import { LogWarningDefault } from '../utilities/logging_utilities';
 import CredentialChangeService from '../services/credential_change';
 import logger from '../config/logger';
@@ -10,7 +10,7 @@ export default async function CredentialChangeController(req: Request, res: Resp
         if (!req.body) {
             return res.status(400).json({ message: "No changes provided" }).end();
         }
-        const { changes }: { changes: UpdatePatch<User> } = req.body;
+        const { changes }: { changes: UpdatePatch<IUser> } = req.body;
         if (!changes || Object.keys(changes).length === 0) {
             return res.status(400).json({ message: "No changes provided" }).end();
         }

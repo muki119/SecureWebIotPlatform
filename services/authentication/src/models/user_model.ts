@@ -4,7 +4,7 @@ import { Pool, type PoolClient } from "pg";
 import { PostgresPool } from "../config/postgres";
 
 
-export interface User extends ModelSchema { // this application wont utilise a username field i think , should probably be email instead
+export interface IUser extends ModelSchema { // this application wont utilise a username field i think , should probably be email instead
     id: string,
     forename: string,
     surname: string,
@@ -13,20 +13,20 @@ export interface User extends ModelSchema { // this application wont utilise a u
     createdAt: Date,
     deletedAt: Date | null
 }
-export default class UserModel extends PostgresDatabaseModel<User> {
+export default class UserModel extends PostgresDatabaseModel<IUser> {
 
     constructor(db: Pool) {
         super(db)
     }
 
-    private fieldsMap = new Map<keyof ModelDTO<User>, string>([
+    protected fieldsMap = new Map<keyof ModelDTO<IUser>, string>([
         ["email", "string"],
         ["forename", "string"],
         ["surname", "string"],
         ["password", "string"]
     ]) // the fields and their corresponding expected data types - for validation in updates 
 
-    public async create(item: ModelDTO<User>): Promise<User> {
+    public async create(item: ModelDTO<IUser>): Promise<IUser> {
         // item should be pre- validated and sanitised - either way the database should have contraints to prevent too much bad
         // like max chars 
 
@@ -39,7 +39,7 @@ export default class UserModel extends PostgresDatabaseModel<User> {
                 const insertQuery = `
                 INSERT INTO users (email, password, forename,surname)
                 VALUES ($1, $2, $3, $4)
-                RETURNING id, email, forename, surname, created_at
+                RETURNING id, email, forename, surname, created_at as createdAt
             `
                 const values = [item.email, item.password, item.forename, item.surname]
                 const result = await conn.query(insertQuery, values)
@@ -49,17 +49,33 @@ export default class UserModel extends PostgresDatabaseModel<User> {
                 }
                 return result.rows[0]
             } catch (err) {
-                conn.query("ROLLBACK") // if there was an error, roll back the transaction
+                await conn.query("ROLLBACK") // if there was an error, roll back the transaction
                 throw new Error("Failed to create user: ", { cause: err })
             }
         })
     }
-    public async findById(id: string): Promise<User | null> {
+    public async findById(id: string): Promise<IUser | null> {
 
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                SELECT id, email, forename, surname,password, created_at
+                    SELECT id, email, forename, surname,password, created_at as createdAt
+                    FROM users
+                    WHERE id = $1 AND deleted_at IS NULL
+                `
+                const result = await conn.query(query, [id])
+                return result.rows[0] || null
+            } catch (err) {
+                throw new Error("Failed to find user by id: ", { cause: err })
+            }
+        })
+    }
+
+    public async findByIdWithoutPassword(id: string): Promise<Omit<IUser, "password"> | null> { // same as find by id but without the password field for security reasons
+        return this.poolWrap(async (conn) => {
+            try {
+                const query = `
+                SELECT id, email, forename, surname, created_at as createdAt
                 FROM users
                 WHERE id = $1 AND deleted_at IS NULL
             `
@@ -70,44 +86,12 @@ export default class UserModel extends PostgresDatabaseModel<User> {
             }
         })
     }
-
-    public async findByIdWithoutPassword(id: string): Promise<Omit<User, "password"> | null> { // same as find by id but without the password field for security reasons
-        return this.poolWrap(async (conn) => {
-            try {
-                const query = `
-                SELECT id, email, forename, surname, created_at
-                FROM users
-                WHERE id = $1 AND deleted_at IS NULL
-            `
-                const result = await conn.query(query, [id])
-                return result.rows[0] || null
-            } catch (err) {
-                throw new Error("Failed to find user by id: ", { cause: err })
-            }
-        })
-    }
-    public async update(id: string, patch: UpdatePatch<User>): Promise<UpdateResult<User>> {
+    public async update(id: string, patch: UpdatePatch<IUser>): Promise<UpdateResult<IUser>> {
         // go through each change in the patch and build a query to update the record with all the changes
         return this.poolWrap(async (conn) => {
             try {
-                var setStringArr: string[] = []
-                var seenSet = new Set<keyof ModelDTO<User>>()
-                for (let i = 0; i < patch.length; i++) {
-                    const change = patch[i]!
-                    if (!this.fieldsMap.has(change.field)) {
-                        return { success: false, message: `Invalid field ${change.field} in update patch` }// if not in the allowed fields then return unsuccessful result - its not bad enough to warrant a thrown error
-                    }
-                    if (seenSet.has(change.field)) {
-                        return { success: false, message: `Duplicate field ${change.field} in update patch` }
-                    }
-                    if (typeof change.value !== this.fieldsMap.get(change.field)) {
-                        return { success: false, message: `Invalid data type for field ${change.field}: expected ${this.fieldsMap.get(change.field)}, got ${typeof change.value}` }
-                    }
-                    seenSet.add(change.field)
-                    setStringArr.push(`${change.field} = $${i + 2}`)
-                }// build the set string for the update query - starts at $2 because $1 is the id in the where clause
-                const setString = setStringArr.join(", ")
-                const values = patch.map(change => change.value) // get the values for the update query
+
+                const [setString, values] = await this.createSetValues(patch)
                 const beginTransaction = await conn.query("BEGIN") // begin a transaction - acid
                 if (beginTransaction.command !== "BEGIN") {
                     throw new Error("Failed to begin transaction")
@@ -116,7 +100,7 @@ export default class UserModel extends PostgresDatabaseModel<User> {
                 UPDATE users
                 SET ${setString}
                 WHERE id = $1 AND deleted_at IS NULL
-                RETURNING id, email, forename, surname, created_at
+                RETURNING id, email, forename, surname, created_at as createdAt
             `
                 const result = await conn.query(query, [id, ...values])
                 const commitTransaction = await conn.query("COMMIT") // commit the transaction
@@ -156,11 +140,11 @@ export default class UserModel extends PostgresDatabaseModel<User> {
             }
         })
     }
-    public async findByEmail(email: string): Promise<User | null> {
+    public async findByEmail(email: string): Promise<IUser | null> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                SELECT id, email, forename, surname, created_at, password
+                SELECT id, email, forename, surname, created_at as createdAt, password
                 FROM users
                 WHERE email = $1 AND deleted_at IS NULL
             `
@@ -199,20 +183,6 @@ export default class UserModel extends PostgresDatabaseModel<User> {
                 return Boolean(result.rowCount) // if row count isnt null or 0 then it exists
             } catch (err) {
                 throw new Error("Failed to check if user exists by email: ", { cause: err })
-            }
-        })
-    }
-
-    protected poolWrap: <U>(operation: (conn: PoolClient) => Promise<U>) => Promise<U> = (operation) => {
-        return new Promise(async (fufilled, reject) => {
-            const conn = await this.db.connect() // gets a connection from the pool
-            try {
-                const result = await operation(conn) // performs the opperation with the connection
-                fufilled(result) // if success then fufill the promise with the result
-            } catch (err) {
-                reject(err) // otherwise reject with the error
-            } finally {
-                conn.release()
             }
         })
     }

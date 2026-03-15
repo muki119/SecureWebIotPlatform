@@ -1,8 +1,8 @@
-import { userModel, type User } from "../models/user_model";
+import { userModel, type IUser } from "../models/user_model";
 import { HashPassword } from "../utilities/password_hash";
 import type { ModelDTO } from "@services/common/types";
 import type { ServiceResult } from "../types/service";
-export default async function RegisterService(user: ModelDTO<User>): Promise<ServiceResult> {
+export default async function RegisterService(user: ModelDTO<IUser>): Promise<ServiceResult> {
     try {
 
         const existingUser = await userModel.existsByEmail(user.email)

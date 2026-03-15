@@ -4,9 +4,9 @@ import { Pool, type PoolClient } from "pg"
  * ModelSchema is the general shape of all models in the database, they can have any fields but must have an id and createdAt field
  */
 export interface ModelSchema {
-    id: string,
-    createdAt: Date,
-    deletedAt: Date | null
+	id: string,
+	createdAt: Date,
+	deletedAt: Date | null
 }
 
 
@@ -25,10 +25,24 @@ export type ModelDTO<T extends ModelSchema> = Omit<T, "id" | "createdAt" | "dele
  * allows for loose coupling and ability to change database without massive changes to the rest of the codebase
  */
 export interface IDatabaseModelOperations<T extends ModelSchema> { // all database models should implement this basic interface for ease of use and ability to change db if needed
-    create(item: ModelDTO<T>): Promise<T>,
-    findById(id: string): Promise<T | null>,
-    update(id: string, patch: UpdatePatch<T>): Promise<UpdateResult<T>>,
-    delete(id: string): Promise<void>
+	create(item: ModelDTO<T>): Promise<T>,
+	findById(id: string): Promise<T | null>,
+	update(id: string, patch: UpdatePatch<T>): Promise<UpdateResult<T>>,
+	delete(id: string): Promise<void>
+}
+export interface IAssociationModelOperations<T extends ModelSchema> {
+	create(item: ModelDTO<T>): Promise<T>,
+	//find functions are way more specific for association models since they can be found using userid or associated id's 
+	// so they will be implemntation specific and not standardised and interfaced 
+	/**
+	 * 
+	 * @param userId 
+	 * @param associatedId 
+	 * @param patch 
+	 * @description update function for association models  - is optional because not all assosciations need updating  
+	 */
+	update?(userId: string, associatedId: string, patch: UpdatePatch<T>): Promise<UpdateResult<T>>,
+	delete(userId: string, associatedId: string): Promise<void>
 }
 
 
@@ -36,13 +50,75 @@ export type UpdatePatch<T extends ModelSchema> = UpdateSet<T>[] // basically and
 
 /**
  * states the field to update and the new value to set it to - the field can only be a key of Type t 
- * more specifically the field must be of any key in anything that extends ModelSchema 
- * removes
+ * more specifically the field must be of any key in anything that extends ModelSchema removes
+ * 
+ * * Forms a union type for all fields in the union type
+ * * key of modelDto is the indexer for the mapped types - so it creates a union type for all possible fields for the given type T
  */
-export type UpdateSet<T extends ModelSchema> = { [K in keyof ModelDTO<T>]-?: { field: K, value: ModelDTO<T>[K] } }[keyof ModelDTO<T>]
-
+export type UpdateSet<T extends ModelSchema> = { [K in keyof ModelDTO<T>]-?: { field: K & string, value: ModelDTO<T>[K] } }[keyof ModelDTO<T>]
 export type UpdateResult<T extends ModelSchema> = { success: boolean, message?: string, updatedItem?: T } // the result of an update operation - success or failure and an optional message and the updated user if the update was successful
 type DbOperation<T> = (conn: PoolClient) => Promise<T>
+
+
+/**
+ * BasePostgresModel is a base class for all models that interface with the postgres database.
+ */
+abstract class BasePostgresModel<T extends ModelSchema> {
+	protected db: Pool
+	protected abstract fieldsMap: Map<keyof ModelDTO<T>, string> // a map of the fields that can be updated and their corresponding data types - used for validation in updates
+	constructor(db: Pool) {
+		this.db = db
+	}
+
+	/**
+	 * 
+	 * @param operation the db opperation to perform with the connection - takes a connection and returns a promise of a type
+	 * @returns returns a promise of a type U which is the result of the db opperation 
+	 * @description this function is a wrapper function for all db opperations to easily manage pool connections and cut down on boilerplate
+	 *  * theres already a lot of boilerplate with db opperations like transaction management so i dont need any extra , especially one that could be so easily abstracted
+	 */
+	protected poolWrap<U>(operation: DbOperation<U>): Promise<U> {
+		return new Promise(async (fufilled, reject) => {
+			const conn = await this.db.connect() // gets a connection from the pool
+			try {
+				const result = await operation(conn) // performs the opperation with the connection
+				fufilled(result) // if success then fufill the promise with the result
+			} catch (err) {
+				reject(err) // otherwise reject with the error
+			} finally {
+				conn.release()
+			}
+		})
+	};
+	/**
+	 * 
+	 * @param patch the update patch to create the set string and values arr from
+	 * @returns a tuple of the set string and the values array.
+	 * set string param starts at 2 because update queries will have the id as the first param
+	 * @description builds the set string for the update query and the values that correspond to the fields being updated
+	 */
+	protected async createSetValues(patch: UpdatePatch<T>, startIdx: number = 2): Promise<[string, any[]]> {
+		let setStringArr: string[] = []
+		let seenSet = new Set<keyof ModelDTO<T>>() // to keep track of what is already been set in the patch 
+		// - so you dont have 2 patches changing the same field
+		for (let i = 0; i < patch.length; i++) {
+			const change = patch[i]!
+			if (!this.fieldsMap.has(change.field)) {
+				throw new Error(`Invalid field ${change.field} in update patch`)
+			}
+			if (seenSet.has(change.field)) {
+				throw new Error(`Duplicate field ${change.field} in update patch`)
+			}
+			if (typeof change.value !== this.fieldsMap.get(change.field)) {
+				throw new Error(`Invalid data type for field ${change.field}: expected ${this.fieldsMap.get(change.field)}, got ${typeof change.value}`)
+			}
+			seenSet.add(change.field)
+			setStringArr.push(`${change.field} = $${i + startIdx}`) // build the set string for the update query - starts at $2 because $1 is the id in the where clause
+		}
+		return [setStringArr.join(", "), patch.map(change => change.value)] // returns the set string and the values for the update query
+	}
+}
+
 /**
  * PostgresDatabase model is a base class for all models that interface with the postgres database.
  * * It implements all the basic opperations for interacting with the database as usual.
@@ -50,14 +126,25 @@ type DbOperation<T> = (conn: PoolClient) => Promise<T>
  * to easily manage the allocation and release of connections from the pool.
  * 
  */
-export abstract class PostgresDatabaseModel<T extends ModelSchema> implements IDatabaseModelOperations<T> {
-    protected db: Pool
-    constructor(db: Pool) {
-        this.db = db
-    };
-    protected abstract poolWrap: <U>(operation: DbOperation<U>) => Promise<U>;
-    public abstract create(item: ModelDTO<T>): Promise<T>;
-    public abstract findById(id: string): Promise<T | null>;
-    public abstract update(id: string, patch: UpdatePatch<T>): Promise<UpdateResult<T>>;
-    public abstract delete(id: string): Promise<void>;
+export abstract class PostgresDatabaseModel<T extends ModelSchema> extends BasePostgresModel<T> implements IDatabaseModelOperations<T> {
+	constructor(db: Pool) {
+		super(db)
+	}
+	public abstract create(item: ModelDTO<T>): Promise<T>;
+	public abstract findById(id: string): Promise<T | null>;
+	public abstract update(id: string, patch: UpdatePatch<T>): Promise<UpdateResult<T>>;
+	public abstract delete(id: string): Promise<void>;
 }
+/**
+ * PostgresAssociationModel is a base class for all models that represent associations between two entities in the database.
+ */
+export abstract class PostgresAssociationModel<T extends ModelSchema> extends BasePostgresModel<T> implements IAssociationModelOperations<T> {
+	constructor(db: Pool) {
+		super(db)
+	}
+	public abstract create(item: ModelDTO<T>): Promise<T>;
+	public abstract delete(userId: string, associatedId: string): Promise<void>;
+	public update?(userId: string, associatedId: string, patch: UpdatePatch<T>): Promise<UpdateResult<T>>;
+}
+
+// will make one for mongo at some point for the devices service

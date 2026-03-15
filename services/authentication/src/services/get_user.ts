@@ -1,7 +1,7 @@
-import { userModel, type User } from "../models/user_model";
+import { userModel, type IUser } from "../models/user_model";
 
 
-export default async function GetUserService(userId: string): Promise<Omit<User, "password"> | null> {
+export default async function GetUserService(userId: string): Promise<Omit<IUser, "password"> | null> {
     try {
         const user = await userModel.findByIdWithoutPassword(userId)
         if (!user) {
