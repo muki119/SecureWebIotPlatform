@@ -1,4 +1,4 @@
-import { scryptSync, scrypt, timingSafeEqual, randomBytes } from "node:crypto"
+import { scrypt, timingSafeEqual, randomBytes } from "node:crypto"
 import { promisify } from "node:util"
 import logger from "../config/logger"
 
