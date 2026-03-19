@@ -1,6 +1,6 @@
 import { PostgresDatabaseModel, type ModelDTO, type ModelSchema, type UpdatePatch, type UpdateResult } from "@services/common/types"
 import { Pool } from "pg"
-
+import { PostgresPool } from "../config/postgres"
 export interface IProfile extends ModelSchema {
     userId: string,
     name: string,
@@ -107,3 +107,5 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
     }
 
 }
+
+export const ProfileModelInstance = new ProfileModel(PostgresPool)

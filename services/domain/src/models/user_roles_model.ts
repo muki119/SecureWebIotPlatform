@@ -1,5 +1,6 @@
 import { PostgresAssociationModel, PostgresDatabaseModel, type ModelDTO, type ModelSchema, type UpdatePatch, type UpdateResult } from "@services/common/types"
 import { Pool } from "pg"
+import { PostgresPool } from "../config/postgres"
 
 
 export interface IUserRole extends ModelSchema {
@@ -165,3 +166,5 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
         })
     }
 }
+
+export const UserRoleModelInstance = new UserRoleModel(PostgresPool)

@@ -1,5 +1,6 @@
 import { PostgresDatabaseModel, type ModelDTO, type ModelSchema, type UpdatePatch, type UpdateResult } from "@services/common/types"
 import { Pool } from "pg"
+import { PostgresPool } from "../config/postgres"
 
 export interface IDomain extends ModelSchema {
     id: string,
@@ -114,3 +115,5 @@ export class DomainModel extends PostgresDatabaseModel<IDomain> {
         })
     }
 }
+
+export const DomainModelInstance = new DomainModel(PostgresPool)

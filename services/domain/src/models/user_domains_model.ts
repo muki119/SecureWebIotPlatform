@@ -1,5 +1,6 @@
 import { PostgresAssociationModel, type ModelDTO, type ModelSchema, type UpdatePatch, type UpdateResult } from "@services/common/types"
 import { Pool } from "pg"
+import { PostgresPool } from "../config/postgres"
 
 export interface IUserDomain extends ModelSchema {
     userId: string,
@@ -70,6 +71,13 @@ export class UserDomainModel extends PostgresAssociationModel<IUserDomain> {
             }
         })
     }
+
+    /**
+     * 
+     * @param userId 
+     * @returns 
+     * To be joined 
+     */
     public async findAllByUserId(userId: string): Promise<IUserDomain[]> { // might have to be tabulated because a user can be a company or normal user and can have a bunch of domains -- will have to see
         return this.poolWrap(async (conn) => {
             try {
@@ -88,6 +96,13 @@ export class UserDomainModel extends PostgresAssociationModel<IUserDomain> {
         })
     }
 
+
+    /**
+     * 
+     * @param domainId 
+     * @returns 
+     * To be joined
+     */
     public async findAllByDomainId(domainId: string): Promise<IUserDomain[]> { // will always return at least one since a domain needs an owner
         return this.poolWrap(async (conn) => {
             try {
@@ -106,3 +121,5 @@ export class UserDomainModel extends PostgresAssociationModel<IUserDomain> {
     }
 
 }
+
+export const UserDomainModelInstance = new UserDomainModel(PostgresPool)
