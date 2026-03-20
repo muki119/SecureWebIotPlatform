@@ -35,7 +35,7 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
                 const insertQuery = `
                 INSERT INTO users (email, password, forename,surname)
                 VALUES ($1, $2, $3, $4)
-                RETURNING id, email, forename, surname, created_at as createdAt
+                RETURNING id, email, forename, surname, created_at as "createdAt"
             `
                 const values = [item.email, item.password, item.forename, item.surname]
                 const result = await conn.query(insertQuery, values)
@@ -50,7 +50,7 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                    SELECT id, email, forename, surname,password, created_at as createdAt
+                    SELECT id, email, forename, surname,password, created_at as "createdAt"
                     FROM users
                     WHERE id = $1 AND deleted_at IS NULL
                 `
@@ -66,7 +66,7 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                SELECT id, email, forename, surname, created_at as createdAt
+                SELECT id, email, forename, surname, created_at as "createdAt"
                 FROM users
                 WHERE id = $1 AND deleted_at IS NULL
             `
@@ -86,7 +86,7 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
                 UPDATE users
                 SET ${setString}
                 WHERE id = $1 AND deleted_at IS NULL
-                RETURNING id, email, forename, surname, created_at as createdAt
+                RETURNING id, email, forename, surname, created_at as "createdAt"
             `
                 const result = await conn.query(query, [id, ...values])
                 if (result.rowCount === 0) {
@@ -116,7 +116,7 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                SELECT id, email, forename, surname, created_at as createdAt, password
+                SELECT id, email, forename, surname, created_at as "createdAt", password
                 FROM users
                 WHERE email = $1 AND deleted_at IS NULL
             `

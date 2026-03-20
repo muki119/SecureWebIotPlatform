@@ -85,7 +85,7 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
                 const insertQuery = `
                 INSERT INTO user_roles (user_id, domain_id, role)
                 VALUES ($1, $2, $3)
-                RETURNING user_id AS userId, domain_id AS domainId, role
+                RETURNING user_id AS "userId", domain_id AS "domainId", role
             `
                 const values = [item.userId, item.domainId, item.role]
                 const result = await conn.query(insertQuery, values)
@@ -106,7 +106,7 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
                     UPDATE user_roles
                     SET role = $3
                     WHERE user_id = $1 AND domain_id = $2 AND deleted_at IS NULL
-                    RETURNING user_id AS userId, domainId AS domainId, role
+                    RETURNING user_id AS "userId", domain_id AS "domainId", role
                 `
                 const values = [userId, domainId, newRole]
                 const result = await conn.query(updateQuery, values)

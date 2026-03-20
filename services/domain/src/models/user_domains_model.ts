@@ -22,7 +22,7 @@ export class UserDomainModel extends PostgresAssociationModel<IUserDomain> {
                 const insertQuery = `
                 INSERT INTO user_domains (user_id, domain_id)
                 VALUES ($1, $2)
-                RETURNING user_id as userId, domain_id as domainId
+                RETURNING user_id as "userId", domain_id as "domainId"
             `
                 const values = [item.userId, item.domainId]
                 const result = await conn.query(insertQuery, values)
@@ -54,50 +54,40 @@ export class UserDomainModel extends PostgresAssociationModel<IUserDomain> {
         }, externalConn)
     }
 
-    /**
-     * 
-     * @param userId 
-     * @returns 
-     * To be joined 
-     */
-    public async findAllByUserId(userId: string): Promise<IUserDomain[]> { // might have to be tabulated because a user can be a company or normal user and can have a bunch of domains -- will have to see
+    public async findAllByDomainId(domainId: string, limit: number = 100, offset: number = 0): Promise<{ userId: string, name: string, role: string, dateJoined: Date }[]> { // will always return at least one since a domain needs an owner
         return this.poolWrap(async (conn) => {
             try {
-                const query = `
-                SELECT user_id as userId, domain_id as domainId
-                FROM user_domains
-                WHERE user_id = $1 AND deleted_at IS NULL
-            `
-                const values = [userId]
+                const query = ` 
+                SELECT user_domains.user_id as "userId", profiles.name, user_roles.role, user_domains.created_at as "dateJoined"
+                FROM user_domains 
+                INNER JOIN profiles ON user_domains.user_id = profiles.user_id
+                INNER JOIN user_roles ON user_domains.user_id = user_roles.user_id AND user_domains.domain_id = user_roles.domain_id
+                WHERE user_domains.domain_id = $1 AND user_domains.deleted_at IS NULL AND profiles.deleted_at IS NULL AND user_roles.deleted_at IS NULL
+                ORDER BY user_domains.created_at DESC
+                LIMIT $2 OFFSET $3
+            ` // check for if the requester is in the domain will be done in the service layer - no need to find 
+                const values = [domainId, limit, offset]
                 const result = await conn.query(query, values)
                 return result.rows
             } catch (error) {
                 throw new Error("Failed to find user domain associations: ", { cause: error })
             }
-
         })
     }
 
-
-    /**
-     * 
-     * @param domainId 
-     * @returns 
-     * To be joined
-     */
-    public async findAllByDomainId(domainId: string): Promise<IUserDomain[]> { // will always return at least one since a domain needs an owner
+    public async isDomainMember(userId: string, domainId: string): Promise<boolean> {
         return this.poolWrap(async (conn) => {
             try {
-                const query = ` 
-                SELECT user_id as userId, domain_id as domainId
+                const query = `
+                SELECT 1
                 FROM user_domains
-                WHERE domain_id = $1 AND deleted_at IS NULL
-            ` // check for if the requester is in the domain will be done in the service layer - no need to find 
-                const values = [domainId]
+                WHERE user_id = $1 AND domain_id = $2 AND deleted_at IS NULL
+            `
+                const values = [userId, domainId]
                 const result = await conn.query(query, values)
-                return result.rows
+                return result.rowCount! > 0
             } catch (error) {
-                throw new Error("Failed to find user domain associations: ", { cause: error })
+                throw new Error("Failed to check if user is domain member: ", { cause: error })
             }
         })
     }

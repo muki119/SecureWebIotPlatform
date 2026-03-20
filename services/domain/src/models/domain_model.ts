@@ -24,7 +24,7 @@ export class DomainModel extends PostgresDatabaseModel<IDomain> {
                     `
                     INSERT INTO domains (name, owner_id)
                     VALUES ($1, $2)
-                    RETURNING id, name, owner_id as ownerId
+                    RETURNING id, name, owner_id as "ownerId"
             `
                 const values = [item.name, item.ownerId]
                 const result = await conn.query(insertQuery, values)
@@ -41,7 +41,7 @@ export class DomainModel extends PostgresDatabaseModel<IDomain> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                    SELECT id, name, owner_id as ownerId
+                    SELECT id, name, owner_id as "ownerId"
                     FROM domains
                     WHERE id = $1 AND deleted_at IS NULL
                 `
@@ -55,6 +55,24 @@ export class DomainModel extends PostgresDatabaseModel<IDomain> {
             }
         })
     }
+    public async findByUserId(userId: string, limit: number = 100, offset: number = 0): Promise<IDomain[]> {
+        return this.poolWrap(async (conn) => {
+            try {
+                const query = `
+                SELECT d.id, d.name, d.owner_id as "ownerId"
+                FROM domains d
+                INNER JOIN user_domains ud ON d.id = ud.domain_id
+                WHERE ud.user_id = $1 AND d.deleted_at IS NULL AND ud.deleted_at IS NULL
+                ORDER BY d.created_at DESC
+                LIMIT $2 OFFSET $3
+                `
+                const result = await conn.query(query, [userId, limit, offset])
+                return result.rows
+            } catch (error) {
+                throw new Error("Failed to find domains by user id: ", { cause: error })
+            }
+        })
+    }
     public async update(id: string, patch: UpdatePatch<IDomain>): Promise<UpdateResult<IDomain>> {
         return this.transactionWrap(async (conn) => {
             try {
@@ -63,7 +81,7 @@ export class DomainModel extends PostgresDatabaseModel<IDomain> {
                     UPDATE domains
                     SET ${setString}
                     WHERE id = $1 AND deleted_at IS NULL
-                    RETURNING id, name, owner_id as ownerId
+                    RETURNING id, name, owner_id as "ownerId"
                 `
                 const result = await conn.query(updateQuery, [id, ...values])
                 if (result.rowCount === 0) {

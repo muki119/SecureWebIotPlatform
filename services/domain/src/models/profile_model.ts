@@ -19,7 +19,7 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
                 const insertQuery = `
                 INSERT INTO profiles (user_id, name)
                 VALUES ($1, $2)
-                RETURNING user_id as userId, name
+                RETURNING user_id as "userId", name
             `
                 const values = [item.userId, item.name]
                 const result = await conn.query(insertQuery, values)
@@ -35,7 +35,7 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                    SELECT user_id as userId, name
+                    SELECT user_id as "userId", name
                     FROM profiles
                     WHERE user_id = $1 AND deleted_at IS NULL   
                 `
@@ -58,7 +58,7 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
                     UPDATE profiles
                     SET ${setString}
                     WHERE user_id = $1 AND deleted_at IS NULL
-                    RETURNING user_id as userId, name
+                    RETURNING user_id as "userId", name
                 `
                 const result = await conn.query(updateQuery, [id, ...values])
                 if (result.rowCount === 0) {
