@@ -14,12 +14,8 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
         super(db)
     }
     public async create(item: ModelDTO<IProfile>): Promise<IProfile> {
-        return this.poolWrap(async (conn) => {
+        return this.transactionWrap(async (conn) => {
             try {
-                const beginTransaction = await conn.query("BEGIN")
-                if (beginTransaction.command !== "BEGIN") {
-                    throw new Error("Failed to begin transaction")
-                }
                 const insertQuery = `
                 INSERT INTO profiles (user_id, name)
                 VALUES ($1, $2)
@@ -27,13 +23,9 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
             `
                 const values = [item.userId, item.name]
                 const result = await conn.query(insertQuery, values)
-                const commitTransaction = await conn.query("COMMIT")
-                if (commitTransaction.command !== "COMMIT") {
-                    throw new Error("Failed to commit transaction")
-                }
+
                 return result.rows[0]
             } catch (error) {
-                await conn.query("ROLLBACK")
                 throw new Error("Failed to create profile: ", { cause: error })
             }
         })
@@ -59,13 +51,9 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
         })
     }
     public async update(id: string, patch: UpdatePatch<IProfile>): Promise<UpdateResult<IProfile>> {
-        return this.poolWrap(async (conn) => {
+        return this.transactionWrap(async (conn) => {
             try {
                 const [setString, values] = await this.createSetValues(patch)
-                const beginTransaction = await conn.query("BEGIN")
-                if (beginTransaction.command !== "BEGIN") {
-                    throw new Error("Failed to begin transaction")
-                }
                 const updateQuery = `
                     UPDATE profiles
                     SET ${setString}
@@ -83,24 +71,15 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
         })
     }
     public async delete(id: string): Promise<void> {
-        return this.poolWrap(async (conn) => {
+        return this.transactionWrap(async (conn) => {
             try {
-                const beginTransaction = await conn.query("BEGIN")
-                if (beginTransaction.command !== "BEGIN") {
-                    throw new Error("Failed to begin transaction")
-                }
                 const deleteQuery = `
                     UPDATE profiles
                     SET deleted_at = NOW()
                     WHERE user_id = $1 AND deleted_at IS NULL
                 `
                 await conn.query(deleteQuery, [id])
-                const commitTransaction = await conn.query("COMMIT")
-                if (commitTransaction.command !== "COMMIT") {
-                    throw new Error("Failed to commit transaction")
-                }
             } catch (error) {
-                await conn.query("ROLLBACK")
                 throw new Error("Failed to delete profile: ", { cause: error })
             }
         })

@@ -1,5 +1,5 @@
 import { PostgresAssociationModel, PostgresDatabaseModel, type ModelDTO, type ModelSchema, type UpdatePatch, type UpdateResult } from "@services/common/types"
-import { Pool } from "pg"
+import { Pool, type PoolClient } from "pg"
 import { PostgresPool } from "../config/postgres"
 
 
@@ -79,13 +79,9 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
     constructor(db: Pool) {
         super(db)
     }
-    public async create(item: ModelDTO<IUserRole>): Promise<IUserRole> {
-        return this.poolWrap(async (conn) => {
+    public async create(item: ModelDTO<IUserRole>, externalConn?: PoolClient): Promise<IUserRole> {
+        return this.transactionWrap(async (conn) => {
             try {
-                const beginTransaction = await conn.query("BEGIN")
-                if (beginTransaction.command !== "BEGIN") {
-                    throw new Error("Failed to begin transaction")
-                }
                 const insertQuery = `
                 INSERT INTO user_roles (user_id, domain_id, role)
                 VALUES ($1, $2, $3)
@@ -96,25 +92,16 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
                 if (result.rowCount === 0) {
                     throw new Error("Failed to create user role association")
                 }
-                const commitTransaction = await conn.query("COMMIT")
-                if (commitTransaction.command !== "COMMIT") {
-                    throw new Error("Failed to commit transaction")
-                }
                 return result.rows[0]
             } catch (error) {
-                await conn.query("ROLLBACK")
-                throw error
+                throw new Error("Failed to create user role association: ", { cause: error })
             }
-        })
+        }, externalConn)
     }
 
     public async updateRole(userId: string, domainId: string, newRole: string): Promise<UpdateResult<IUserRole>> { // must be domain owner to update user role association - checked in the service layer
-        return this.poolWrap(async (conn) => {
+        return this.transactionWrap(async (conn) => {
             try {
-                const beginTransaction = await conn.query("BEGIN")
-                if (beginTransaction.command !== "BEGIN") {
-                    throw new Error("Failed to begin transaction")
-                }
                 const updateQuery = `
                     UPDATE user_roles
                     SET role = $3
@@ -126,25 +113,16 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
                 if (result.rowCount === 0) {
                     throw new Error("No user role association found for the given user and domain")
                 }
-                const commitTransaction = await conn.query("COMMIT")
-                if (commitTransaction.command !== "COMMIT") {
-                    throw new Error("Failed to commit transaction")
-                }
                 return result.rows[0]
             } catch (error) {
-                await conn.query("ROLLBACK")
                 throw new Error("Failed to update user role : ", { cause: error })
             }
         })
     }
 
-    public async delete(userId: string, domainId: string): Promise<void> { // must be domain owner to delete user role association - checked in the service layer
-        return this.poolWrap(async (conn) => {
+    public async delete(userId: string, domainId: string, externalConn?: PoolClient): Promise<void> { // must be domain owner to delete user role association - checked in the service layer
+        return this.transactionWrap(async (conn) => {
             try {
-                const beginTransaction = await conn.query("BEGIN")
-                if (beginTransaction.command !== "BEGIN") {
-                    throw new Error("Failed to begin transaction")
-                }
                 const deleteQuery = `
                     UPDATE user_roles
                     SET deleted_at = NOW()
@@ -155,15 +133,10 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
                 if (result.rowCount === 0) {
                     throw new Error("Failed to delete user role association")
                 }
-                const commitTransaction = await conn.query("COMMIT")
-                if (commitTransaction.command !== "COMMIT") {
-                    throw new Error("Failed to commit transaction")
-                }
             } catch (error) {
-                await conn.query("ROLLBACK")
-                throw error
+                throw new Error("Failed to delete user role association: ", { cause: error })
             }
-        })
+        }, externalConn)
     }
 }
 

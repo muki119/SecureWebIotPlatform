@@ -70,6 +70,11 @@ abstract class BasePostgresModel<T extends ModelSchema> {
 		this.db = db
 	}
 
+
+	public async multiTableTransaction<U>(operations: DbOperation<any>): Promise<U | any> {
+		return this.transactionWrap(operations)
+	}
+
 	/**
 	 * 
 	 * @param operation the db opperation to perform with the connection - takes a connection and returns a promise of a type
@@ -77,19 +82,50 @@ abstract class BasePostgresModel<T extends ModelSchema> {
 	 * @description this function is a wrapper function for all db opperations to easily manage pool connections and cut down on boilerplate
 	 *  * theres already a lot of boilerplate with db opperations like transaction management so i dont need any extra , especially one that could be so easily abstracted
 	 */
-	protected poolWrap<U>(operation: DbOperation<U>): Promise<U> {
-		return new Promise(async (fufilled, reject) => {
-			const conn = await this.db.connect() // gets a connection from the pool
+	protected async poolWrap<U>(operation: DbOperation<U>): Promise<U> {
+		const conn = await this.db.connect() // gets a connection from the pool
+		try {
+			const res = await operation(conn) // performs the opperation with the connection
+			return res // if success then return the result
+		} catch (err) {
+			throw err // otherwise throw the error
+		} finally {
+			conn.release()
+		}
+	};
+
+	/**
+	 * 
+	 * @param operation  - the db operation to be performed , 
+	 * * functions shouldnt take a connection or start a transactions , since that the whole point of this function
+	 * @param externalConn - optional external connection to use for the transactions
+	 * @returns 
+	 * @description this function is a wrapper for transactional db opperations , 
+	 * also provideds the option to use an external connection , from multi table transactions
+	 */
+	protected async transactionWrap<U>(operation: DbOperation<U>, externalConn?: PoolClient): Promise<U> {
+
+		if (externalConn) {
+			return await operation(externalConn) // if an external connection is provided, use it (for multi table transactions)
+		}
+		return await this.poolWrap(async (conn) => {
 			try {
-				const result = await operation(conn) // performs the opperation with the connection
-				fufilled(result) // if success then fufill the promise with the result
-			} catch (err) {
-				reject(err) // otherwise reject with the error
-			} finally {
-				conn.release()
+				const beginTransaction = await conn.query("BEGIN")
+				if (beginTransaction.command !== "BEGIN") {
+					throw new Error("Failed to begin transaction")
+				}
+				const result = await operation(conn)
+				const commitTransaction = await conn.query("COMMIT")
+				if (commitTransaction.command !== "COMMIT") {
+					throw new Error("Failed to commit transaction")
+				}
+				return result
+			} catch (error) {
+				await conn.query("ROLLBACK")
+				throw error
 			}
 		})
-	};
+	}
 	/**
 	 * 
 	 * @param patch the update patch to create the set string and values arr from

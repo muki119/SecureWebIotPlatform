@@ -1,5 +1,5 @@
 import { PostgresAssociationModel, type ModelDTO, type ModelSchema, type UpdatePatch, type UpdateResult } from "@services/common/types"
-import { Pool } from "pg"
+import { Pool, type PoolClient } from "pg"
 import { PostgresPool } from "../config/postgres"
 
 export interface IUserDomain extends ModelSchema {
@@ -16,60 +16,42 @@ export class UserDomainModel extends PostgresAssociationModel<IUserDomain> {
     constructor(db: Pool) {
         super(db)
     }
-    public async create(item: ModelDTO<IUserDomain>): Promise<IUserDomain> {
-        return this.poolWrap(async (conn) => {
+    public async create(item: ModelDTO<IUserDomain>, externalConn?: PoolClient): Promise<IUserDomain> {
+        return this.transactionWrap(async (conn) => {
             try {
-                const beginTransaction = await conn.query("BEGIN")
-                if (beginTransaction.command !== "BEGIN") {
-                    throw new Error("Failed to begin transaction")
-                }
                 const insertQuery = `
                 INSERT INTO user_domains (user_id, domain_id)
                 VALUES ($1, $2)
-                RETURNING user_id, domain_id
+                RETURNING user_id as userId, domain_id as domainId
             `
                 const values = [item.userId, item.domainId]
                 const result = await conn.query(insertQuery, values)
                 if (result.rowCount === 0) {
                     throw new Error("Failed to create user domain association")
                 }
-                const commitTransaction = await conn.query("COMMIT")
-                if (commitTransaction.command !== "COMMIT") {
-                    throw new Error("Failed to commit transaction")
-                }
                 return result.rows[0]
             } catch (error) {
-                await conn.query("ROLLBACK")
-                throw error
+                throw new Error("Failed to create user domain association: ", { cause: error })
             }
-        })
+        }, externalConn)
     }
-    public async delete(userId: string, domainId: string): Promise<void> { // must be domain owner or user to delete association - checked in the service layer
-        return this.poolWrap(async (conn) => {
+    public async delete(userId: string, domainId: string, externalConn?: PoolClient): Promise<void> { // must be domain owner or user to delete association - checked in the service layer
+        return this.transactionWrap(async (conn) => {
             try {
-                const beginTransaction = await conn.query("BEGIN")
-                if (beginTransaction.command !== "BEGIN") {
-                    throw new Error("Failed to begin transaction")
-                }
                 const deleteQuery = `
                     UPDATE user_domains
                     SET deleted_at = NOW()
                     WHERE user_id = $1 AND domain_id = $2 AND deleted_at IS NULL
-            `
+                `
                 const values = [userId, domainId]
                 const result = await conn.query(deleteQuery, values)
                 if (result.rowCount === 0) {
                     throw new Error("Failed to delete user domain association")
                 }
-                const commitTransaction = await conn.query("COMMIT")
-                if (commitTransaction.command !== "COMMIT") {
-                    throw new Error("Failed to commit transaction")
-                }
             } catch (error) {
-                await conn.query("ROLLBACK")
-                throw error
+                throw new Error("Failed to delete user domain association: ", { cause: error })
             }
-        })
+        }, externalConn)
     }
 
     /**
@@ -82,7 +64,7 @@ export class UserDomainModel extends PostgresAssociationModel<IUserDomain> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                SELECT user_id, domain_id
+                SELECT user_id as userId, domain_id as domainId
                 FROM user_domains
                 WHERE user_id = $1 AND deleted_at IS NULL
             `
@@ -107,7 +89,7 @@ export class UserDomainModel extends PostgresAssociationModel<IUserDomain> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = ` 
-                SELECT user_id, domain_id
+                SELECT user_id as userId, domain_id as domainId
                 FROM user_domains
                 WHERE domain_id = $1 AND deleted_at IS NULL
             ` // check for if the requester is in the domain will be done in the service layer - no need to find 

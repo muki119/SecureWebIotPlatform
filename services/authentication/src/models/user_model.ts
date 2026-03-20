@@ -30,12 +30,8 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
         // item should be pre- validated and sanitised - either way the database should have contraints to prevent too much bad
         // like max chars 
 
-        return this.poolWrap(async (conn) => {
+        return this.transactionWrap(async (conn) => {
             try {
-                const beginTransaction = await conn.query("BEGIN") // begin a transaction - acid
-                if (beginTransaction.command !== "BEGIN") {
-                    throw new Error("Failed to begin transaction")
-                }
                 const insertQuery = `
                 INSERT INTO users (email, password, forename,surname)
                 VALUES ($1, $2, $3, $4)
@@ -43,13 +39,8 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
             `
                 const values = [item.email, item.password, item.forename, item.surname]
                 const result = await conn.query(insertQuery, values)
-                const commitTransaction = await conn.query("COMMIT") // commit the transaction
-                if (commitTransaction.command !== "COMMIT") {
-                    throw new Error("Failed to commit transaction")
-                }
                 return result.rows[0]
             } catch (err) {
-                await conn.query("ROLLBACK") // if there was an error, roll back the transaction
                 throw new Error("Failed to create user: ", { cause: err })
             }
         })
@@ -88,14 +79,9 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
     }
     public async update(id: string, patch: UpdatePatch<IUser>): Promise<UpdateResult<IUser>> {
         // go through each change in the patch and build a query to update the record with all the changes
-        return this.poolWrap(async (conn) => {
+        return this.transactionWrap(async (conn) => {
             try {
-
                 const [setString, values] = await this.createSetValues(patch)
-                const beginTransaction = await conn.query("BEGIN") // begin a transaction - acid
-                if (beginTransaction.command !== "BEGIN") {
-                    throw new Error("Failed to begin transaction")
-                }
                 const query = `
                 UPDATE users
                 SET ${setString}
@@ -103,39 +89,25 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
                 RETURNING id, email, forename, surname, created_at as createdAt
             `
                 const result = await conn.query(query, [id, ...values])
-                const commitTransaction = await conn.query("COMMIT") // commit the transaction
-                if (commitTransaction.command !== "COMMIT") {
-                    throw new Error("Failed to commit transaction")
-                }
                 if (result.rowCount === 0) {
                     return { success: false, message: "User not found or no changes applied" }
                 }
                 return { success: true, updatedItem: result.rows[0] }
             } catch (err) {
-                conn.query("ROLLBACK")
                 throw new Error("Failed to update user: ", { cause: err })
             }
         })
     }
     public async delete(id: string): Promise<void> { // soft delete by setting deletedAt field to current timestamp
-        return this.poolWrap(async (conn) => {
+        return this.transactionWrap(async (conn) => {
             try {
                 const query = `
                 UPDATE users
                 SET deleted_at = NOW()
                 WHERE id = $1 AND deleted_at IS NULL
             `
-                const beginTransaction = await conn.query("BEGIN") // begin a transaction - acid
-                if (beginTransaction.command !== "BEGIN") {
-                    throw new Error("Failed to begin transaction")
-                }
                 await conn.query(query, [id])
-                const commitTransaction = await conn.query("COMMIT") // commit the transaction
-                if (commitTransaction.command !== "COMMIT") {
-                    throw new Error("Failed to commit transaction")
-                }
             } catch (err) {
-                conn.query("ROLLBACK")
                 throw new Error("Failed to delete user: ", { cause: err })
             }
         })
