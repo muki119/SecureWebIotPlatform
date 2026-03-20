@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { UpdatePatch } from '@services/common/types';
 import type { IUser } from '../models/user_model';
-import { LogWarningDefault } from '../utilities/logging_utilities';
+import { LogWarningDefault } from '@services/common/utilities';
 import CredentialChangeService from '../services/credential_change';
 import logger from '../config/logger';
 export default async function CredentialChangeController(req: Request, res: Response, next: NextFunction) {

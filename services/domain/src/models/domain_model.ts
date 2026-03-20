@@ -90,7 +90,7 @@ export class DomainModel extends PostgresDatabaseModel<IDomain> {
             } catch (error) {
                 throw new Error("Failed to delete domain: ", { cause: error })
             }
-        })
+        }, externalConn)
     }
 }
 

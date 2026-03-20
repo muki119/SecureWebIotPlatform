@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import ForgotpasswordService from '../services/forgot_password';
 import logger from '../config/logger';
 import { validationResult } from 'express-validator';
-import { LogWarningDefault } from '../utilities/logging_utilities';
+import { LogWarningDefault } from '@services/common/utilities';
 
 export default async function ForgotPasswordController(req: Request, res: Response, next: NextFunction) {
     try {
