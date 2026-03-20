@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import GetUsersProfileService from '../../services/profile_services/get_users_profile_service';
 import logger from '../../config/logger';
+import { LogWarningDefault } from '@services/common/utilities';
 
 
 /**
@@ -11,7 +12,7 @@ export default async function GetUsersProfileController(req: Request, res: Respo
     try {
         const userID = req.user?.sub; // should be set by the auth middleware
         if (!userID) { // somehow got past the auth middleware
-            logger.warn("Unauthorized access to GetUsersProfileController - no user ID in request");
+            logger.warn(LogWarningDefault(req), "Unauthorized access to GetUsersProfileController - no user ID in request");
             return res.status(401).json({ error: "Unauthorized" }).end();
         }
         const profile = await GetUsersProfileService(userID);
