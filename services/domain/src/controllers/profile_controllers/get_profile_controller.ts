@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import GetProfileService from '../../services/profile_services/get_profile_service';
+import { GetProfileService } from '../../services';
 
 
 

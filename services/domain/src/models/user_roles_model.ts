@@ -23,12 +23,31 @@ export interface IUserRole extends ModelSchema {
 
 type rolePermissions = {
     isOwner: boolean, // allows domain deletion and transfer of ownership
+    /**
+     * canManageUsers - allows crud of user in domain , can add users,update user roles and delete users from domain
+     */
     canManageUsers: boolean, // allows crud of user in domain 
+    /**
+     * canManageDevices - allows crud of devices in domain , can add devices, update device details and delete devices from domain
+     */
     canManageDevices: boolean, // allows crud of devices in domain
+    /**
+     * canManageDomain - allows updating of domain details such as name 
+     */
     canManageDomain: boolean, // can update domain details
+    /**
+     * canControlDevices - allows control of devices in domain - the most basic permission
+     */
     canControlDevices: boolean,
 }
-const VALID_ROLES: { [key: string]: rolePermissions } = {
+export const ROLES = {
+    OWNER: "OWNER",
+    ADMIN: "ADMIN",
+    MEMBER: "MEMBER",
+    GUEST: "GUEST",
+} as const
+
+export const ROLE_PERMISSIONS: { [key: string]: rolePermissions } = {
     /**
      * Owner has all permissions ... since its the owner
      */
@@ -82,6 +101,9 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
     public async create(item: ModelDTO<IUserRole>, externalConn?: PoolClient): Promise<IUserRole> {
         return this.transactionWrap(async (conn) => {
             try {
+                if (!item.role || !(item.role in ROLES)) {
+                    throw new Error("Invalid role specified")
+                }
                 const insertQuery = `
                 INSERT INTO user_roles (user_id, domain_id, role)
                 VALUES ($1, $2, $3)
@@ -99,9 +121,35 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
         }, externalConn)
     }
 
+    public async userPermissions(userId: string, domainId: string): Promise<rolePermissions> {
+        return this.poolWrap(async (conn) => {
+            try {
+                const query = `
+                SELECT role 
+                FROM user_roles 
+                WHERE user_id = $1 AND domain_id = $2 AND deleted_at IS NULL`
+                const values = [userId, domainId]
+                const result = await conn.query(query, values)
+                if (result.rowCount === 0) {
+                    throw new Error("No user role association found for the given user and domain")
+                }
+                const userRole = result.rows[0].role
+                if (!(userRole in ROLE_PERMISSIONS)) {
+                    throw new Error("Invalid role found for user in domain")
+                }
+                return ROLE_PERMISSIONS[userRole]!
+            } catch (error) {
+                throw new Error("Failed to get user permissions: ", { cause: error })
+            }
+        })
+    }
+
     public async updateRole(userId: string, domainId: string, newRole: string): Promise<UpdateResult<IUserRole>> { // must be domain owner to update user role association - checked in the service layer
         return this.transactionWrap(async (conn) => {
             try {
+                if (!(newRole in ROLES)) {
+                    throw new Error("Invalid role specified")
+                }
                 const updateQuery = `
                     UPDATE user_roles
                     SET role = $3

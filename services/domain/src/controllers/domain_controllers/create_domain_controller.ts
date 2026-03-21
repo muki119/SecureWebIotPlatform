@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import logger from '../../config/logger';
-import CreateDomainService from '../../services/domain_services/create_domain_service';
+import { CreateDomainService } from '../../services';
 import { LogWarningDefault } from '@services/common/utilities';
 
 export default async function CreateDomainController(req: Request, res: Response, next: NextFunction) {

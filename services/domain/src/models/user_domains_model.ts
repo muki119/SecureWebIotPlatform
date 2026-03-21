@@ -85,7 +85,7 @@ export class UserDomainModel extends PostgresAssociationModel<IUserDomain> {
             `
                 const values = [userId, domainId]
                 const result = await conn.query(query, values)
-                return result.rowCount! > 0
+                return Boolean(result.rowCount)
             } catch (error) {
                 throw new Error("Failed to check if user is domain member: ", { cause: error })
             }
