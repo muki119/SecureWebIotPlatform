@@ -5,6 +5,7 @@ export { default as GetUserDomainsController } from "./get_user_domains_controll
 export { default as GetDomainUsersController } from "./get_domain_users_controller";
 export { default as AddUserController } from "./add_user_controller";
 export { default as DeleteUserController } from "./delete_user_controller";
-export { default as UpdateUserRoleController } from "./update_user_role"
+export { default as UpdateUserRoleController } from "./update_user_role_controller"
+export { default as LeaveDomainController } from "./leave_domain_controller"
 
 

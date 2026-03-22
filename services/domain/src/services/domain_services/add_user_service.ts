@@ -12,9 +12,12 @@ export default async function AddUserService(inviter: string, invitee: string, d
         if (inviteeIsMember) { // Shouldnt really happen because frontend shouldnt even show an already added member - only way is through a non ui client or a race condition 
             return [null, new Error("User is already a member of the domain")]
         }
-        const inviterIsAllowed = (await UserRoleModelInstance.userPermissions(inviter, domainId)).canManageUsers
+        const inviterIsAllowed = (await UserRoleModelInstance.userPermissions(inviter, domainId))
         if (!inviterIsAllowed) {
-            return [null, new Error("You are not allowed to manage users in this domain")]
+            return [null, new Error("Inviter has no role in the domain")]
+        }
+        if (!inviterIsAllowed.canManageUsers) {
+            return [null, new Error("Inviter is not allowed to manage users in this domain")]
         }
         await UserDomainModelInstance.multiTableTransaction(async (conn) => {
             await UserDomainModelInstance.create({ userId: invitee, domainId }, conn)

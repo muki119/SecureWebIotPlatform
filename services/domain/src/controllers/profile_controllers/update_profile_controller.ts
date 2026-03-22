@@ -10,7 +10,7 @@ export default async function UpdateProfileController(req: Request, res: Respons
             logger.warn(LogWarningDefault(req), "Unauthorized access to UpdateProfileController - no user ID in request");
             return res.status(401).json({ error: "Unauthorized" }).end();
         }
-        const changes = req.body;
+        const { changes } = req.body;
         const [updatedProfile, err] = await UpdateProfileService(changes, userID);
 
         if (err) {

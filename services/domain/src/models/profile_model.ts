@@ -3,6 +3,7 @@ import { Pool } from "pg"
 import { PostgresPool } from "../config/postgres"
 export interface IProfile extends ModelSchema {
     userId: string,
+    email: string,
     name: string,
 }
 export class ProfileModel extends PostgresDatabaseModel<IProfile> {
@@ -17,11 +18,11 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
         return this.transactionWrap(async (conn) => {
             try {
                 const insertQuery = `
-                INSERT INTO profiles (user_id, name)
-                VALUES ($1, $2)
-                RETURNING user_id as "userId", name
+                INSERT INTO profiles (user_id, email, name)
+                VALUES ($1, $2, $3)
+                RETURNING user_id as "userId", email, name
             `
-                const values = [item.userId, item.name]
+                const values = [item.userId, item.email, item.name]
                 const result = await conn.query(insertQuery, values)
 
                 return result.rows[0]
@@ -35,7 +36,7 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                    SELECT user_id as "userId", name
+                    SELECT user_id as "userId", email, name
                     FROM profiles
                     WHERE user_id = $1 AND deleted_at IS NULL   
                 `
@@ -58,7 +59,7 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
                     UPDATE profiles
                     SET ${setString}
                     WHERE user_id = $1 AND deleted_at IS NULL
-                    RETURNING user_id as "userId", name
+                    RETURNING user_id as "userId", email, name
                 `
                 const result = await conn.query(updateQuery, [id, ...values])
                 if (result.rowCount === 0) {
@@ -67,6 +68,26 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
                 return [result.rows[0], null]
             } catch (error) {
                 throw new Error("Failed to validate update patch: ", { cause: error })
+            }
+        })
+    }
+
+    public async findByEmail(email: string, limit: number = 50): Promise<IProfile[]> {
+        return this.poolWrap(async (conn) => {
+            try {
+                const searchQuery = `
+                    SELECT user_id as "userId", email, name
+                    FROM profiles
+                    WHERE email LIKE $1 || '%' AND deleted_at IS NULL
+                    LIMIT $2
+                `
+                const result = await conn.query(searchQuery, [email, limit])
+                if (result.rowCount === 0) {
+                    return []
+                }
+                return result.rows
+            } catch (error) {
+                throw new Error("Failed to find profile by email: ", { cause: error })
             }
         })
     }
