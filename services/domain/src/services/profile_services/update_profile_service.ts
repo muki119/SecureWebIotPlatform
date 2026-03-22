@@ -9,14 +9,14 @@ export default async function UpdateProfileService(changes: UpdatePatch<IProfile
         if (Object.keys(changes).length === 0) {
             throw new Error("No changes provided for profile update");
         }
-        const result = await ProfileModelInstance.update(userID, changes);
-        if (!result.success) {
-            return [null, new Error("Failed to update profile")];
+        const [updatedItem, error] = await ProfileModelInstance.update(userID, changes);
+        if (error) {
+            return [null, error];
         }
-        if (!result.updatedItem) {
+        if (!updatedItem) {
             throw new Error("Profile update succeeded but no updated item returned"); // shouldnt ever happen
         }
-        return [result.updatedItem!, null];
+        return [updatedItem, null];
     } catch (error) {
         throw new Error("Error updating profile", { cause: error });
     }

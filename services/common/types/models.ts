@@ -1,5 +1,5 @@
 import { Pool, type PoolClient } from "pg"
-
+import type { ServiceResult } from "./service"
 /**
  * ModelSchema is the general shape of all models in the database, they can have any fields but must have an id and createdAt field
  */
@@ -56,7 +56,7 @@ export type UpdatePatch<T extends ModelSchema> = UpdateSet<T>[] // basically and
  * * key of modelDto is the indexer for the mapped types - so it creates a union type for all possible fields for the given type T
  */
 export type UpdateSet<T extends ModelSchema> = { [K in keyof ModelDTO<T>]-?: { field: K & string, value: ModelDTO<T>[K] } }[keyof ModelDTO<T>]
-export type UpdateResult<T extends ModelSchema> = { success: boolean, message?: string, updatedItem?: T } // the result of an update operation - success or failure and an optional message and the updated user if the update was successful
+export type UpdateResult<T extends ModelSchema> = ServiceResult<T> // the result of an update operation - success or failure and an optional message and the updated user if the update was successful
 type DbOperation<T> = (conn: PoolClient) => Promise<T>
 
 

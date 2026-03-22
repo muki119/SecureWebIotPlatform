@@ -22,6 +22,9 @@ export interface IUserRole extends ModelSchema {
 
 
 type rolePermissions = {
+    /**
+     * isOwner - allows domain deletion and transfer of ownership
+     */
     isOwner: boolean, // allows domain deletion and transfer of ownership
     /**
      * canManageUsers - allows crud of user in domain , can add users,update user roles and delete users from domain
@@ -121,7 +124,7 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
         }, externalConn)
     }
 
-    public async userPermissions(userId: string, domainId: string): Promise<rolePermissions> {
+    public async userPermissions(userId: string, domainId: string): Promise<rolePermissions | null> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
@@ -131,7 +134,7 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
                 const values = [userId, domainId]
                 const result = await conn.query(query, values)
                 if (result.rowCount === 0) {
-                    throw new Error("No user role association found for the given user and domain")
+                    return null;
                 }
                 const userRole = result.rows[0].role
                 if (!(userRole in ROLE_PERMISSIONS)) {
@@ -159,9 +162,9 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
                 const values = [userId, domainId, newRole]
                 const result = await conn.query(updateQuery, values)
                 if (result.rowCount === 0) {
-                    throw new Error("No user role association found for the given user and domain")
+                    return [null, new Error("No user role association found for the given user and domain")]
                 }
-                return result.rows[0]
+                return [result.rows[0], null]
             } catch (error) {
                 throw new Error("Failed to update user role : ", { cause: error })
             }

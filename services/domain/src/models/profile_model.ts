@@ -62,9 +62,9 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
                 `
                 const result = await conn.query(updateQuery, [id, ...values])
                 if (result.rowCount === 0) {
-                    return { success: false, message: "User not found or no changes applied" }
+                    return [null, new Error("User not found or no changes applied")]
                 }
-                return { success: true, data: result.rows[0] }
+                return [result.rows[0], null]
             } catch (error) {
                 throw new Error("Failed to validate update patch: ", { cause: error })
             }

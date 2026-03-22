@@ -90,9 +90,9 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
             `
                 const result = await conn.query(query, [id, ...values])
                 if (result.rowCount === 0) {
-                    return { success: false, message: "User not found or no changes applied" }
+                    return [null, new Error("User not found or no changes applied")]
                 }
-                return { success: true, updatedItem: result.rows[0] }
+                return [result.rows[0], null]
             } catch (err) {
                 throw new Error("Failed to update user: ", { cause: err })
             }

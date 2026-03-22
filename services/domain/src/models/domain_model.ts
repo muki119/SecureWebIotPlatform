@@ -85,9 +85,9 @@ export class DomainModel extends PostgresDatabaseModel<IDomain> {
                 `
                 const result = await conn.query(updateQuery, [id, ...values])
                 if (result.rowCount === 0) {
-                    throw new Error("Domain not found")
+                    return [null, new Error("Domain not found")]
                 }
-                return result.rows[0]
+                return [result.rows[0], null]
             } catch (error) {
                 throw new Error("Failed to update domain: ", { cause: error })
             }
