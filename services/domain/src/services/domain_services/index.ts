@@ -1,5 +1,6 @@
 export { default as CreateDomainService } from "./create_domain_service"
 export { default as GetUserDomainsService } from "./get_user_domains_service"
+export { default as GetDomainUsersService } from "./get_domain_users_service"
 export { default as AddUserService } from "./add_user_service"
 export { default as DeleteDomainService } from "./delete_domain_service"
 export { default as DeleteUserService } from "./delete_user_service"
