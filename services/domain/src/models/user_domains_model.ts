@@ -54,11 +54,11 @@ export class UserDomainModel extends PostgresAssociationModel<IUserDomain> {
         }, externalConn)
     }
 
-    public async findAllByDomainId(domainId: string, limit: number = 100, offset: number = 0): Promise<{ userId: string, name: string, role: string, dateJoined: Date }[]> { // will always return at least one since a domain needs an owner
+    public async findAllByDomainId(domainId: string, limit: number = 100, offset: number = 0): Promise<{ userId: string, name: string, role: string, dateJoined: Date, email: string }[]> { // will always return at least one since a domain needs an owner
         return this.poolWrap(async (conn) => {
             try {
                 const query = ` 
-                SELECT user_domains.user_id as "userId", profiles.name, user_roles.role, user_domains.created_at as "dateJoined"
+                SELECT user_domains.user_id as "userId", profiles.name, user_roles.role, user_domains.created_at as "dateJoined", profiles.email
                 FROM user_domains 
                 INNER JOIN profiles ON user_domains.user_id = profiles.user_id
                 INNER JOIN user_roles ON user_domains.user_id = user_roles.user_id AND user_domains.domain_id = user_roles.domain_id

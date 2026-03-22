@@ -18,7 +18,7 @@ export default async function GetUserDomainsController(req: Request, res: Respon
         const [domains, error] = await GetUserDomainsService(userId, Number(limit), Number(offset));
         if (error) {
             logger.warn({ ...LogWarningDefault(req), error }, "Error in GetUserDomainsController: ")
-            return res.status(500).json({ message: "Failed to get user domains" }).end();
+            return res.status(400).json({ message: "Failed to get user domains" }).end();
         }
         return res.status(200).json({ domains }).end();
     } catch (error) {

@@ -13,7 +13,7 @@ export default async function SearchUsersController(req: Request, res: Response,
         const [profiles, err] = await SearchUsersService(email, limit ? parseInt(limit) : 50);
         if (err) {
             logger.error({ ...LogWarningDefault(req), email }, "Error searching for users");
-            return res.status(500).json({ error: err.message }).end();
+            return res.status(400).json({ error: err.message }).end();
         }
         return res.status(200).json(profiles).end();
     } catch (error) {

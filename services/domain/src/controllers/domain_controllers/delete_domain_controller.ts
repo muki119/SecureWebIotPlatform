@@ -15,7 +15,7 @@ export default async function DeleteDomainController(req: Request, res: Response
         }
         const [_, err] = await DeleteDomainService(userId, domainId as string)
         if (err) {
-            return res.status(403).json({ message: err.message }).end();
+            return res.status(400).json({ message: err.message }).end();
         }
         return res.status(200).json({ message: "Domain deleted successfully" }).end();
 

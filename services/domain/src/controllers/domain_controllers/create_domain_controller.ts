@@ -17,7 +17,7 @@ export default async function CreateDomainController(req: Request, res: Response
     const [result, error] = await CreateDomainService(domainName, userID)
     if (error) {
         logger.warn({ ...LogWarningDefault(req), error }, "Error in CreateDomainController: ")
-        return res.status(500).json({ error }).end();
+        return res.status(400).json({ error }).end();
     }
     return res.status(201).json(result).end();
 }
