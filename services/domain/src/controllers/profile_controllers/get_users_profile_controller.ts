@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import GetUsersProfileService from '../../services/profile_services/get_users_profile_service';
+import { GetUsersProfileService } from '../../services';
 import logger from '../../config/logger';
 import { LogWarningDefault } from '@services/common/utilities';
 
