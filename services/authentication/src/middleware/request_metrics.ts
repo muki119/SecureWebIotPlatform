@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { requestDurationHistogram } from '../config/metrics';
-import { GetRoutePath } from '../utilities/logging_utilities';
+import { GetRoutePath } from '@services/common/utilities';
 
 
 
