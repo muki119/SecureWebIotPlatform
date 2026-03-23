@@ -1,6 +1,7 @@
 import type { AccessTokenClaims } from "../types";
 import { GetPemKey, GetEnvString } from "../utilities/getEnv";
 import jwt from "jsonwebtoken";
+import type { Logger } from "pino"
 const ACCESS_TOKEN_PUBLIC_KEY = GetPemKey("ACCESS_TOKEN_PUBLIC_KEY_PATH"); //  for verifying access tokens
 const AUDIENCE = GetEnvString("TOKEN_AUDIENCE");
 /**
@@ -31,7 +32,7 @@ export function VerifyAccessToken(token: string): AccessTokenClaims | null { // 
 }
 
 
-export function CreateVerifyAccessTokenInstance(logger: any) { // have to make a factory function because the logger may have different configurations - but will all be a pino instance anyway 
+export function CreateVerifyAccessTokenInstance(logger: Logger) { // have to make a factory function because the logger may have different configurations - but will all be a pino instance anyway 
     return (token: string): AccessTokenClaims | null => {
         if (!token) {
             return null; // if theres no token then just treat it as invalid and return null

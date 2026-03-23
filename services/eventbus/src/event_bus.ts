@@ -5,6 +5,7 @@ import {
 } from "@services/eventbus";
 import { ChildProcess, fork } from "node:child_process";
 import { MessageFlags } from "@services/eventbus";
+import type { Logger } from "pino"
 
 /**
  * @description the event bus in its abstraction glory
@@ -18,7 +19,7 @@ import { MessageFlags } from "@services/eventbus";
  */
 export class EventBus {
 	// comprises of the listener proccess and the sender function
-	private logger: any;
+	private logger: Logger;
 	private config: EventBusConfig; // for potential retries
 	private isListening: boolean;
 	private listenerProcess: ChildProcess | null = null; // the listener process spawned
@@ -26,7 +27,7 @@ export class EventBus {
 	private workerFile: string;
 	public handleDebugMessage: ((message: any) => void) | null = null; // handler for debug messages from worker process
 
-	constructor(config: EventBusConfig, logger: any, workerDir: string) {
+	constructor(config: EventBusConfig, logger: Logger, workerDir: string) {
 		this.config = config;
 		this.logger = logger;
 		this.isListening = false;

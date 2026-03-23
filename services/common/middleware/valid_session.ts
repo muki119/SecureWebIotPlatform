@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction, RequestHandler } from 'express';
 import { CreateVerifyAccessTokenInstance } from '../helpers/access_token';
+import type { Logger } from "pino"
 
 
 /**
@@ -12,11 +13,11 @@ import { CreateVerifyAccessTokenInstance } from '../helpers/access_token';
 export default class SessionMiddleware {
     logger: any;
     middleware: RequestHandler;
-    constructor(logger: any) {
+    constructor(logger: Logger) {
         this.logger = logger;
         this.middleware = this.createMiddleware();
     }
-    protected createMiddleware() {
+    private createMiddleware() {
         const VerifyAccessTokenInstance = CreateVerifyAccessTokenInstance(this.logger);
         return (req: Request, res: Response, next: NextFunction) => {
             // basically will check access token -- passed in header beaerer token
