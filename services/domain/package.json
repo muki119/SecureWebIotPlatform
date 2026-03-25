@@ -15,7 +15,12 @@
 	"type": "module",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "vitest",
+		"benchmark": "vitest bench",
+		"dev": "npx tsx  --env-file ./.env index.ts",
+		"watch": "npx tsx --env-file ./.env --watch-path ./ index.ts",
+		"build": "node build.mjs",
+		"start": "node --env-file ./.env build/index.js"
 	},
 	"devDependencies": {
 		"@types/express": "^5.0.6",
