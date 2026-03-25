@@ -88,7 +88,7 @@ export abstract class BaseWorker {
 	public start() {
 		// begins listening for proc messages
 		process.title = "EventBus Worker Process";
-		process.on("message", (message: { flag: string; value?: any }) => {
+		process.on("message", async (message: { flag: string; value?: any }) => {
 			if (process.send === undefined) {
 				throw new Error("Process does not have ipc channel");
 			}
@@ -110,8 +110,7 @@ export abstract class BaseWorker {
 					}
 					const config: EventBusConfig = message.value;
 					this.listenerInstance = new EventListener(config);
-					this.onCreate();
-
+					await this.onCreate();
 					break;
 				case MessageFlags.START:
 					if (!this.listenerInstance) {
