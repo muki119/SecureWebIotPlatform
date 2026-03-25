@@ -2,8 +2,8 @@ import express from 'express';
 import { GetEnvNumber, GetEnvString } from '../common/utilities/getEnv';
 import cookieParser from 'cookie-parser';
 import Domain_ProfileRouter from './src/routes';
-
-
+import EventBusInstance from './src/config/event_bus';
+import logger from './src/config/logger';
 const app = express();
 
 app.use(express.json());
@@ -15,24 +15,28 @@ app.disable('x-powered-by')
 app.use('/api/v1', Domain_ProfileRouter);
 const port = GetEnvNumber('PORT', 3000);
 
-const server = app.listen(port, (err) => {
+const server = app.listen(port, async (err) => {
     if (err) {
-        console.error('Error starting server:', err);
+        logger.error({ error: err }, 'Error starting server:');
         process.exit(1);
     }
-    console.log(`Listening on port ${port}`)
+    await EventBusInstance.init();
+    await EventBusInstance.start();
+    logger.info('Event bus started');
+    logger.info(`Listening on port ${port}`)
 });
 
 
 
 const shutdown = () => {
-    console.log("Shutting down")
-    server.close((err) => {
+    logger.info("Shutting down")
+    server.close(async (err) => {
         if (err) {
-            console.error('Error closing server:', err);
+            logger.error({ error: err }, 'Error closing server:');
             process.exit(1);
         }
-        console.log("Server closed")
+        await EventBusInstance.stop();
+        logger.info("Server closed")
         process.exit(0);
     });
 }

@@ -1,5 +1,5 @@
 import { PostgresDatabaseModel, type ModelDTO, type ModelSchema, type UpdatePatch, type UpdateResult } from "@services/common/types"
-import { Pool } from "pg"
+import { Pool, type PoolClient } from "pg"
 import { PostgresPool } from "../config/postgres"
 export interface IProfile extends ModelSchema {
     userId: string,
@@ -10,6 +10,7 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
 
     protected fieldsMap = new Map<keyof ModelDTO<IProfile>, string>([
         ["name", "string"], // only name can be updated in the profile , theres no need to update any other fields since theyre identifiers and metadata
+        ["email", "string"],
     ])
     constructor(db: Pool) {
         super(db)
@@ -91,7 +92,7 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
             }
         })
     }
-    public async delete(id: string): Promise<void> {
+    public async delete(id: string, externalConn?: PoolClient): Promise<void> {
         return this.transactionWrap(async (conn) => {
             try {
                 const deleteQuery = `
@@ -103,7 +104,7 @@ export class ProfileModel extends PostgresDatabaseModel<IProfile> {
             } catch (error) {
                 throw new Error("Failed to delete profile: ", { cause: error })
             }
-        })
+        }, externalConn)
     }
 
 }
