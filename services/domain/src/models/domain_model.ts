@@ -110,6 +110,21 @@ export class DomainModel extends PostgresDatabaseModel<IDomain> {
             }
         }, externalConn)
     }
+
+    public async deleteByOwnerId(ownerId: string, externalConn?: PoolClient): Promise<void> { // bulk deletion when owner is deleted - if the owner dosent want to delete the domain - they have to transfer ownership
+        return this.transactionWrap(async (conn) => {
+            try {
+                const deleteQuery = `
+                    UPDATE domains
+                    SET deleted_at = NOW()
+                    WHERE owner_id = $1 AND deleted_at IS NULL
+                `
+                await conn.query(deleteQuery, [ownerId])
+            } catch (error) {
+                throw new Error("Failed to delete domains by owner id: ", { cause: error })
+            }
+        }, externalConn)
+    }
 }
 
 export const DomainModelInstance = new DomainModel(PostgresPool)
