@@ -159,6 +159,7 @@ export class EventBus {
 			this.logger.warn("Listener process is not running");
 			return;
 		}
+		await this.sender.close();
 		this.listenerProcess.send({ flag: MessageFlags.STOP });
 		await this.waitForStop();
 		this.logger.info("Stopping listener process");

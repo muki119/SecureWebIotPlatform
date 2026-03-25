@@ -17,12 +17,10 @@ export type EventBusConfig = {
 
 /**
  * @description - the event payload message structure
- * - there must be an action to specify what is being done
  * - the userId is optional if the operations is related to a user
  * - datafield is the action requires some data
  */
 export type EventMessage = {
-    action: string;
     timestamp: string;
     [dataField: string]: string; // because messages are fairly flat and dont allow nested objects
 };
@@ -97,13 +95,6 @@ export class EventSender {
                     },
                 });
             }
-            if (!message.action) {
-                throw new Error("Message must have an action", {
-                    cause: {
-                        message,
-                    },
-                });
-            }
             const id = await this.conn.xAdd(stream, "*", message);
             if (!id) {
                 throw new Error("Failed to add message to stream " + stream);
@@ -116,6 +107,9 @@ export class EventSender {
                 },
             );
         }
+    }
+    public async close() {
+        await this.conn.quit();
     }
 }
 
