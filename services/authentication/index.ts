@@ -7,6 +7,7 @@ import { RedisClient } from './src/config/redis';
 import { PostgresPool } from './src/config/postgres';
 import requestMetricsMiddleware from './src/middleware/request_metrics';
 import { GetEnvNumber } from "@services/common/utilities"
+import EventSenderInstance from './src/config/event_sender';
 const app = express();
 
 
@@ -21,7 +22,13 @@ app.use('/auth/v1', authRoutes);
 app.use(errorHandler);
 
 const Port = GetEnvNumber("PORT", 3000);
-var server = app.listen(Port, () => {
+var server = app.listen(Port, async (err) => {
+    EventSenderInstance.init();
+    if (err) {
+        await EventSenderInstance.close()
+        logger.error({ error: err }, 'Error starting server:');
+        process.exit(1);
+    }
     logger.info(`Authentication Service is running on port ${Port}`);
 });
 process.on("SIGINT", () => {
@@ -29,6 +36,7 @@ process.on("SIGINT", () => {
         server.close(async () => {
             logger.info("Authentication Service has been stopped.");
 
+            await EventSenderInstance.close();
             if (RedisClient && RedisClient.isOpen) {
                 await RedisClient.close();
             }
