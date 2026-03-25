@@ -23,3 +23,17 @@ export function GetRoutePath(req: Request): string { // o(n) but its extremley s
     return routePath;
 
 }
+
+export const RecursiveError = (err: Error): any => { // just finds the name of the error and message 
+    if (err.cause) {
+        return {
+            name: err.name,
+            message: err.message,
+            cause: RecursiveError(err.cause as Error)
+        }
+    }
+    return {
+        name: err.name,
+        message: err.message,
+    }
+}
