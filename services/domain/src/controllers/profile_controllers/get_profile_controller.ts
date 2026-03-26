@@ -6,15 +6,15 @@ import { GetProfileService } from '../../services';
 /**
  * @description - gets a users profile - for when a user wants to see another users profile
  */
-export default function GetProfileController(req: Request, res: Response, next: NextFunction) {
+export default async function GetProfileController(req: Request, res: Response, next: NextFunction) {
     // for single lookup of a profile - when a user want to see anothers
     try {
-        const { userID } = req.params;
-
-        if (!userID) {
+        const { userId } = req.params;
+        console.log(userId)
+        if (!userId) {
             return res.status(400).json({ error: "User ID is required" });
         }
-        const profile = GetProfileService(userID as string);
+        const profile = await GetProfileService(userId as string);
         if (!profile) {
             return res.status(404).json({ error: "Profile not found" });
         }
