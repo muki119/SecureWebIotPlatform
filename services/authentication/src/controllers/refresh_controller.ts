@@ -28,7 +28,7 @@ export default async function RefreshController(req: Request, res: Response, nex
         if (!refreshTokenClaims) {
             // invalid refresh token - should clear cookie and force logout and login again
             ClearCookies(res)
-            res.sendStatus(401).json({ message: 'Invalid refresh token' });
+            res.status(401).json({ message: 'Invalid refresh token' });
             res.end();
             return
         }
@@ -37,7 +37,7 @@ export default async function RefreshController(req: Request, res: Response, nex
             // if a bad token then its already logged in the verify function itself
             // invalid xsrf token - should clear cookie and force logout and login again
             ClearCookies(res)
-            res.sendStatus(401).json({ message: 'Invalid XSRF token' });
+            res.status(401).json({ message: 'Invalid XSRF token' });
             res.end();
             return
         }
