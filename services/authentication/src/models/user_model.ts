@@ -26,7 +26,7 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
         ["password", "string"]
     ]) // the fields and their corresponding expected data types - for validation in updates 
 
-    public async create(item: ModelDTO<IUser>): Promise<IUser> {
+    public async create(item: ModelDTO<IUser>, externalConn?: PoolClient): Promise<IUser> {
         // item should be pre- validated and sanitised - either way the database should have contraints to prevent too much bad
         // like max chars 
 
@@ -43,7 +43,7 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
             } catch (err) {
                 throw new Error("Failed to create user: ", { cause: err })
             }
-        })
+        }, externalConn)
     }
     public async findById(id: string): Promise<IUser | null> {
 
