@@ -1,7 +1,8 @@
 import {
     GetUsersProfileController,
     GetProfileController,
-    UpdateProfileController
+    UpdateProfileController,
+    SearchUsersController
 } from "../controllers/profile_controllers"
 import { Router } from "express";
 
@@ -16,7 +17,9 @@ const ProfileRouter = Router();
  */
 // the parent route is profile
 ProfileRouter.get("/me", GetUsersProfileController);
-ProfileRouter.get("/:userId", GetProfileController); // frontend should check if requested profile is their own and if so use the /me route instead 
+ProfileRouter.get("/search", SearchUsersController);
 ProfileRouter.patch("/me", UpdateProfileController); // updates the users profile - only allows updating of display name for now
+ProfileRouter.get("/:userId", GetProfileController); // frontend should check if requested profile is their own and if so use the /me route instead 
+
 
 export default ProfileRouter;

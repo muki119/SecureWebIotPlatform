@@ -27,6 +27,9 @@ export default async function UpdateUserRoleService(updater: string, updatee: st
         if (updateePermissions?.isOwner) { // if they are an owner - reject
             return [null, new Error("Cannot change the role of an owner")];
         }
+        if (updateePermissions.role === newRole.toUpperCase()) {
+            return [null, new Error("New role is the same as the current role")];
+        }
         const [updatedRole, error] = await UserRoleModelInstance.updateRole(updatee, domainId, newRole.toUpperCase());
         if (error) {
             return [null, error];

@@ -139,6 +139,10 @@ abstract class BasePostgresModel<T extends ModelSchema> {
 		// - so you dont have 2 patches changing the same field
 		for (let i = 0; i < patch.length; i++) {
 			const change = patch[i]!
+
+			if (!change.field || change.value === undefined) {
+				throw new Error(`Field and value are required for all changes in update patch`)
+			}
 			if (!this.fieldsMap.has(change.field)) {
 				throw new Error(`Invalid field ${change.field} in update patch`)
 			}

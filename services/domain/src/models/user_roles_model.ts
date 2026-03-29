@@ -124,7 +124,7 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
         }, externalConn)
     }
 
-    public async userPermissions(userId: string, domainId: string): Promise<rolePermissions | null> {
+    public async userPermissions(userId: string, domainId: string): Promise<rolePermissions & { role: string } | null> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
@@ -136,11 +136,11 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
                 if (result.rowCount === 0) {
                     return null;
                 }
-                const userRole = result.rows[0].role
+                const userRole = result.rows[0].role.toUpperCase()
                 if (!(userRole in ROLE_PERMISSIONS)) {
                     throw new Error("Invalid role found for user in domain")
                 }
-                return ROLE_PERMISSIONS[userRole]!
+                return { ...ROLE_PERMISSIONS[userRole]!, role: userRole as string }
             } catch (error) {
                 throw new Error("Failed to get user permissions: ", { cause: error })
             }

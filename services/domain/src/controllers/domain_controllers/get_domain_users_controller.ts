@@ -22,6 +22,6 @@ export default async function GetDomainUsersController(req: Request, res: Respon
     if (err) {
         return res.status(400).json({ message: err.message }).end();
     }
-    return res.status(200).json({ members }).end();
+    return res.status(200).json(members).end();
 
 }

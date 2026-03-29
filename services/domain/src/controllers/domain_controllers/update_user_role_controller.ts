@@ -7,17 +7,17 @@ export default async function UpdateUserRoleController(req: Request, res: Respon
     try {
         const userId = req.user?.sub
         const { domainId, userId: userToUpdate } = req.params;
-        const { newRole } = req.body;
+        const { role } = req.body;
         if (!userId) {  // shouldnt happen since protected route
             return res.status(401).json({ message: "Unauthorized" }).end();
         }
-        if (!domainId || !userToUpdate || !newRole) {
+        if (!domainId || !userToUpdate || !role) {
             return res.status(400).json({ message: "Domain ID, User ID to update, and new role are required" }).end();
         }
         if (userId === userToUpdate) {
             return res.status(400).json({ message: "Users cannot change their own role" }).end();
         }
-        const [_, err] = await UpdateUserRoleService(userId, userToUpdate as string, newRole as string, domainId as string)
+        const [_, err] = await UpdateUserRoleService(userId, userToUpdate as string, role as string, domainId as string)
         if (err) {
             return res.status(400).json({ message: err.message }).end();
         }

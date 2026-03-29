@@ -17,7 +17,7 @@ export default async function RegisterService(user: ModelDTO<IUser>): Promise<Se
         const createdUser = await userModel.create(user) // will be used to send to stream for record creation in other services- like the domain service - to be added
         await EventSenderInstance.send(STREAMS.AUTH_SERVICE.USER_CREATED, {
             id: createdUser.id,
-            name: `${createdUser.forename} ${createdUser.surname.charAt(0)}.`,
+            name: `${createdUser.forename} ${createdUser.surname.charAt(0)}`,
             email: createdUser.email,
             timestamp: new Date().toISOString()
         })

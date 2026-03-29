@@ -8,7 +8,7 @@ export default async function LeaveDomainService(userId: string, domainId: strin
             return [null, new Error("User is not a member of the domain")];
         }
         if (isUserMember.isOwner) { // owner cannot leave the domain - ownership has to be transferred first
-            return [null, new Error("Owner cannot leave the domain, ownership must be transferred first")];
+            return [null, new Error("Owner cannot leave the domain, ownership must be transferred first or the domain must be deleted")];
         }
         await UserDomainModelInstance.multiTableTransaction(async (conn) => {
             await UserDomainModelInstance.delete(userId, domainId, conn)

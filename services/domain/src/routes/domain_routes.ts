@@ -30,10 +30,13 @@ const DomainRouter = Router();
 DomainRouter.post("/", CreateDomainController); // Creates a domain
 DomainRouter.patch("/:domainId", UpdateDomainController); // Updates a domain - owner only
 DomainRouter.delete("/:domainId", DeleteDomainController); // Deletes a domain - owner only
+
 DomainRouter.post("/:domainId/leave", LeaveDomainController); // leave a domain
 DomainRouter.post("/:domainId/user", AddUserController); // Adds a user to a domain - admin+ only
+
 DomainRouter.delete("/:domainId/user/:userId", DeleteUserController); // Removes a user from domain - admin+ only
 DomainRouter.patch("/:domainId/user/:userId/role", UpdateUserRoleController); // Updates a users role in a domain - admin+ only
+
 DomainRouter.get("/:domainId/users", GetDomainUsersController); // Gets all users in a domain
 DomainRouter.get("/", GetUserDomainsController); // Gets all domains for a user - paginated with ?limit= & offset=
 
