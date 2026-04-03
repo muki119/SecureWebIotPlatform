@@ -1,5 +1,6 @@
 import { Pool, type PoolClient } from "pg"
-import type { ServiceResult } from "./service"
+import { Schema, Connection, Model, type ClientSession } from "mongoose";
+import type { Result } from "./result"
 /**
  * ModelSchema is the general shape of all models in the database, they can have any fields but must have an id and createdAt field
  */
@@ -14,9 +15,10 @@ export interface ModelSchema {
  * ModelDTO (Data Transfer Object) is a type that represents incomming data for working with models 
  * Basically the same as the modelschema interface but without the id and created at fields because those comefrom the db
  */
-export type ModelDTO<T extends ModelSchema> = Omit<T, "id" | "createdAt" | "deletedAt">
+export type ModelDTO<T extends ModelSchema> = Omit<T, "id" | "createdAt" | "deletedAt" | "updatedAt">
 
 
+export type MongoModelSchema<T extends ModelSchema> = Omit<T, "id"> & { _id: Schema.Types.UUID } // for mongo models we use _id instead of id and its a uuid type
 
 /**
  * IDatabaseModelOpperations
@@ -56,7 +58,7 @@ export type UpdatePatch<T extends ModelSchema> = UpdateSet<T>[] // basically and
  * * key of modelDto is the indexer for the mapped types - so it creates a union type for all possible fields for the given type T
  */
 export type UpdateSet<T extends ModelSchema> = { [K in keyof ModelDTO<T>]-?: { field: K & string, value: ModelDTO<T>[K] } }[keyof ModelDTO<T>]
-export type UpdateResult<T extends ModelSchema> = ServiceResult<T> // the result of an update operation - success or failure and an optional message and the updated user if the update was successful
+export type UpdateResult<T extends ModelSchema> = Result<T> // the result of an update operation - success or failure and an optional message and the updated user if the update was successful
 type DbOperation<T> = (conn: PoolClient) => Promise<T>
 
 
@@ -65,7 +67,7 @@ type DbOperation<T> = (conn: PoolClient) => Promise<T>
  */
 abstract class BasePostgresModel<T extends ModelSchema> {
 	protected db: Pool
-	protected abstract fieldsMap: Map<keyof ModelDTO<T>, string> // a map of the fields that can be updated and their corresponding data types - used for validation in updates
+	protected abstract updatableFieldsMap: Map<keyof ModelDTO<T>, string> // a map of the fields that can be updated and their corresponding data types - used for validation in updates
 	constructor(db: Pool) {
 		this.db = db
 	}
@@ -143,14 +145,14 @@ abstract class BasePostgresModel<T extends ModelSchema> {
 			if (!change.field || change.value === undefined) {
 				throw new Error(`Field and value are required for all changes in update patch`)
 			}
-			if (!this.fieldsMap.has(change.field)) {
+			if (!this.updatableFieldsMap.has(change.field)) {
 				throw new Error(`Invalid field ${change.field} in update patch`)
 			}
 			if (seenSet.has(change.field)) {
 				throw new Error(`Duplicate field ${change.field} in update patch`)
 			}
-			if (typeof change.value !== this.fieldsMap.get(change.field)) {
-				throw new Error(`Invalid data type for field ${change.field}: expected ${this.fieldsMap.get(change.field)}, got ${typeof change.value}`)
+			if (typeof change.value !== this.updatableFieldsMap.get(change.field)) {
+				throw new Error(`Invalid data type for field ${change.field}: expected ${this.updatableFieldsMap.get(change.field)}, got ${typeof change.value}`)
 			}
 			seenSet.add(change.field)
 			setStringArr.push(`${change.field} = $${i + startIdx}`) // build the set string for the update query - starts at $2 because $1 is the id in the where clause
@@ -188,3 +190,62 @@ export abstract class PostgresAssociationModel<T extends ModelSchema> extends Ba
 }
 
 // will make one for mongo at some point for the devices service
+
+
+export abstract class BaseMongoModel<T extends ModelSchema> implements IDatabaseModelOperations<T> {
+	protected db: Connection
+	protected model: Model<T>;
+	protected abstract updatableFieldMap: Map<keyof ModelDTO<T>, string>
+	constructor(db: Connection, schema: Schema<T>, modelName: string) {
+		this.db = db
+		this.model = this.db.model<T>(modelName, schema)
+	}
+
+	async createUpdateObject(patch: UpdatePatch<T>): Promise<[Partial<Record<keyof ModelDTO<T>, unknown>>, null] | [null, Error]> {
+		let seenSet = new Set<keyof ModelDTO<T>>()
+		let result: Partial<Record<keyof ModelDTO<T>, unknown>> = {}
+		for (let i = 0; i < patch.length; i++) {
+			const change = patch[i]!
+			if (!change.field || change.value === undefined) {
+				return [null, new Error(`Field and value are required for all changes in update patch`)]
+			}
+			if (!this.updatableFieldMap.has(change.field)) {
+				return [null, new Error(`Invalid field ${change.field} in update patch`)]
+			}
+			if (seenSet.has(change.field)) {
+				return [null, new Error(`Duplicate field ${change.field} in update patch`)]
+			}
+			if (typeof change.value !== this.updatableFieldMap.get(change.field)) {
+				return [null, new Error(`Invalid data type for field ${change.field}: expected ${this.updatableFieldMap.get(change.field)}, got ${typeof change.value}`)]
+			}
+			seenSet.add(change.field)
+			result[change.field] = change.value
+		}
+		return [result, null]
+	}
+
+
+	async transactionWrap<U>(operation: (session: ClientSession) => Promise<U>, externalSession?: ClientSession): Promise<U> {
+		if (externalSession) {
+			return await operation(externalSession) // if an external session is provided, use it (for multi table transactions)
+		}
+		const session = await this.db.startSession()
+		try {
+			session.startTransaction()
+			const result = await operation(session)
+			await session.commitTransaction()
+			return result
+		} catch (error) {
+			await session.abortTransaction()
+			throw error
+		} finally {
+			session.endSession()
+		}
+	}
+
+	abstract create(item: ModelDTO<T>): Promise<T>;
+	abstract findById(id: string): Promise<T | null>;
+	abstract update(id: string, patch: UpdatePatch<T>): Promise<UpdateResult<T>>;
+	abstract delete(id: string): Promise<void>;
+
+}

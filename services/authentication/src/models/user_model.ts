@@ -19,7 +19,7 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
         super(db)
     }
 
-    protected fieldsMap = new Map<keyof ModelDTO<IUser>, string>([
+    protected updatableFieldsMap = new Map<keyof ModelDTO<IUser>, string>([
         ["email", "string"],
         ["forename", "string"],
         ["surname", "string"],

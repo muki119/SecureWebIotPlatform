@@ -10,7 +10,7 @@ export interface IDomain extends ModelSchema {
 
 export class DomainModel extends PostgresDatabaseModel<IDomain> {
 
-    protected fieldsMap = new Map<keyof ModelDTO<IDomain>, string>([
+    protected updatableFieldsMap = new Map<keyof ModelDTO<IDomain>, string>([
         ["name", "string"],
     ])
     constructor(db: Pool) {

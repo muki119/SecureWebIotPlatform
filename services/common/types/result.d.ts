@@ -5,4 +5,4 @@
 * 
 * * Service results are usually errors caused by problems with the request data - so the res will mosst likely be a 40x error
 */
-export type ServiceResult<T, E = Error> = [T, null] | [null, E extends Error ? E : Error] // Go style tuple result , because every other return type is annoying 
+export type Result<T, E = Error> = [T, null] | [null, E extends Error ? E : Error] // Go style tuple result , because every other return type is annoying 

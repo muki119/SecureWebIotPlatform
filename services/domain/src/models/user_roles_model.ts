@@ -95,7 +95,7 @@ export const ROLE_PERMISSIONS: { [key: string]: rolePermissions } = {
 
 export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
 
-    protected fieldsMap = new Map<keyof ModelDTO<IUserRole>, string>([
+    protected updatableFieldsMap = new Map<keyof ModelDTO<IUserRole>, string>([
         ["role", "string"], // only role can be updated in the user role association, theres no need to update any other fields since theyre identifiers and metadata
     ])
     constructor(db: Pool) {

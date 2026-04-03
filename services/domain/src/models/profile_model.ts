@@ -8,7 +8,7 @@ export interface IProfile extends ModelSchema {
 }
 export class ProfileModel extends PostgresDatabaseModel<IProfile> {
 
-    protected fieldsMap = new Map<keyof ModelDTO<IProfile>, string>([
+    protected updatableFieldsMap = new Map<keyof ModelDTO<IProfile>, string>([
         ["name", "string"], // only name can be updated in the profile , theres no need to update any other fields since theyre identifiers and metadata
         ["email", "string"],
     ])

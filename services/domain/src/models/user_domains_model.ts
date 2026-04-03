@@ -9,7 +9,7 @@ export interface IUserDomain extends ModelSchema {
 
 export class UserDomainModel extends PostgresAssociationModel<IUserDomain> {
 
-    protected fieldsMap = new Map<keyof ModelDTO<IUserDomain>, string>([
+    protected updatableFieldsMap = new Map<keyof ModelDTO<IUserDomain>, string>([
         // no updatable fields since this is just a join table between users and domains
         // if more custom fields are added then here
     ])
