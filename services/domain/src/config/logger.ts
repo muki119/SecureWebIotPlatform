@@ -1,5 +1,5 @@
 import { CreateLogger, type ILoggerOptions } from "@services/common/config";
-import { GetEnvString } from "../../../common/utilities/getEnv";
+import { GetEnvString } from "@services/common/utilities";
 
 const options: ILoggerOptions = {
     host: GetEnvString("LOKI_HOST", "http://localhost:3100"),
