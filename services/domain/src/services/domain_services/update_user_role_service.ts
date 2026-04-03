@@ -1,5 +1,5 @@
-import type { ServiceResult } from "@services/common/types";
-import { UserRoleModelInstance, ROLES, type IUserRole } from "../../models";
+import type { ServiceResult, IUserRole } from "@services/common/types";
+import { UserRoleModelInstance, ROLES } from "../../models";
 
 
 export default async function UpdateUserRoleService(updater: string, updatee: string, newRole: string, domainId: string): Promise<ServiceResult<IUserRole>> {

@@ -1,13 +1,10 @@
-import { PostgresAssociationModel, PostgresDatabaseModel, type ModelDTO, type ModelSchema, type UpdatePatch, type UpdateResult } from "@services/common/types"
+import { PostgresAssociationModel, PostgresDatabaseModel } from "@services/common/types"
+import type { ModelDTO, ModelSchema, UpdatePatch, UpdateResult, IUserRole } from "@services/common/types"
 import { Pool, type PoolClient } from "pg"
 import { PostgresPool } from "../config/postgres"
 
 
-export interface IUserRole extends ModelSchema {
-    userId: string,
-    domainId: string,
-    role: string,
-}
+
 /**
  *  Owner
 * * A domain owner has full control over a domain and its devices, including the ability to destroy the domain itself.  
