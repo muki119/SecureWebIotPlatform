@@ -1,11 +1,10 @@
 import express from 'express';
-import errorHandler from './src/middleware/error_handler';
+import { ErrorHandlerMiddleware, RequestMetricsMiddleware } from './src/middleware';
 import { authRoutes } from './src/routes/auth_routes';
 import logger from './src/config/logger';
 import cookieParser from 'cookie-parser';
 import { RedisClient } from './src/config/redis';
 import { PostgresPool } from './src/config/postgres';
-import requestMetricsMiddleware from './src/middleware/request_metrics';
 import { GetEnvNumber } from "@services/common/utilities"
 import EventSenderInstance from './src/config/event_sender';
 const app = express();
@@ -15,11 +14,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.disable('x-powered-by')
-app.use(requestMetricsMiddleware);
+app.use(RequestMetricsMiddleware);
 
 app.use('/auth/v1', authRoutes);
 
-app.use(errorHandler);
+app.use(ErrorHandlerMiddleware);
 
 const Port = GetEnvNumber("PORT", 3000);
 var server = app.listen(Port, async (err) => {

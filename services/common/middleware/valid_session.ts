@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction, RequestHandler } from 'express';
+import MiddlewareBaseClass from "./middleware_base_class";
 import { CreateVerifyAccessTokenInstance } from '../helpers/access_token';
 import type { Logger } from "pino"
 
@@ -10,11 +11,10 @@ import type { Logger } from "pino"
 *  For any service that needs this - need to create an instance passing a pino logger (or whatever loggs with warnings) and pass the middleware function as a middleware
 */
 
-export default class SessionMiddleware {
-    logger: any;
-    middleware: RequestHandler;
+export default class SessionMiddleware extends MiddlewareBaseClass {
+    public middleware: RequestHandler;
     constructor(logger: Logger) {
-        this.logger = logger;
+        super(logger);
         this.middleware = this.createMiddleware();
     }
     private createMiddleware() {

@@ -1,5 +1,5 @@
 import { Pool, type PoolClient } from "pg"
-import { Schema, Connection, Model, type ClientSession } from "mongoose";
+import { Schema, type Connection, Model, type ClientSession } from "mongoose";
 import type { Result } from "./result"
 /**
  * ModelSchema is the general shape of all models in the database, they can have any fields but must have an id and createdAt field

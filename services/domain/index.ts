@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import Domain_ProfileRouter from './src/routes';
 import EventBusInstance from './src/config/event_bus';
 import logger from './src/config/logger';
+import { ErrorHandlerMiddleware } from './src/middleware';
 const app = express();
 
 app.use(express.json());
@@ -13,6 +14,7 @@ app.disable('x-powered-by')
 
 
 app.use('/api/v1', Domain_ProfileRouter);
+app.use(ErrorHandlerMiddleware);
 const port = GetEnvNumber('PORT', 3000);
 
 const server = app.listen(port, async (err) => {

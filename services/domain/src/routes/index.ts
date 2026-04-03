@@ -1,6 +1,6 @@
 import DomainRouter from "./domain_routes";
 import ProfileRouter from "./profile_routes"
-import { ValidSessionMiddleware } from "../middleware/valid_session_middleware";
+import { ValidSessionMiddleware } from "../middleware";
 import express from 'express';
 
 

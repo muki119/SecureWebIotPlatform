@@ -4,7 +4,7 @@ import { GetRoutePath } from '@services/common/utilities';
 
 
 
-export default function requestMetricsMiddleware(req: Request, res: Response, next: NextFunction) {
+export default function RequestMetricsMiddleware(req: Request, res: Response, next: NextFunction) {
     const timer = requestDurationHistogram.startTimer({
         method: req.method,
         route: GetRoutePath(req), // if route is undefined (e.g. for 404s) use the url instead
