@@ -11,6 +11,7 @@
   "license": "ISC",
   "type": "module",
   "exports": {
+    "./constants": "./constants/index.ts",
     "./config": "./config/index.ts",
     "./types": "./types/index.ts",
     "./utilities": "./utilities/index.ts",

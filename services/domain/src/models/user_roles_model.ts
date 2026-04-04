@@ -1,9 +1,8 @@
 import { PostgresAssociationModel, PostgresDatabaseModel } from "@services/common/types"
-import type { ModelDTO, ModelSchema, UpdatePatch, UpdateResult, IUserRole } from "@services/common/types"
+import type { ModelDTO, ModelSchema, UpdatePatch, UpdateResult, IUserRole, rolePermissions, Role } from "@services/common/types"
+import { ROLES, ROLE_PERMISSIONS } from "@services/common/constants"
 import { Pool, type PoolClient } from "pg"
 import { PostgresPool } from "../config/postgres"
-
-
 
 /**
  *  Owner
@@ -15,81 +14,6 @@ import { PostgresPool } from "../config/postgres"
  * Guest
  * * A guest can control devices permitted, though only for a period set by an admin or owner. 
  */
-
-
-
-type rolePermissions = {
-    /**
-     * isOwner - allows domain deletion and transfer of ownership
-     */
-    isOwner: boolean, // allows domain deletion and transfer of ownership
-    /**
-     * canManageUsers - allows crud of user in domain , can add users,update user roles and delete users from domain
-     */
-    canManageUsers: boolean, // allows crud of user in domain 
-    /**
-     * canManageDevices - allows crud of devices in domain , can add devices, update device details and delete devices from domain
-     */
-    canManageDevices: boolean, // allows crud of devices in domain
-    /**
-     * canManageDomain - allows updating of domain details such as name 
-     */
-    canManageDomain: boolean, // can update domain details
-    /**
-     * canControlDevices - allows control of devices in domain - the most basic permission
-     */
-    canControlDevices: boolean,
-}
-export const ROLES = {
-    OWNER: "OWNER",
-    ADMIN: "ADMIN",
-    MEMBER: "MEMBER",
-    GUEST: "GUEST",
-} as const
-
-export const ROLE_PERMISSIONS: { [key: string]: rolePermissions } = {
-    /**
-     * Owner has all permissions ... since its the owner
-     */
-    OWNER: {
-        isOwner: true,
-        canManageUsers: true,
-        canManageDevices: true,
-        canManageDomain: true,
-        canControlDevices: true,
-    },
-    /**
-     * Admin has all permissions except ownership specific and domain management permissions , such as changing domain names
-     */
-    ADMIN: {
-        isOwner: false,
-        canManageUsers: true,
-        canManageDevices: true,
-        canManageDomain: false,
-        canControlDevices: true,
-    },
-    /**
-     * Mmember can only control devices - adding of devices should be left to the admins+
-     */
-    MEMBER: {
-        isOwner: false,
-        canManageUsers: false,
-        canManageDevices: false,
-        canManageDomain: false,
-        canControlDevices: true,
-    },
-    /**
-     * Guest can only control devices for a limited time
-     */
-    GUEST: {
-        isOwner: false,
-        canManageUsers: false,
-        canManageDevices: false,
-        canManageDomain: false,
-        canControlDevices: true,
-    }
-} as const
-
 export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
 
     protected updatableFieldsMap = new Map<keyof ModelDTO<IUserRole>, string>([
@@ -144,7 +68,7 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
         })
     }
 
-    public async updateRole(userId: string, domainId: string, newRole: string): Promise<UpdateResult<IUserRole>> { // must be domain owner to update user role association - checked in the service layer
+    public async updateRole(userId: string, domainId: string, newRole: Role): Promise<UpdateResult<IUserRole>> { // must be domain owner to update user role association - checked in the service layer
         return this.transactionWrap(async (conn) => {
             try {
                 if (!(newRole in ROLES)) {

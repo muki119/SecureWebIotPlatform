@@ -3,3 +3,4 @@ export type { AccessTokenClaims, RefreshTokenClaims, Tokens, Seconds } from "./t
 export type { Result as ServiceResult } from "./result"
 export * from "./shared_models"
 export type * from "./result"
+export type { rolePermissions } from "./role_permissions"

@@ -1,8 +1,10 @@
 import { Schema } from "mongoose";
 import { randomUUID } from 'crypto';
+import type { IUserRole, MongoModelSchema } from "@services/common/types";
+import { ROLES } from "@services/common/constants";
 
 
-const UserRolesSchema = new Schema({
+const UserRolesSchema = new Schema<MongoModelSchema<IUserRole>>({
     _id: {
         type: Schema.Types.UUID,
         default: randomUUID,
@@ -11,6 +13,11 @@ const UserRolesSchema = new Schema({
     userId: {
         type: Schema.Types.UUID,
         required: true,
+    },
+    role: {
+        type: String,
+        required: true,
+        enum: Object.values(ROLES) // Makes sure roles are only the roles that were defined
     },
     domainId: {
         type: Schema.Types.UUID,

@@ -91,7 +91,7 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
     async delete(id: string, externalSession?: ClientSession): Promise<Result<boolean>> {
         return await this.transactionWrap(async (session) => {
             try {
-                const deleted = await this.model.findByIdAndUpdate({ _id: id }, { $set: { deletedAt: new Date() } }, { session }).exec()
+                const deleted = await this.model.findOneAndUpdate({ _id: id, deletedAt: null }, { $set: { deletedAt: new Date() } }, { session }).exec()
                 if (!deleted) {
                     return [null, new Error("Device not found")]
                 }
@@ -125,7 +125,7 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
             if (!domainId || typeof domainId !== "string") {
                 return [null, new Error("Invalid domain id")]
             }
-            const devices = await this.model.find({ domainId }).exec()
+            const devices = await this.model.find({ domainId, deletedAt: null }).exec()
             return [devices, null]
         } catch (error) {
             throw new Error("Error attempting to find all devices under domain id ", { cause: error })
@@ -134,7 +134,7 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
 
     async updateCurrentState(id: string, capabilityKey: string, newValue: string | number | boolean, externalSession?: ClientSession): Promise<Result<IDevice>> {
         return await this.transactionWrap(async (session) => {
-            const device = await this.model.findById(id).exec() // get the device
+            const device = await this.model.findOne({ _id: id, deletedAt: null }).exec() // get the device
             if (!device) {
                 return [null, new Error("Device not found")]
             }
@@ -181,7 +181,7 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
             if (!id || typeof id !== "string") {
                 return null
             }
-            const device = await this.model.findById(id).exec()
+            const device = await this.model.findOne({ _id: id, deletedAt: null }).exec()
             return device
         } catch (error) {
             throw new Error("Error attempting to find device by id", { cause: error })
@@ -193,7 +193,7 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
             if (error) {
                 return [null, error]
             }
-            const updatedDevice = await this.model.findOneAndUpdate({ _id: id }, updateObject, { session, returnDocument: "after" }).exec()
+            const updatedDevice = await this.model.findOneAndUpdate({ _id: id, deletedAt: null }, updateObject, { session, returnDocument: "after" }).exec()
             if (!updatedDevice) {
                 return [null, new Error("Device not found")]
             }
