@@ -30,4 +30,12 @@ export interface IDevice extends ModelSchema {
     capabilities: Map<string, DeviceCapabilities>, // list of capabilities the device has - used for control and permissioning
 }
 
+export type DeviceTelemetry = {
+    timestamp: Date, // idexed
+    metadata: {
+        deviceId: string | Schema.Types.UUID, // indexed
+        capability: string, // indexed
+    }
+    value: string | number | boolean
+}
 

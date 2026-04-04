@@ -41,7 +41,7 @@ const UserRolesSchema = new Schema<MongoModelSchema<IUserRole>>({
     }
 })
 
-UserRolesSchema.index({ userId: 1, domainId: 1, deletedAt: 1 })
+UserRolesSchema.index({ userId: 1, domainId: 1 }, { partialFilterExpression: { deletedAt: null }, unique: true })
 
 export default UserRolesSchema
 

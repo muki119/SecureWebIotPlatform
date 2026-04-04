@@ -1,6 +1,6 @@
 import { Schema } from "mongoose";
-import { CapabilityTypes } from "../models"
-import type { IDevice, CurrentDeviceState, DeviceCapabilities } from "../models"
+import { CapabilityTypes } from "../types"
+import type { IDevice, CurrentDeviceState, DeviceCapabilities } from "../types"
 import type { MongoModelSchema } from "@services/common/types";
 import { randomUUID } from 'crypto';
 
@@ -27,10 +27,10 @@ export const DeviceCapabilitiesSchema = new Schema<DeviceCapabilities>({
         type: String,
         required: true
     },
-    min: { // for range types
+    min: { // for range types -  min is -2^53 because of js numbers are always a 64 bit float - will support more if i move to different programming language 
         type: Number
     },
-    max: { // for range types
+    max: { // for range types - max is 2^53 because of js numbers are always a 64 bit float
         type: Number
     },
     enumValues: { // for enums types
@@ -53,7 +53,6 @@ const DeviceSchema = new Schema<MongoModelSchema<IDevice>>({
     domainId: {
         type: Schema.Types.UUID,
         required: true,
-        index: true,
         immutable: true
     },
     createdBy: {
@@ -89,6 +88,6 @@ const DeviceSchema = new Schema<MongoModelSchema<IDevice>>({
     }
 })
 
-DeviceSchema.index({ domainId: 1, deletedAt: 1 })
+DeviceSchema.index({ domainId: 1 }, { partialFilterExpression: { deletedAt: null } });
 
 export default DeviceSchema
