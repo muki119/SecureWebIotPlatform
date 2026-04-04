@@ -26,13 +26,13 @@ export type MongoModelSchema<T extends ModelSchema> = Omit<T, "id"> & { _id: Sch
  * they must implement all these functions to work across the application
  * allows for loose coupling and ability to change database without massive changes to the rest of the codebase
  */
-export interface IDatabaseModelOperations<T extends ModelSchema> { // all database models should implement this basic interface for ease of use and ability to change db if needed
+export interface IPostgresDatabaseModelOperations<T extends ModelSchema> { // all database models should implement this basic interface for ease of use and ability to change db if needed
 	create(item: ModelDTO<T>): Promise<T>,
 	findById(id: string): Promise<T | null>,
 	update(id: string, patch: UpdatePatch<T>): Promise<UpdateResult<T>>,
 	delete(id: string): Promise<void>
 }
-export interface IAssociationModelOperations<T extends ModelSchema> {
+export interface IPostgresAssociationModelOperations<T extends ModelSchema> {
 	create(item: ModelDTO<T>): Promise<T>,
 	//find functions are way more specific for association models since they can be found using userid or associated id's 
 	// so they will be implemntation specific and not standardised and interfaced 
@@ -45,6 +45,19 @@ export interface IAssociationModelOperations<T extends ModelSchema> {
 	 */
 	update?(userId: string, associatedId: string, patch: UpdatePatch<T>): Promise<UpdateResult<T>>,
 	delete(userId: string, associatedId: string): Promise<void>
+}
+
+export interface IMongoDatabaseModelOperations<T extends ModelSchema> {
+	create(item: ModelDTO<T>, externalSession?: ClientSession): Promise<Result<T>>,
+	findById(id: string, domainId?: string): Promise<T | null>,
+	update(id: string, patch: UpdatePatch<T>, externalSession?: ClientSession): Promise<UpdateResult<T>>,
+	delete(id: string, externalSession?: ClientSession): Promise<Result<any>>
+}
+
+export interface IMongoAssociationModelOperations<T extends ModelSchema> {
+	create(item: ModelDTO<T>, externalSession?: ClientSession): Promise<Result<T>>,
+	delete(userId: string, associatedId: string, externalSession?: ClientSession): Promise<Result<any>>,
+	update?(userId: string, associatedId: string, patch: UpdatePatch<T>, externalSession?: ClientSession): Promise<UpdateResult<T>>
 }
 
 
@@ -168,7 +181,7 @@ abstract class BasePostgresModel<T extends ModelSchema> {
  * to easily manage the allocation and release of connections from the pool.
  * 
  */
-export abstract class PostgresDatabaseModel<T extends ModelSchema> extends BasePostgresModel<T> implements IDatabaseModelOperations<T> {
+export abstract class PostgresDatabaseModel<T extends ModelSchema> extends BasePostgresModel<T> implements IPostgresDatabaseModelOperations<T> {
 	constructor(db: Pool) {
 		super(db)
 	}
@@ -180,7 +193,7 @@ export abstract class PostgresDatabaseModel<T extends ModelSchema> extends BaseP
 /**
  * PostgresAssociationModel is a base class for all models that represent associations between two entities in the database.
  */
-export abstract class PostgresAssociationModel<T extends ModelSchema> extends BasePostgresModel<T> implements IAssociationModelOperations<T> {
+export abstract class PostgresAssociationModel<T extends ModelSchema> extends BasePostgresModel<T> implements IPostgresAssociationModelOperations<T> {
 	constructor(db: Pool) {
 		super(db)
 	}
@@ -192,7 +205,7 @@ export abstract class PostgresAssociationModel<T extends ModelSchema> extends Ba
 // will make one for mongo at some point for the devices service
 
 
-export abstract class BaseMongoModel<T extends ModelSchema> implements IDatabaseModelOperations<T> {
+export abstract class BaseMongoModel<T extends ModelSchema> {
 	protected db: Connection
 	protected model: Model<T>;
 	protected abstract updatableFieldMap: Map<keyof ModelDTO<T>, string>
@@ -243,9 +256,23 @@ export abstract class BaseMongoModel<T extends ModelSchema> implements IDatabase
 		}
 	}
 
-	abstract create(item: ModelDTO<T>): Promise<T>;
-	abstract findById(id: string): Promise<T | null>;
-	abstract update(id: string, patch: UpdatePatch<T>): Promise<UpdateResult<T>>;
-	abstract delete(id: string): Promise<void>;
+}
 
+export abstract class MongoDatabaseModel<T extends ModelSchema> extends BaseMongoModel<T> implements IMongoDatabaseModelOperations<T> {
+	constructor(db: Connection, schema: Schema<T>, modelName: string) {
+		super(db, schema, modelName)
+	}
+	public abstract create(item: ModelDTO<T>, externalSession?: ClientSession): Promise<Result<T>>;
+	public abstract findById(id: string, domainId?: string): Promise<T | null>;
+	public abstract update(id: string, patch: UpdatePatch<T>, externalSession?: ClientSession): Promise<UpdateResult<T>>;
+	public abstract delete(id: string, externalSession?: ClientSession): Promise<Result<any>>;
+}
+
+export abstract class MongoAssociationModel<T extends ModelSchema> extends BaseMongoModel<T> implements IMongoAssociationModelOperations<T> {
+	constructor(db: Connection, schema: Schema<T>, modelName: string) {
+		super(db, schema, modelName)
+	}
+	public abstract create(item: ModelDTO<T>, externalSession?: ClientSession): Promise<Result<T>>;
+	public abstract delete(userId: string, associatedId: string, externalSession?: ClientSession): Promise<Result<any>>;
+	public update?(userId: string, associatedId: string, patch: UpdatePatch<T>, externalSession?: ClientSession): Promise<UpdateResult<T>>;
 }

@@ -1,12 +1,12 @@
 import DeviceSchema from "../db/device_schema.ts"
-import type { IDevice, DeviceCapabilities, CurrentDeviceState } from "./types"
-import { CapabilityTypes } from "./types"
-import { BaseMongoModel, type ModelDTO, type MongoModelSchema, type UpdatePatch, type UpdateResult, type Result } from "@services/common/types"
-import { MongoConnection } from "../config/index.ts"
+import type { IDevice, DeviceCapabilities, CurrentDeviceState } from "../types"
+import { CapabilityTypes } from "../types"
+import { MongoDatabaseModel, type ModelDTO, type MongoModelSchema, type UpdatePatch, type UpdateResult, type Result } from "@services/common/types"
+import { MongoConnection } from "../config"
 import { Schema, Connection, Model, type ClientSession } from "mongoose";
 
 
-export class DeviceClass extends BaseMongoModel<IDevice> {
+export class DeviceModel extends MongoDatabaseModel<IDevice> {
     constructor(db: Connection, schema: Schema<IDevice>, modelName: string) {
         super(db, schema, modelName)
     }
@@ -88,15 +88,16 @@ export class DeviceClass extends BaseMongoModel<IDevice> {
         }
     }
 
-    async create(item: ModelDTO<Omit<IDevice, "currentState">>): Promise<IDevice> { // current state is derived from the capabilities - to ensure everything is the same
-        throw new Error("Use createDevice method")
-    }
-
-    async delete(id: string, externalSession?: ClientSession): Promise<void> {
+    async delete(id: string, externalSession?: ClientSession): Promise<Result<boolean>> {
         return await this.transactionWrap(async (session) => {
-            const deleted = await this.model.findOneAndDelete({ _id: id }, { session }).exec()
-            if (!deleted) {
-                throw new Error("Device not found")
+            try {
+                const deleted = await this.model.findByIdAndUpdate({ _id: id }, { $set: { deletedAt: new Date() } }, { session }).exec()
+                if (!deleted) {
+                    return [null, new Error("Device not found")]
+                }
+                return [true, null]
+            } catch (error) {
+                throw new Error("Error deleting device", { cause: error })
             }
         }, externalSession)
     }
@@ -145,12 +146,12 @@ export class DeviceClass extends BaseMongoModel<IDevice> {
                 return [null, new Error("Invalid value for capability")]
             }
             device.currentState.set(capabilityKey, { value: newValue, timestamp: new Date() })
-            device.save({ session })
+            await device.save({ session })
             return [device, null]
         }, externalSession)
     }
 
-    async createDevice(item: ModelDTO<Omit<IDevice, "currentState">>, externalSession?: ClientSession): Promise<Result<IDevice>> {
+    async create(item: ModelDTO<Omit<IDevice, "currentState">>, externalSession?: ClientSession): Promise<Result<IDevice>> {
         return await this.transactionWrap(async (session) => {
             try {
                 const [err] = await this.verifyCapabilities(item.capabilities)
