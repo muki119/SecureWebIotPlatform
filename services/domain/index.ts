@@ -1,5 +1,5 @@
 import express from 'express';
-import { GetEnvNumber, GetEnvString } from '../common/utilities/getEnv';
+import { GetEnvNumber } from '@services/common/utilities';
 import cookieParser from 'cookie-parser';
 import Domain_ProfileRouter from './src/routes';
 import EventBusInstance from './src/config/event_bus';

@@ -1,5 +1,5 @@
 import type { AccessTokenClaims } from "../types";
-import { GetPemKey, GetEnvString } from "../utilities/getEnv";
+import { GetPemKey, GetEnvString } from "../utilities/get_env";
 import jwt from "jsonwebtoken";
 import type { Logger } from "pino"
 const ACCESS_TOKEN_PUBLIC_KEY = GetPemKey("ACCESS_TOKEN_PUBLIC_KEY_PATH"); //  for verifying access tokens
