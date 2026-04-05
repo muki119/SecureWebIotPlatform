@@ -40,7 +40,7 @@ export const DeviceCapabilitiesSchema = new Schema<DeviceCapabilities>({
     _id: false, timestamps: false
 })
 
-const DeviceSchema = new Schema<MongoModelSchema<IDevice>>({
+const DeviceSchema = new Schema({
     _id: {
         type: Schema.Types.UUID,
         default: randomUUID,
@@ -89,5 +89,6 @@ const DeviceSchema = new Schema<MongoModelSchema<IDevice>>({
 })
 
 DeviceSchema.index({ domainId: 1 }, { partialFilterExpression: { deletedAt: null } });
+DeviceSchema.set("toObject", { virtuals: true });
 
 export default DeviceSchema

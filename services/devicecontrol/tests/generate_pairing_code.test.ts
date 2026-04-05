@@ -1,0 +1,58 @@
+import { describe, expect, test, bench, assert } from "vitest"
+import { GeneratePairingCode, VerifyPairingCode, CODE_LENGTH } from "../src/helpers/generate_pairing_code"
+
+
+describe("Generate Pairing Code", () => {
+
+    test("Generated code should be valid", () => {
+        for (let i = 0; i < 1000; i++) { // test 1000 codes , should be enough change
+            const code = GeneratePairingCode()
+            expect(VerifyPairingCode(code)).toBe(true)
+        }
+    })
+})
+
+describe("Verify Pairing Code", () => {
+    test("Valid code should return true", () => {
+        const code = GeneratePairingCode()
+        expect(VerifyPairingCode(code)).toBe(true)
+    })
+
+    test("Incremental code should return false", () => {
+        const incrementalCode = "123456"
+        expect(VerifyPairingCode(incrementalCode)).toBe(false)
+    })
+    test("Decremental code should return false", () => {
+        const decrementalCode = "654321"
+        expect(VerifyPairingCode(decrementalCode)).toBe(false)
+    })
+    test("Code with 3 repeating characters should return false", () => {
+        const repeatingCode = "111234"
+        expect(VerifyPairingCode(repeatingCode)).toBe(false)
+    })
+    test("Code with 3 repeating characters in the middle should return false", () => {
+        const repeatingCode = "123333"
+        expect(VerifyPairingCode(repeatingCode)).toBe(false)
+    })
+    test("Code with 3 repeating characters at the end should return false", () => {
+        const repeatingCode = "123444"
+        expect(VerifyPairingCode(repeatingCode)).toBe(false)
+    })
+    test("Returns true when code only has 2 repeating characters", () => {
+        const repeatingCode = "112345"
+        expect(VerifyPairingCode(repeatingCode)).toBe(true)
+    })
+    test("Returns false when code is non string", () => {
+        // @ts-expect-error
+        expect(VerifyPairingCode(123456)).toBe(false)
+    })
+    test("Returns false when code is empty string", () => {
+        expect(VerifyPairingCode("")).toBe(false)
+    })
+    test("Returns false when code is invalid length", () => {
+        const shortCode = GeneratePairingCode(CODE_LENGTH - 2) // supposed to be at least smaller than the default code length
+        const longCode = GeneratePairingCode(CODE_LENGTH + 2) // has to be multiple of 2 because of hex
+        expect(VerifyPairingCode(shortCode)).toBe(false)
+        expect(VerifyPairingCode(longCode)).toBe(false)
+    })
+})

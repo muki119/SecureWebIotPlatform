@@ -3,7 +3,7 @@ import type { DeviceTelemetry } from "../types";
 
 
 
-const TELEMETRYEXPIRATIONSECONDS = (60 * 60 * 24 * 7 * 2) // 2 weeks  - might create an aggregator that crunches old data into daily averages
+const TELEMETRY_EXPIRATION_SECONDS = (60 * 60 * 24 * 7 * 4) // 1 month
 
 const DeviceTelemetrySchema = new Schema<DeviceTelemetry>({
     timestamp: {
@@ -33,7 +33,7 @@ const DeviceTelemetrySchema = new Schema<DeviceTelemetry>({
         metaField: "metadata",
         granularity: "seconds" // doesnt go any finer than seconds 
     },
-    expireAfterSeconds: TELEMETRYEXPIRATIONSECONDS,
+    expireAfterSeconds: TELEMETRY_EXPIRATION_SECONDS,
 })
 
 DeviceTelemetrySchema.index({ "metadata.deviceId": 1, "metadata.capability": 1, timestamp: -1 }) // timestammp in desc so queries for recent is faster

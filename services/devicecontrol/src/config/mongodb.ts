@@ -3,9 +3,9 @@
  */
 import { ConnectToMongoDB } from "@services/common/config"
 import { GetEnvString } from "@services/common/utilities"
-import { Logger } from "./"
+import { logger } from "./"
 
-export default ConnectToMongoDB(
+export default await ConnectToMongoDB(
     GetEnvString("MONGODB_URI"),
-    Logger
+    logger
 )

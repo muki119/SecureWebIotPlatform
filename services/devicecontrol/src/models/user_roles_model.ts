@@ -1,9 +1,11 @@
 import type { IUserRole, ModelDTO, UpdateResult, Result, Role, rolePermissions } from "@services/common/types"
 import { MongoAssociationModel } from "@services/common/types";
 import { ROLES, ROLE_PERMISSIONS } from "@services/common/constants";
+import UserRolesSchema from "../db/user_roles_schema";
+import { MongoConnection } from "../config";
 import { Schema, Connection, type ClientSession } from "mongoose";
 
-export default class UserRoleModel extends MongoAssociationModel<IUserRole> {
+export class UserRoleModel extends MongoAssociationModel<IUserRole> {
 
     protected updatableFieldMap = new Map<keyof ModelDTO<IUserRole>, string>([
         ["role", "string"]
@@ -16,7 +18,7 @@ export default class UserRoleModel extends MongoAssociationModel<IUserRole> {
             try {
                 const newRole = new this.model(item)
                 await newRole.save({ session })
-                return [newRole, null]
+                return [newRole.toObject(), null]
             } catch (error) {
                 throw new Error("Error creating user role", { cause: error })
             }
@@ -29,11 +31,21 @@ export default class UserRoleModel extends MongoAssociationModel<IUserRole> {
                 throw new Error("Domain ID is required to find user role")
             }
             const userRole = await this.model.findOne({ _id: id, domainId, deletedAt: null }).exec()
-            return userRole
+            return userRole ? userRole.toObject() : null
         } catch (error) {
             throw new Error("Error finding user role by id", { cause: error })
         }
     }
+
+    async isMember(userId: string, domainId: string): Promise<Result<boolean>> {
+        try {
+            const user = await this.model.exists({ userId, domainId, deletedAt: null }).exec()
+            return [Boolean(user), null]
+        } catch (error) {
+            throw new Error("Error checking if user is member of domain", { cause: error })
+        }
+    }
+
     async userPermisisons(userId: string, domainId: string): Promise<Result<rolePermissions & { role: Role }>> {
         try {
             const userRole = await this.model.findOne({ userId, domainId, deletedAt: null }, "role").exec() // only gets the role
@@ -63,7 +75,7 @@ export default class UserRoleModel extends MongoAssociationModel<IUserRole> {
                 if (!result) {
                     return [null, new Error("User role not found for update")]
                 }
-                return [result, null]
+                return [result.toObject(), null]
             } catch (error) {
                 throw new Error("Error updating user role", { cause: error })
             }
@@ -81,3 +93,6 @@ export default class UserRoleModel extends MongoAssociationModel<IUserRole> {
     }
 
 }
+
+
+export const UserRoleModelInstance = new UserRoleModel(MongoConnection, UserRolesSchema, "UserRoles")

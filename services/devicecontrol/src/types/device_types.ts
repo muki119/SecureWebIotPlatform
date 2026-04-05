@@ -1,5 +1,6 @@
-import type { ModelDTO, ModelSchema } from "@services/common/types"
+import type { ModelDTO, ModelSchema, BaseTokenClaims } from "@services/common/types"
 import { Schema } from "mongoose";
+import { type Seconds } from "@services/common/types";
 // doing this to avoid circular deps between model and schema - since model uses schema
 export enum CapabilityTypes {
     BINARY = "BINARY", // on or off
@@ -30,6 +31,11 @@ export interface IDevice extends ModelSchema {
     capabilities: Map<string, DeviceCapabilities>, // list of capabilities the device has - used for control and permissioning
 }
 
+export interface AddDeviceRequest { // 
+    name: string,
+    capabilities: Record<string, DeviceCapabilities>
+}
+
 export type DeviceTelemetry = {
     timestamp: Date, // idexed
     metadata: {
@@ -48,4 +54,12 @@ export enum IntervalUnits { // this is for the aggregation pipeline
     DAY = "Hour",
     WEEK = "Day",
     MONTH = "Week"
+}
+
+
+export interface DeviceTokenClaims extends BaseTokenClaims {
+    // sub is the device id 
+    // aud is domain id
+    // iss is the issuer - device control 
+    capabilities: Record<string, DeviceCapabilities>
 }

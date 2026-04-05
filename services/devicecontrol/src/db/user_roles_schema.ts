@@ -4,7 +4,7 @@ import type { IUserRole, MongoModelSchema } from "@services/common/types";
 import { ROLES } from "@services/common/constants";
 
 
-const UserRolesSchema = new Schema<MongoModelSchema<IUserRole>>({
+const UserRolesSchema = new Schema({
     _id: {
         type: Schema.Types.UUID,
         default: randomUUID,
@@ -42,6 +42,7 @@ const UserRolesSchema = new Schema<MongoModelSchema<IUserRole>>({
 })
 
 UserRolesSchema.index({ userId: 1, domainId: 1 }, { partialFilterExpression: { deletedAt: null }, unique: true })
+UserRolesSchema.set("toObject", { virtuals: true })
 
 export default UserRolesSchema
 

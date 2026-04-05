@@ -1,40 +1,45 @@
 {
-  "name": "@services/devicecontrol",
-  "version": "0.0.0",
-  "description": "The device control service for the secure web iot platform",
-  "homepage": "https://github.com/muki119/SecureWebIotPlatform#readme",
-  "bugs": {
-    "url": "https://github.com/muki119/SecureWebIotPlatform/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/muki119/SecureWebIotPlatform.git"
-  },
-  "license": "ISC",
-  "author": "Mugagga Kimera",
-  "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "dependencies": {
-    "cookie-parser": "^1.4.7",
-    "date-fns": "^4.1.0",
-    "express": "^5.2.1",
-    "express-validator": "^7.3.1",
-    "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.3.3",
-    "pino": "^10.3.0",
-    "pino-loki": "^3.0.0",
-    "prom-client": "^15.1.3",
-    "redis": "^5.10.0",
-    "tsx": "^4.21.0"
-  },
-  "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/express-session": "^1.18.2",
-    "@types/jsonwebtoken": "^9.0.10",
-    "esbuild": "0.27.3",
-    "vitest": "^4.0.18"
-  }
+	"name": "@services/devicecontrol",
+	"version": "0.0.0",
+	"description": "The device control service for the secure web iot platform",
+	"homepage": "https://github.com/muki119/SecureWebIotPlatform#readme",
+	"bugs": {
+		"url": "https://github.com/muki119/SecureWebIotPlatform/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/muki119/SecureWebIotPlatform.git"
+	},
+	"license": "ISC",
+	"author": "Mugagga Kimera",
+	"type": "module",
+	"main": "index.js",
+	"scripts": {
+		"test": "vitest",
+		"benchmark": "vitest bench",
+		"dev": "npx tsx  --env-file ./.env index.ts",
+		"watch": "npx tsx --env-file ./.env --watch-path ./ index.ts",
+		"build": "node build.mjs",
+		"start": "node --env-file ./.env build/index.js"
+	},
+	"dependencies": {
+		"cookie-parser": "^1.4.7",
+		"date-fns": "^4.1.0",
+		"express": "^5.2.1",
+		"express-validator": "^7.3.1",
+		"jsonwebtoken": "^9.0.3",
+		"mongoose": "^9.3.3",
+		"pino": "^10.3.0",
+		"pino-loki": "^3.0.0",
+		"prom-client": "^15.1.3",
+		"redis": "^5.10.0",
+		"tsx": "^4.21.0"
+	},
+	"devDependencies": {
+		"@types/express": "^5.0.6",
+		"@types/express-session": "^1.18.2",
+		"@types/jsonwebtoken": "^9.0.10",
+		"esbuild": "0.27.3",
+		"vitest": "^4.0.18"
+	}
 }

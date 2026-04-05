@@ -1,13 +1,14 @@
-import { MongoDatabaseModel, type Result } from "@services/common/types";
+import { type Result } from "@services/common/types";
+import { MongoConnection } from "../config";
 import { Schema, type Connection, Model } from "mongoose";
-import DeviceSchema from "../db/device_schema";
+import DeviceTelemetrySchema from "../db/device_telemetry_schema";
 import { startOfISOWeek, endOfISOWeek, startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns"
 import { type DeviceTelemetry, CapabilityTypes, Intervals, IntervalUnits } from "../types";
 
 
 
 // could potentially move this as a sidecar binary
-export default class DeviceTelemetryModel { // extends nothing because telemetry is only written and read (paginated)- dosent conform to usual crud since its just logs basicallys
+export class DeviceTelemetryModel { // extends nothing because telemetry is only written and read (paginated)- dosent conform to usual crud since its just logs basicallys
     private conn: Connection
     private model: Model<DeviceTelemetry>
     constructor(conn: Connection, schema: Schema, modelName: string) {
@@ -52,7 +53,7 @@ export default class DeviceTelemetryModel { // extends nothing because telemetry
         return capabilityType === CapabilityTypes.RANGE || capabilityType === CapabilityTypes.GUAGE
     }
 
-    async findByDeviceId(deviceId: string, capability: string, capabilityType: CapabilityTypes, queryDate = null, interval = Intervals.WEEK) { // will be paginated by week or day
+    async findByDeviceId(deviceId: string, capability: string, capabilityType: CapabilityTypes, queryDate: Date | null = null, interval = Intervals.WEEK): Promise<Result<DeviceTelemetry[]>> { // will be paginated by week or day
         try {
             const [lowerBound, upperBound] = this.getIntervalBounds(queryDate || new Date(), interval) // by doing this , dont need frontend to manually specify date bounds
             const isNumeric = this.isNumericCapability(capabilityType) // if the capability is a numeric type
@@ -84,9 +85,11 @@ export default class DeviceTelemetryModel { // extends nothing because telemetry
             ]).exec()
 
 
-            return results
+            return [results as DeviceTelemetry[], null]
         } catch (error) {
             throw new Error("Failed to find device telemetry", { cause: error })
         }
     }
 }
+
+export const DeviceTelemetryModelInstance = new DeviceTelemetryModel(MongoConnection, DeviceTelemetrySchema, "DeviceTelemetry")

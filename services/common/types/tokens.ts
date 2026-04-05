@@ -5,21 +5,19 @@ declare global {
         }
     }
 }
-export interface RefreshTokenClaims {
-    sub: string; // user id
+
+
+export interface BaseTokenClaims {
+    sub: string; // id
     aud: string; // audience
     iss: string; // issuer
     exp: Seconds; // expiration time in seconds
     iat: number; // issued at time in seconds
+}
+export interface RefreshTokenClaims extends BaseTokenClaims {
     jti: string; // unique identifier for the token - used for blocklisting
 }
-export interface AccessTokenClaims {
-    sub: string; // user id
-    aud: string; // audience
-    iss: string; // issuer
-    exp: Seconds; // expiration time in seconds
-    iat: number; // issued at time in seconds
-}
+export interface AccessTokenClaims extends BaseTokenClaims { }
 
 export interface Tokens {
     accessToken: string;
