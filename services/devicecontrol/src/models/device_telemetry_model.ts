@@ -2,20 +2,10 @@ import { MongoDatabaseModel, type Result } from "@services/common/types";
 import { Schema, type Connection, Model } from "mongoose";
 import DeviceSchema from "../db/device_schema";
 import { startOfISOWeek, endOfISOWeek, startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns"
-import { type DeviceTelemetry, CapabilityTypes } from "../types";
+import { type DeviceTelemetry, CapabilityTypes, Intervals, IntervalUnits } from "../types";
 
 
 
-export enum Intervals {
-    DAY = "DAY",
-    WEEK = "WEEK",
-    MONTH = "MONTH"
-}
-export enum IntervalUnits { // this is for the aggregation pipeline 
-    DAY = "Hour",
-    WEEK = "Day",
-    MONTH = "Week"
-}
 // could potentially move this as a sidecar binary
 export default class DeviceTelemetryModel { // extends nothing because telemetry is only written and read (paginated)- dosent conform to usual crud since its just logs basicallys
     private conn: Connection

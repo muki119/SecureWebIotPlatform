@@ -39,3 +39,13 @@ export type DeviceTelemetry = {
     value: string | number | boolean
 }
 
+export enum Intervals {
+    DAY = "DAY",
+    WEEK = "WEEK",
+    MONTH = "MONTH"
+}
+export enum IntervalUnits { // this is for the aggregation pipeline 
+    DAY = "Hour",
+    WEEK = "Day",
+    MONTH = "Week"
+}
