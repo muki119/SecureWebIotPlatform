@@ -1,7 +1,7 @@
-import type { IUserRole, ModelDTO, UpdateResult, Result, Role } from "@services/common/types"
+import type { IUserRole, ModelDTO, UpdateResult, Result, Role, rolePermissions } from "@services/common/types"
 import { MongoAssociationModel } from "@services/common/types";
-import { ROLES } from "@services/common/constants";
-import { Schema, Connection, Model, type ClientSession } from "mongoose";
+import { ROLES, ROLE_PERMISSIONS } from "@services/common/constants";
+import { Schema, Connection, type ClientSession } from "mongoose";
 
 export default class UserRoleModel extends MongoAssociationModel<IUserRole> {
 
@@ -32,6 +32,22 @@ export default class UserRoleModel extends MongoAssociationModel<IUserRole> {
             return userRole
         } catch (error) {
             throw new Error("Error finding user role by id", { cause: error })
+        }
+    }
+    async userPermisisons(userId: string, domainId: string): Promise<Result<rolePermissions & { role: Role }>> {
+        try {
+            const userRole = await this.model.findOne({ userId, domainId, deletedAt: null }, "role").exec() // only gets the role
+            if (!userRole) {
+                return [null, new Error("User role not found for user in domain")]
+            }
+            const rolePermissions = ROLE_PERMISSIONS[userRole.role]
+            if (!rolePermissions) {
+                return [null, new Error("Permissions not found for user role")]
+            }
+            return [{ role: userRole.role, ...rolePermissions }, null]
+
+        } catch (error) {
+            throw new Error("Error getting user permissions", { cause: error })
         }
     }
 
