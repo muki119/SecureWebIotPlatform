@@ -53,7 +53,7 @@ export class DeviceTelemetryModel { // extends nothing because telemetry is only
         return capabilityType === CapabilityTypes.RANGE || capabilityType === CapabilityTypes.GUAGE
     }
 
-    async findByDeviceId(deviceId: string, capability: string, capabilityType: CapabilityTypes, queryDate: Date | null = null, interval = Intervals.WEEK): Promise<Result<DeviceTelemetry[]>> { // will be paginated by week or day
+    async findByDeviceId(deviceId: string, capability: string, capabilityType: CapabilityTypes, queryDate: Date | null = null, interval = Intervals.WEEK): Promise<Result<any[]>> { // will be paginated by week or day
         try {
             const [lowerBound, upperBound] = this.getIntervalBounds(queryDate || new Date(), interval) // by doing this , dont need frontend to manually specify date bounds
             const isNumeric = this.isNumericCapability(capabilityType) // if the capability is a numeric type
