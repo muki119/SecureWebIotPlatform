@@ -91,6 +91,15 @@ export class UserRoleModel extends MongoAssociationModel<IUserRole> {
             return [true, null]
         }, externalSession)
     }
+    async deleteByUserId(userId: string, externalSession?: ClientSession): Promise<Result<boolean>> {
+        return await this.transactionWrap(async (session) => {
+            const result = await this.model.updateMany({ userId, deletedAt: null }, { deletedAt: new Date() }, { session }).exec()
+            if (result.modifiedCount === 0) {
+                return [null, new Error("No user roles found for deletion")]
+            }
+            return [true, null]
+        }, externalSession)
+    }
 
 }
 

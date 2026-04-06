@@ -72,7 +72,7 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
         return this.transactionWrap(async (conn) => {
             try {
                 if (!(newRole in ROLES)) {
-                    throw new Error("Invalid role specified")
+                    return [null, new Error("Invalid role specified")]
                 }
                 const updateQuery = `
                     UPDATE user_roles
@@ -107,6 +107,22 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
                 }
             } catch (error) {
                 throw new Error("Failed to delete user role association: ", { cause: error })
+            }
+        }, externalConn)
+    }
+
+    public async deleteByUserId(userId: string, externalConn?: PoolClient): Promise<void> {
+        return this.transactionWrap(async (conn) => {
+            try {
+                const deleteQuery = `
+                    UPDATE user_roles
+                    SET deleted_at = NOW()
+                    WHERE user_id = $1 AND deleted_at IS NULL
+            `
+                const values = [userId]
+                await conn.query(deleteQuery, values)
+            } catch (error) {
+                throw new Error("Failed to delete user role associations by user id: ", { cause: error })
             }
         }, externalConn)
     }

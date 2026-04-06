@@ -1,5 +1,10 @@
-import { UserDomainModelInstance, UserRoleModelInstance, ROLES } from "../../models";
-import { type ServiceResult } from "@services/common/types";
+import { UserDomainModelInstance, UserRoleModelInstance } from "../../models";
+import { ROLES } from "@services/common/constants";
+import { type Role, type ServiceResult } from "@services/common/types";
+import EventBusInstance from "../../config/event_bus";
+import { STREAMS } from "@services/common/config"
+
+
 
 export default async function AddUserService(inviter: string, invitee: string, domainId: string, role: string): Promise<ServiceResult<boolean>> {
     // user domain model entry
@@ -19,10 +24,15 @@ export default async function AddUserService(inviter: string, invitee: string, d
         if (!inviterIsAllowed.canManageUsers) {
             return [null, new Error("Inviter is not allowed to manage users in this domain")]
         }
-        await UserDomainModelInstance.multiTableTransaction(async (conn) => {
+        const result = await UserDomainModelInstance.multiTableTransaction(async (conn) => {
             await UserDomainModelInstance.create({ userId: invitee, domainId }, conn)
-            await UserRoleModelInstance.create({ userId: invitee, domainId, role }, conn)
+            const userRole = await UserRoleModelInstance.create({ userId: invitee, domainId, role: role.toUpperCase() as Role }, conn)
+            if (!userRole) {
+                throw new Error("Failed to create user role")
+            }
+            return userRole
         })
+        await EventBusInstance.send(STREAMS.DOMAIN_SERVICE.DOMAIN_USER_ADDED, result) // send the new user role to the event bus - flat enough to not cause problems or need stringifying
         return [true, null]
     } catch (error) {
         throw new Error("Failed to add user to domain: ", { cause: error })

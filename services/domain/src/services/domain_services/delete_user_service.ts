@@ -1,5 +1,7 @@
 import { UserDomainModelInstance, UserRoleModelInstance } from "../../models"
 import { type ServiceResult } from "@services/common/types";
+import EventBusInstance from "../../config/event_bus";
+import { STREAMS } from "@services/common/config"
 
 export default async function DeleteUserService(userId: string, domainId: string, userToDelete: string): Promise<ServiceResult<boolean>> {
     try {
@@ -23,7 +25,9 @@ export default async function DeleteUserService(userId: string, domainId: string
         await UserDomainModelInstance.multiTableTransaction(async (conn) => {
             await UserDomainModelInstance.delete(userToDelete, domainId, conn)
             await UserRoleModelInstance.delete(userToDelete, domainId, conn)
+
         })
+        await EventBusInstance.send(STREAMS.DOMAIN_SERVICE.DOMAIN_USER_REMOVED, { userId: userToDelete, domainId }) // send the deleted user id and domain id to the event bus
         return [true, null];
     }
     catch (error) {

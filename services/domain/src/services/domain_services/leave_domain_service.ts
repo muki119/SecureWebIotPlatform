@@ -1,6 +1,7 @@
 import { UserDomainModelInstance, UserRoleModelInstance } from "../../models"
 import { type ServiceResult } from "@services/common/types";
-
+import EventBusInstance from "../../config/event_bus";
+import { STREAMS } from "@services/common/config"
 export default async function LeaveDomainService(userId: string, domainId: string): Promise<ServiceResult<boolean>> {
     try {
         const isUserMember = await UserRoleModelInstance.userPermissions(userId, domainId)
@@ -14,6 +15,7 @@ export default async function LeaveDomainService(userId: string, domainId: strin
             await UserDomainModelInstance.delete(userId, domainId, conn)
             await UserRoleModelInstance.delete(userId, domainId, conn)
         })
+        await EventBusInstance.send(STREAMS.DOMAIN_SERVICE.DOMAIN_USER_REMOVED, { userId, domainId }) // send the deleted user id and domain id to the event bus
         return [true, null];
     } catch (error) {
         throw new Error("Failed to leave domain", { cause: error });
