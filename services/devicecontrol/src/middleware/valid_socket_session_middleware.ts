@@ -1,6 +1,6 @@
 import type { Socket, Event } from "socket.io"
 import { VerifyAccessToken } from "../helpers"
-import logger from "../config/logger";
+import { logger } from "../config";
 
 
 
