@@ -1,7 +1,8 @@
 import type { Result, UpdatePatch } from "@services/common/types";
 import { UserRoleModelInstance, DeviceModelInstance } from "../models"
 import type { IDevice } from "../types";
-
+import { io } from "../config";
+import { SOCKET_EVENTS } from "../constants/socket_events";
 
 export async function UpdateDeviceService(userId: string, deviceId: string, patch: UpdatePatch<IDevice>): Promise<Result<IDevice>> {
     try {
@@ -20,6 +21,8 @@ export async function UpdateDeviceService(userId: string, deviceId: string, patc
         if (err) {
             return [null, err]
         }
+        // better to send the full updated device because user might not have device and the doing patches on client isnt a simple task
+        io.to(device.domainId as string).emit(SOCKET_EVENTS.SERVER_EMITTED.DEVICE.DEVICE_INFO_UPDATED, { device: updatedDevice, domainId: device.domainId }); // notify connected clients that a device has been updated
         return [updatedDevice!, null]
 
     } catch (error) {

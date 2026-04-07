@@ -5,7 +5,8 @@ import type { AddDeviceRequest, IDevice } from "../types"
 import { RedisClient } from "../config";
 import { VerifyPairingCode } from "../helpers";
 import { UserRoleModelInstance, DeviceModelInstance } from "../models"
-
+import { io } from "../config";
+import { SOCKET_EVENTS } from "../constants/socket_events";
 export async function AddDeviceService(pairingCode: string, deviceInfo: AddDeviceRequest): Promise<ServiceResult<string>> {
     // get the pairing code
     try {
@@ -35,11 +36,13 @@ export async function AddDeviceService(pairingCode: string, deviceInfo: AddDevic
             domainId: codeInfo.domainId,
             capabilities: capabilitiesMap
         }
+
         var [device, err] = await DeviceModelInstance.create(deviceData)
         if (err !== null) {
             return [null, err]
         }
         const deviceToken = CreateDeviceToken(device!)
+        io.to(codeInfo.domainId).emit(SOCKET_EVENTS.SERVER_EMITTED.DEVICE.ADDED, { deviceId: device!.id, domainId: codeInfo.domainId }); // notify connected clients that a new device has been added to the domain
         return [deviceToken, null]
     } catch (error) {
         throw new Error("Failed to add device", { cause: error });

@@ -1,7 +1,8 @@
 import type { Result } from "@services/common/types";
 import { UserRoleModelInstance, DeviceModelInstance } from "../models"
 import type { IDevice } from "../types";
-
+import { io } from "../config";
+import { SOCKET_EVENTS } from "../constants/socket_events";
 
 export async function DeleteDeviceService(userId: string, deviceId: string): Promise<Result<IDevice>> {
     try {
@@ -20,6 +21,8 @@ export async function DeleteDeviceService(userId: string, deviceId: string): Pro
         if (err) {
             return [null, err]
         }
+
+        io.to(device.domainId as string).emit(SOCKET_EVENTS.SERVER_EMITTED.DEVICE.REMOVED, { deviceId: device.id, domainId: device.domainId });
         return [deletedDevice!, null]
 
     } catch (error) {

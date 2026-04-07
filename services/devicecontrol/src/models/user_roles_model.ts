@@ -25,12 +25,21 @@ export class UserRoleModel extends MongoAssociationModel<IUserRole> {
         }, externalSession)
     }
 
-    async findById(id: string, domainId?: string): Promise<IUserRole | null> {
+    async findByUserId(userId: string): Promise<IUserRole[]> {
+        try {
+            const userRoles = await this.model.find({ userId, deletedAt: null }).exec()
+            return userRoles.map(role => role.toObject())
+        } catch (error) {
+            throw new Error("Error finding user roles by user id", { cause: error })
+        }
+    }
+
+    async find(userId: string, domainId: string): Promise<IUserRole | null> {
         try {
             if (!domainId) {
                 throw new Error("Domain ID is required to find user role")
             }
-            const userRole = await this.model.findOne({ _id: id, domainId, deletedAt: null }).exec()
+            const userRole = await this.model.findOne({ userId, domainId, deletedAt: null }).exec()
             return userRole ? userRole.toObject() : null
         } catch (error) {
             throw new Error("Error finding user role by id", { cause: error })
