@@ -1,4 +1,4 @@
-import { PostgresAssociationModel, type ModelDTO, type ModelSchema, type UpdatePatch, type UpdateResult } from "@services/common/types"
+import { PostgresAssociationModel, type ModelDTO, type ModelSchema } from "@services/common/types"
 import { Pool, type PoolClient } from "pg"
 import { PostgresPool } from "../config/postgres"
 

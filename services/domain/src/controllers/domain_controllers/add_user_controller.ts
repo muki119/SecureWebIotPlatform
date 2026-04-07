@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { ROLES } from '../../models';
+import { ROLES } from '@services/common/constants';
 import { AddUserService } from '../../services';
 export default async function AddUserController(req: Request, res: Response, next: NextFunction) {
     // adds a user to a domain with a specific role

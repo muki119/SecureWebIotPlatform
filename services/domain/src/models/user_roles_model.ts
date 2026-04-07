@@ -1,5 +1,5 @@
-import { PostgresAssociationModel, PostgresDatabaseModel } from "@services/common/types"
-import type { ModelDTO, ModelSchema, UpdatePatch, UpdateResult, IUserRole, rolePermissions, Role } from "@services/common/types"
+import { PostgresAssociationModel } from "@services/common/types"
+import type { ModelDTO, UpdateResult, IUserRole, rolePermissions, Role } from "@services/common/types"
 import { ROLES, ROLE_PERMISSIONS } from "@services/common/constants"
 import { Pool, type PoolClient } from "pg"
 import { PostgresPool } from "../config/postgres"
