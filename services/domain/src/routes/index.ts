@@ -5,10 +5,10 @@ import express from 'express';
 
 
 
-const Domain_ProfileRouter = express.Router();
+const DomainProfileRouter = express.Router();
 
-Domain_ProfileRouter.use(ValidSessionMiddleware);
-Domain_ProfileRouter.use("/domain", DomainRouter);
-Domain_ProfileRouter.use("/profile", ProfileRouter);
+DomainProfileRouter.use(ValidSessionMiddleware);
+DomainProfileRouter.use("/domain", DomainRouter);
+DomainProfileRouter.use("/profile", ProfileRouter);
 
-export default Domain_ProfileRouter;
+export default DomainProfileRouter;

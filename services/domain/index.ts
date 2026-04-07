@@ -1,7 +1,7 @@
 import express from 'express';
 import { GetEnvNumber } from '@services/common/utilities';
 import cookieParser from 'cookie-parser';
-import Domain_ProfileRouter from './src/routes';
+import DomainProfileRouter from './src/routes';
 import EventBusInstance from './src/config/event_bus';
 import logger from './src/config/logger';
 import { ErrorHandlerMiddleware } from './src/middleware';
@@ -13,7 +13,7 @@ app.use(cookieParser());
 app.disable('x-powered-by')
 
 
-app.use('/api/v1', Domain_ProfileRouter);
+app.use('/api/v1', DomainProfileRouter);
 app.use(ErrorHandlerMiddleware);
 const port = GetEnvNumber('PORT', 3000);
 
