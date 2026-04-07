@@ -16,9 +16,13 @@ export async function ValidSocketSessionMiddleware(socket: Socket, next: (err?: 
         }
         (socket as any).user = payload; // cba to extend for user payload
         const tokenExpiry = payload.exp * 1000 - Date.now();
-        setTimeout(() => { // disconnect socket when token expires - security measure
+        const timeout = setTimeout(() => { // disconnect socket when token expires - security measure
             socket.disconnect(true);
         }, tokenExpiry);
+
+        socket.on("disconnect", (reason) => {
+            clearTimeout(timeout);
+        });
         next();
     } catch (err) {
         logger.error({ error: err }, "Error in ValidSocketSessionMiddleware:");
