@@ -1,5 +1,5 @@
 import { ConnectToRedis } from '@services/common/config';
-import logger from './logger';
+import { logger } from './';
 import { GetEnvString, GetEnvNumber } from "@services/common/utilities";
 
 export const RedisClient = ConnectToRedis({
