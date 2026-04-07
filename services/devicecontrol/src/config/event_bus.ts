@@ -5,7 +5,7 @@
 import { EventBus } from "@services/eventbus";
 import { GetEnvString, GetEnvNumber } from "@services/common/utilities";
 import { CONSUMER_GROUPS } from "@services/common/config";
-import logger from "./logger";
+import { logger } from "./";
 import { hostname } from "node:os";
 const eventBusConfig = {
     connectionOptions: {

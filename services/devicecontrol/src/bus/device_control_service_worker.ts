@@ -4,7 +4,7 @@
 import { BaseWorker } from "@services/eventbus";
 import { STREAMS } from "@services/common/config";
 import { DomainUserAddedHandler, DomainUserRemovedHandler, DomainUserRoleUpdatedHandler, UserDeletedHandler } from "./handlers";
-import logger from "../config/logger";
+import { logger } from "../config";
 export class DeviceControlServiceWorker extends BaseWorker {
     onCreate() {
         this.handler(STREAMS.DOMAIN_SERVICE.DOMAIN_CREATED, DomainUserAddedHandler) // only has to create a user role for domain owner
