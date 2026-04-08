@@ -133,22 +133,20 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
     }
 
     async updateCurrentState(id: string, capabilityKey: string, newValue: string | number | boolean, externalSession?: ClientSession): Promise<Result<IDevice>> {
-        return await this.transactionWrap(async (session) => {
-            const device = await this.model.findOne({ _id: id, deletedAt: null }).exec() // get the device
-            if (!device) {
-                return [null, new Error("Device not found")]
-            }
-            const capability = device.capabilities.get(capabilityKey) // find if the device is even capable of the requested control 
-            if (!capability) {
-                return [null, new Error("Capability not found on device")]
-            }
-            if (!this.verifyCapabilityValue(capability.type, newValue, capability)) {
-                return [null, new Error("Invalid value for capability")]
-            }
-            device.currentState.set(capabilityKey, { value: newValue, timestamp: new Date() })
-            await device.save({ session })
-            return [device.toObject(), null]
-        }, externalSession)
+        const device = await this.model.findOne({ _id: id, deletedAt: null }).exec() // get the device
+        if (!device) {
+            return [null, new Error("Device not found")]
+        }
+        const capability = device.capabilities.get(capabilityKey) // find if the device is even capable of the requested control 
+        if (!capability) {
+            return [null, new Error("Capability not found on device")]
+        }
+        if (!this.verifyCapabilityValue(capability.type, newValue, capability)) {
+            return [null, new Error("Invalid value for capability")]
+        }
+        device.currentState.set(capabilityKey, { value: newValue, timestamp: new Date() })
+        await device.save()
+        return [device.toObject(), null]
     }
 
     async create(item: ModelDTO<Omit<IDevice, "currentState">>, externalSession?: ClientSession): Promise<Result<IDevice>> {
@@ -192,17 +190,22 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
     }
     async update(id: string, patch: UpdatePatch<IDevice>, externalSession?: ClientSession): Promise<UpdateResult<IDevice>> {
         return await this.transactionWrap(async (session) => {
-            const [updateObject, error] = await this.createUpdateObject(patch)
-            if (error) {
-                return [null, error]
+            try {
+                const [updateObject, error] = await this.createUpdateObject(patch)
+                if (error) {
+                    return [null, error]
+                }
+                const updatedDevice = await this.model.findOneAndUpdate({ _id: id, deletedAt: null }, updateObject, { session, returnDocument: "after" }).exec()
+                if (!updatedDevice) {
+                    return [null, new Error("Device not found")]
+                }
+                return [updatedDevice.toObject(), null]
+            } catch (error) {
+                throw new Error("Error updating device", { cause: error })
             }
-            const updatedDevice = await this.model.findOneAndUpdate({ _id: id, deletedAt: null }, updateObject, { session, returnDocument: "after" }).exec()
-            if (!updatedDevice) {
-                return [null, new Error("Device not found")]
-            }
-            return [updatedDevice.toObject(), null]
         }, externalSession)
     }
+
 }
 
 

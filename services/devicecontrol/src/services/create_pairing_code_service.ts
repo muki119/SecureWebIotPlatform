@@ -2,7 +2,7 @@ import { RedisClient } from "../config";
 import { GeneratePairingCode } from "../helpers";
 import { type Result } from "@services/common/types"
 import { UserRoleModelInstance } from "../models";
-import { PAIRING_CODE_EXPIRY_SECONDS, PAIRING_CODE_REDIS_KEY_PREFIX } from "../constants/pairing_code";
+import { PAIRING_CODE_EXPIRY_SECONDS, PAIRING_CODE_REDIS_KEY_PREFIX } from "../constants";
 export async function CreatePairingCodeService(userId: string, domainId: string): Promise<Result<{ pairingCode: string, expiry: Date }, Error>> {
     try {
         const [userPermissions, err] = await UserRoleModelInstance.userPermisisons(userId, domainId)

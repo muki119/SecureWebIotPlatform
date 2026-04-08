@@ -1,12 +1,12 @@
 import type { ModelDTO, ServiceResult } from "@services/common/types";
-import { PAIRING_CODE_REDIS_KEY_PREFIX } from "../constants/pairing_code";
+import { PAIRING_CODE_REDIS_KEY_PREFIX } from "../constants";
 import { CreateDeviceToken } from "../helpers";
 import type { AddDeviceRequest, IDevice } from "../types"
 import { RedisClient } from "../config";
 import { VerifyPairingCode } from "../helpers";
 import { UserRoleModelInstance, DeviceModelInstance } from "../models"
 import { io } from "../config";
-import { SOCKET_EVENTS } from "../constants/socket_events";
+import { SOCKET_EVENTS } from "../constants/";
 export async function AddDeviceService(pairingCode: string, deviceInfo: AddDeviceRequest): Promise<ServiceResult<string>> {
     // get the pairing code
     try {

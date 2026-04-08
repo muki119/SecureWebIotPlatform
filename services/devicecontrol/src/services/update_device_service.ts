@@ -2,7 +2,7 @@ import type { Result, UpdatePatch } from "@services/common/types";
 import { UserRoleModelInstance, DeviceModelInstance } from "../models"
 import type { IDevice } from "../types";
 import { io } from "../config";
-import { SOCKET_EVENTS } from "../constants/socket_events";
+import { SOCKET_EVENTS } from "../constants/";
 
 export async function UpdateDeviceService(userId: string, deviceId: string, patch: UpdatePatch<IDevice>): Promise<Result<IDevice>> {
     try {

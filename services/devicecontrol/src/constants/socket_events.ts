@@ -5,7 +5,7 @@ export const SOCKET_EVENTS = {
 
     CLIENT_EMITTED: {
         DEVICE_CONTROL: { // client emitted
-            UPDATE: "DEVICE_CONTROL_UPDATE" // this is emitted to the device when a user updates capability  of a device (ie is controlling something ) - should follow {deviceId, changes:{capability:string, value:any} } // has to be debounced on client so micro changes dont kill backend 
+            UPDATE: "DEVICE_CONTROL_UPDATE" // this is emitted to the device when a user updates capability  of a device (ie is controlling something ) - should follow {deviceId,domainId, changes:{capability:string, value:any} } // has to be debounced on client so micro changes dont kill backend  - might have to be acked
         }
     },
 

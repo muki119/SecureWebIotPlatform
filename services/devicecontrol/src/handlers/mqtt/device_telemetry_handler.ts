@@ -1,0 +1,24 @@
+import { DeviceTelemetryModelInstance, DeviceModelInstance } from "../../models";
+import { SOCKET_EVENTS } from "../../constants";
+import { io, logger } from "../../config";
+
+// this handler gets the telemetry data from devices and then gets 
+export async function HandleDeviceTelemetry(deviceId: string, message: Buffer) {
+    // get device data from the topic
+    // add to db
+    // send to domain room for device telemetry update
+    try {
+        const { capability, value } = JSON.parse(message.toString()) as { capability: string, value: string | number | boolean };
+        await DeviceTelemetryModelInstance.create(deviceId, capability, value);
+        const [updatedDevice, err] = await DeviceModelInstance.updateCurrentState(deviceId, capability, value);
+        if (err) {
+            logger.error({ error: err }, "Error updating device state:");
+            return;
+        }
+        io.to(updatedDevice.domainId as string).emit(SOCKET_EVENTS.SERVER_EMITTED.DEVICE.TELEMETRY, { deviceId, domainId: updatedDevice.domainId, capability, value });
+        return
+    } catch (error) {
+        logger.error({ error }, "Error handling device telemetry:");
+        return;
+    }
+}

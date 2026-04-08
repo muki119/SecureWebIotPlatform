@@ -2,7 +2,7 @@ import type { EventPayload } from "@services/eventbus";
 import { UserRoleModelInstance } from "../../models";
 import type { Role } from "@services/common/types";
 import { SocketEmitterInstance } from "../../config";
-import { SOCKET_EVENTS } from "../../constants/socket_events";
+import { SOCKET_EVENTS } from "../../constants/";
 export async function DomainUserRoleUpdatedHandler(message: EventPayload) {
     try {
         // get role info from payload
