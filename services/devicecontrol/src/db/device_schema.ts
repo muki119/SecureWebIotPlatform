@@ -1,7 +1,6 @@
 import { Schema } from "mongoose";
 import { CapabilityTypes } from "../types"
-import type { IDevice, CurrentDeviceState, DeviceCapabilities } from "../types"
-import type { MongoModelSchema } from "@services/common/types";
+import type { CurrentDeviceState, DeviceCapabilities } from "../types"
 import { randomUUID } from 'crypto';
 
 

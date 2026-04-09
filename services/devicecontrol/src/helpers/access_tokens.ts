@@ -1,4 +1,4 @@
 import { CreateVerifyAccessTokenInstance } from "@services/common/helpers"
-import Logger from "../config/logger";
+import { logger } from "../config/";
 
-export const VerifyAccessToken = CreateVerifyAccessTokenInstance(Logger);
+export const VerifyAccessToken = CreateVerifyAccessTokenInstance(logger);

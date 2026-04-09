@@ -1,6 +1,5 @@
 import type { ModelDTO, ModelSchema, BaseTokenClaims } from "@services/common/types"
 import { Schema } from "mongoose";
-import { type Seconds } from "@services/common/types";
 // doing this to avoid circular deps between model and schema - since model uses schema
 export enum CapabilityTypes {
     BINARY = "BINARY", // on or off
