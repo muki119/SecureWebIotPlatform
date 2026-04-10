@@ -101,16 +101,16 @@ const UserSchema: Schema<DefaultSchemaKeys> = {
 export const RegisterValidator = checkSchema(UserSchema, ["body"]) // email,password,forename,surname in body
 
 export const LoginValidator = checkSchema({
-    email: UserSchema.email,
-    password: UserSchema.password
+    email: UserSchema.email!,
+    password: UserSchema.password!
 }, ["body"]) // email and password in body
 
 export const ForgotPasswordValidator = checkSchema({
-    email: UserSchema.email
+    email: UserSchema.email!
 }, ["body"]) // only email in body
 
 export const ResetPasswordValidator = checkSchema({
-    password: UserSchema.password,
+    password: UserSchema.password!,
     token: {
         in: ["query"],
         escape: true,

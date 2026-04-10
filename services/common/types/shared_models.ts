@@ -1,6 +1,6 @@
 import type { ModelSchema } from "./models";
 import { ROLES } from "../constants"
-import { Schema } from "mongoose";
+import type { Schema } from "mongoose";
 
 
 export type Role = typeof ROLES[keyof typeof ROLES]

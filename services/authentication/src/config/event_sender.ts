@@ -1,4 +1,4 @@
-import { EventBus, EventSender } from "@services/eventbus";
+import { EventSender } from "@services/eventbus";
 import { GetEnvString, GetEnvNumber } from "@services/common/utilities";
 import { CONSUMER_GROUPS } from "@services/common/config";
 import { hostname } from "node:os";
