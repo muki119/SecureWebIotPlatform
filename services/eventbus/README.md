@@ -1,5 +1,7 @@
 # Event Bus
 
+[![Run Codebase Tests](https://github.com/muki119/SecureWebIotPlatform/actions/workflows/run_tests.yml/badge.svg)](https://github.com/muki119/SecureWebIotPlatform/actions/workflows/run_tests.yml)
+
 This Module is an abstraction layer for the Redis' Streams data structure.
 
 It provides a super simple API to publish and subscribe to streams without worrying about the intricacies of the Redis implementation.
