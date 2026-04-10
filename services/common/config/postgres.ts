@@ -1,5 +1,6 @@
-import pg from "pg"
-export function ConnectToPostgres(config: pg.PoolConfig, logger: any): pg.Pool {
+import type { Pool, PoolConfig } from "pg"
+export async function ConnectToPostgres(config: PoolConfig, logger: any): Promise<Pool> {
+    const pg = await import("pg")
     const newConnectionPool = new pg.Pool(config)
     newConnectionPool.on("error", (err) => {
         logger.error({ err }, "Unexpected error on idle postgres client")

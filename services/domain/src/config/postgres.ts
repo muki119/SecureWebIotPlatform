@@ -11,4 +11,4 @@ const defaultConfig: pg.PoolConfig = {
     database: GetEnvString("POSTGRES_DB", "domain_service"),
 }
 
-export const PostgresPool = ConnectToPostgres(defaultConfig, logger)
+export const PostgresPool = await ConnectToPostgres(defaultConfig, logger)

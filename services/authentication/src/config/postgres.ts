@@ -12,4 +12,4 @@ const defaultConfig: pg.PoolConfig = {
 }
 
 
-export const PostgresPool = ConnectToPostgres(defaultConfig, logger)
+export const PostgresPool = await ConnectToPostgres(defaultConfig, logger)

@@ -1,5 +1,5 @@
 import type { Logger } from 'pino';
-import { createClientPool } from 'redis';
+
 
 export interface RedisConfig {
     host: string;
@@ -8,8 +8,9 @@ export interface RedisConfig {
     db: number;
 }
 
-export function ConnectToRedis(config: RedisConfig, logger: Logger) {
+export async function ConnectToRedis(config: RedisConfig, logger: Logger) {
     try {
+        const { createClientPool } = await import('redis');
         const client = createClientPool({
             socket: {
                 host: config.host,
