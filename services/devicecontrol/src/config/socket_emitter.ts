@@ -5,11 +5,11 @@ import { GetEnvString, GetEnvNumber } from "@services/common/utilities";
 export async function CreateSocketEmitter() {
     const redisClient = createClient({
         socket: {
-            host: GetEnvString("REDIS_HOST", "localhost"),
-            port: GetEnvNumber("REDIS_PORT", 6379)
+            host: GetEnvString("SOCKET_REDIS_HOST", "localhost"),
+            port: GetEnvNumber("SOCKET_REDIS_PORT", 6379)
         },
-        password: GetEnvString("REDIS_PASSWORD", ""), // add password if needed
-        database: GetEnvNumber("REDIS_DB", 0),
+        password: GetEnvString("SOCKET_REDIS_PASSWORD", ""), // add password if needed
+        database: GetEnvNumber("SOCKET_REDIS_DB", 0),
     });
 
     await redisClient.connect()
