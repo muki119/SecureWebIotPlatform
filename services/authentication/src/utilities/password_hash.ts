@@ -1,5 +1,4 @@
 import { scrypt, timingSafeEqual, randomBytes } from "node:crypto"
-import { promisify } from "node:util"
 import logger from "../config/logger"
 
 
@@ -11,8 +10,28 @@ export const ErrMinPasswordLength = `Password must be at least ${PASSWORD_CONSTR
 export const ErrMaxPasswordLength = `Password must be at most ${PASSWORD_CONSTRAINTS.maxLength} characters long`
 export const ErrHashRequired = "Hash is required for verification"
 
-const scryptAsync = promisify(scrypt)
-const saltGenAsync = promisify(randomBytes)
+function scryptAsync(plaintext: string, salt: Buffer, keylen: number, options: { N: number, r: number, p: number }): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+        scrypt(plaintext, salt, keylen, options, (err, derivedKey) => {
+            if (err) {
+                reject(err)
+            } else {
+                resolve(derivedKey as Buffer)
+            }
+        })
+    })
+}
+function saltGenAsync(length: number): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+        randomBytes(length, (err, buf) => {
+            if (err) {
+                reject(err)
+            } else {
+                resolve(buf)
+            }
+        })
+    })
+}
 /**
  * 
  * @param plaintext 
@@ -40,7 +59,7 @@ export async function HashPassword(plaintext: string): Promise<string> {
     try {
         const salt = await saltGenAsync(SALT_LENGTH);
 
-        const derivedKey = await scryptAsync(plaintext, salt, SCRYPT_CONFIG.keylen, { N: SCRYPT_CONFIG.N, r: SCRYPT_CONFIG.r, p: SCRYPT_CONFIG.p }) as Buffer;
+        const derivedKey = await scryptAsync(plaintext, salt, SCRYPT_CONFIG.keylen, { N: SCRYPT_CONFIG.N, r: SCRYPT_CONFIG.r, p: SCRYPT_CONFIG.p });
         const fString = `$${SCRYPT_CONFIG.N}$${SCRYPT_CONFIG.r}$${SCRYPT_CONFIG.p}$${salt.toString("base64")}$${derivedKey.toString("base64")}` // the formatted string - to be stored in the database§
 
         return fString
@@ -79,7 +98,7 @@ export async function VerifyPassword(plaintext: string, hash: string): Promise<b
         if (!Nstr || !rstr || !pstr || !salt || !hashedPassword) {
             throw new Error("Invalid hash format")
         }
-        const hashToCompare = await scryptAsync(plaintext, Buffer.from(salt, "base64"), SCRYPT_CONFIG.keylen, { N: parseInt(Nstr, 10), r: parseInt(rstr, 10), p: parseInt(pstr, 10) }) as Buffer;
+        const hashToCompare = await scryptAsync(plaintext, Buffer.from(salt, "base64"), SCRYPT_CONFIG.keylen, { N: parseInt(Nstr, 10), r: parseInt(rstr, 10), p: parseInt(pstr, 10) });
         return timingSafeEqual(hashToCompare, Buffer.from(hashedPassword, "base64")) // to prevent timing attacks
 
     } catch (err) {
