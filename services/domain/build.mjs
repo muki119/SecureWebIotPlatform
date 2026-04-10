@@ -1,17 +1,25 @@
-import * as esbuild from 'esbuild';
-import { readFile } from 'fs/promises';
-const moduleDependencies = JSON.parse(await readFile(new URL('./package.json', import.meta.url), 'utf-8'));
+import esbuild from 'esbuild';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-
+console.log("Starting build process...");
+console.log(dirname(fileURLToPath(import.meta.url)))
 await esbuild.build({
-    entryPoints: ['index.ts'],
+    entryPoints: ['./index.ts', "./src/bus/domain_service_worker.ts"],
     bundle: true,
     platform: 'node',
     target: 'esNext',
     format: "esm",
-    outdir: 'build',
-    sourcemap: true,
-    tsconfig: 'tsconfig.json',
+    outdir: 'dist',
     resolveExtensions: ['.ts', '.js'],
-    external: Object.keys(moduleDependencies.dependencies)
+    alias: {
+        '@services/common': '../common',
+        "@services/eventbus": '../eventbus/src',
+    },
+    treeShaking: true,
+    packages: 'external',
+    preserveSymlinks: true,
+    absWorkingDir: dirname(fileURLToPath(import.meta.url)),
+    metafile: true,
 });
+console.log("Build completed successfully.");

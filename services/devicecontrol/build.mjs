@@ -3,9 +3,9 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 console.log("Starting build process...");
-
+console.log(dirname(fileURLToPath(import.meta.url)))
 await esbuild.build({
-    entryPoints: ['index.ts'],
+    entryPoints: ['./index.ts', "./src/bus/device_control_service_worker.ts"],
     bundle: true,
     platform: 'node',
     target: 'esNext',
