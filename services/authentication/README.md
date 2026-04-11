@@ -86,7 +86,7 @@ The Authentication Service has no Streams to listen to, since it mainly acts as 
 
 - PostgreSQL database server
 
-- A redis server
+- A redis server (Event bus , Jwt blacklisting and password reset tokens)
 
 - A Loki instance (optional, for logging)
 
@@ -95,3 +95,13 @@ The Authentication Service has no Streams to listen to, since it mainly acts as 
 ## Additional Documentation
 
 Please refer to additional documentation such as the .env.example for available configuration options.
+
+## Docker
+
+To build the docker image for the domain service, run the following command where the current working directory is the services dir:
+
+``` bash
+
+docker build -t "auth_service":1.0.0 -f authentication/Dockerfile .
+
+```

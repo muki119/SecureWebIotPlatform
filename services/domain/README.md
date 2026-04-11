@@ -78,6 +78,8 @@ The creation and deletion of Profiles are triggered by the creation and deletion
 
 - In addition, it currently also emits the following events:
 
+  - `DOMAIN_SERVICE.DOMAIN_CREATED` - When a domain is created
+
   - `DOMAIN_SERVICE.DOMAIN_USER_ADDED` - When a user is added to a domain
 
   - `DOMAIN_SERVICE.DOMAIN_USER_ROLE_UPDATED` - When a user's role in a domain is updated
@@ -85,3 +87,13 @@ The creation and deletion of Profiles are triggered by the creation and deletion
   - `DOMAIN_SERVICE.DOMAIN_USER_UPDATED` - When a user's information in a domain is updated
 
   - `DOMAIN_SERVICE.DOMAIN_USER_REMOVED` - When a user is removed from a domain
+
+
+## Docker
+To build the docker image for the domain service, run the following command where the current working directory is the services dir:
+
+```bash
+
+docker build -t "domain_service":1.0.0 -f domain/Dockerfile .  
+
+```
