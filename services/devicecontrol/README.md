@@ -14,7 +14,7 @@ The Device Control Service is responsible for managing the devices within the pl
 
 ## Pre-requisites
 
-- A Mongodb instance - (device information and telemetry data storage)
+- A MongoDB instance - (device information and telemetry data storage)
 
 - A Redis server (Event bus and pairing code)
 
@@ -28,7 +28,7 @@ The Device Control Service is responsible for managing the devices within the pl
 
   - Activates a device with a pairing code and adds it to the domain
 
-  - Is a device only endpoint , the device will send the pairing code in the request body
+  - Is a device only endpoint, the device will send the pairing code in the request body
 
   - Returns a JWT token that the device uses to connect to the MQTT broker and authenticate itself
 
@@ -40,11 +40,11 @@ The Device Control Service is responsible for managing the devices within the pl
 
 - PATCH `/device/:deviceId/` - Update a device's basic information
 
-  - Device capabilites cannot be updated.
+  - Device capabilities cannot be updated.
 
 - DELETE `/device/:deviceId/` - Delete a device
 
-- **The creation and deletion of devices , requires that the user has the appropriate permissions in the domain**
+- **The creation and deletion of devices requires that the user has the appropriate permissions in the domain**
 
 **For more details on the api endpoints, please look at the api documentaion in the docs folder.**
 
@@ -60,7 +60,7 @@ The Device Control Service is responsible for managing the devices within the pl
 
   - `/device/+/telemetry`
 
-    - The topic that devices send telemetry data to. The server listens to the topic , processes and stores the telemetry data , then sends the data through sockets to the clients for real-time updates.
+    - The topic that devices send telemetry data to. The server listens to the topic, processes and stores the telemetry data, then sends the data through sockets to the clients for real-time updates.
 
 ### Socket.IO Events
 
@@ -108,13 +108,13 @@ The Device Control Service is responsible for managing the devices within the pl
 
 ### Device Capabilities
 
-Devices can have different capabilites that define the type of data they can send and if they can recieve commands or not.
+Devices can have different capabilities that define the type of data they can send and if they can receive commands or not.
 
 The capability types are as follows:
 
 - Binary
 
-  - Binary capabilities can only have two states , true or false (ON or OFF) .
+  - Binary capabilities can only have two states, true or false (ON or OFF).
 
     - Example: A light bulb can have a binary capability that represents whether it is on or off.
 
@@ -125,11 +125,11 @@ The capability types are as follows:
     - Example: A thermostat can have a range capability that represents the current temperature setting, which can be set to any value between 10 and 30 degrees Celsius.
 
 - GUAGE
-  - Guage capabilities can have a value that represents a measurement or reading.
+  - Gauge capabilities can have a value that represents a measurement or reading.
 
-    - Example: A humidity sensor can have a guage capability that represents the current humidity level in percentage.
+    - Example: A humidity sensor can have a gauge capability that represents the current humidity level in percentage.
 
-    - Guage capabilites are read-only and cannot be controlled by the users
+    - Gauge capabilities are read-only and cannot be controlled by the users
 
 - ENUM
 
@@ -139,38 +139,38 @@ The capability types are as follows:
 
 - COLOR
 
-  - Color capabilities can have a value that represents a color in RGB hex format.
+  - Colour capabilities can have a value that represents a colour in RGB hex format.
 
-    - Example: A smart light can have a color capability that represents the current color setting, which can be set to any RGB color hex value.
+    - Example: A smart light can have a colour capability that represents the current colour setting, which can be set to any RGB colour hex value.
 
 ## Event Bus
 
 The Device Control Service listens to the following events from the event bus:
 
 - `AUTH_SERVICE.USER_DELETED`
-  - When a user is deleted by the Authentication service , the device control service deletes all user role entries for that user.
+  - When a user is deleted by the Authentication service, the device control service deletes all user role entries for that user.
 
-- `DOMAIN_SERVICE.DOMAIN_CREATED` - When a domain is created the domains owner is given the owner role in the device control service as well
+- `DOMAIN_SERVICE.DOMAIN_CREATED` - When a domain is created, the domains owner is given the owner role in the device control service as well
 
 - `DOMAIN_SERVICE.DOMAIN_USER_ADDED`
 
-  - When a user is added to a domain a user role entry is created for that user in the device control service.
+  - When a user is added to a domain, a user role entry is created for that user in the device control service.
 
 - `DOMAIN_SERVICE.DOMAIN_USER_ROLE_UPDATED`
 
-  - When a user's role in a domain is updated it is updated in the device control service as well.
+  - When a user's role in a domain is updated, it is updated in the device control service as well.
 
 - `DOMAIN_SERVICE.DOMAIN_USER_REMOVED`
 
-  - When a user is removed from a domain they are removed from the device control service as well.
+  - When a user is removed from a domain, they are removed from the device control service as well.
 
 ## Additional Documentation
 
-Please refer to additional documentation such as the .env.example for available configuration options.
+Please refer to additional documentation, such as the .env.example, for available configuration options.
 
 ## Docker
 
-To build the docker image for the device control service, run the following command where the current working directory is the services dir:
+To build the Docker image for the device control service, run the following command where the current working directory is the services dir:
 
 ```bash
 
