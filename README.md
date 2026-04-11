@@ -27,6 +27,12 @@ The system also utilises software such as:
 - MQTT for communication between the backend and IoT devices.
 - Nginx for reverse proxying.
 
+## File Structure
+
+- `services/` - Contains the code for the backend serices of the system
+
+- `app/` - Contains the code for the frontend of the system
+
 ## Installation
 
 Currently, the system is not ready for installation.
