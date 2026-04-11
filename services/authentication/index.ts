@@ -16,7 +16,7 @@ app.use(cookieParser());
 app.disable('x-powered-by')
 app.use(RequestMetricsMiddleware);
 
-app.use('/auth/v1', authRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 app.use(ErrorHandlerMiddleware);
 

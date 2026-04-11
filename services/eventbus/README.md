@@ -12,6 +12,52 @@ This module runs as a worker process. This is so the application can work alongs
 
 ## Components
 
+``` text
+┌───────────────────────────────────────────────────┐                    
+│                                                   │                    
+│    Parent Process                                 │                    
+│  ┌──────────────────────┐  ┌────────────────────┐ │                    
+│  │                      │  │                    │ │                    
+│  │   Server Instance    ┼──► Event Bus Instance │ │                    
+│  │                      │  │                    │ │                    
+│  └──────────────────────┘  └────▲──────────────┬┘ │                    
+│                                 │              │  │                    
+└─────────────────────────────────┼──────────────┼──┘                    
+                                  │              │                       
+           Communicate through IPC│              │                       
+                                  │              │                       
+                                  │              │                       
+┌─────────────────────────────────▼────────┐     │                       
+│                                          │     │                       
+│   Worker Process                         │     │                       
+│                                          │     │                       
+│                                          │     │                       
+│                                          │     │                       
+│    ┌────────┐ ┌─────────────────────────┐│     │Send messages to Stream
+│    │        │ │                         ││     │                       
+│    │        ┼─►     Stream Handler      ││     │                       
+│    │        │ │                         ││     │                       
+│    │        │ └─────────────────────────┘│     │                       
+│    │        │ ┌─────────────────────────┐│     │                       
+│    │Listener│ │                         ││     │                       
+│    │        ┼─►      Error Handler      ││     │                       
+│    │        │ │                         ││     │                       
+│    │        │ └─────────────────────────┘│     │                       
+│    │        │                            │     │                       
+│    │        │                            │     │                       
+│    │        │                            │     │                       
+│    └─▲──────┘                            │     │                       
+│      │                                   │     │                       
+└──────┼───────────────────────────────────┘     │                       
+       │ Listen to Streams for messages          │                       
+┌──────┴─────────────────────────────────────────▼───┐                   
+│                                                    │                   
+│                   Redis Server                     │                   
+│                                                    │                   
+│                                                    │                   
+└────────────────────────────────────────────────────┘                                    
+```
+
 ### EventBus
 
 The main instance to be used by the main server process, this manages the lifecycle of the worker process and provides the ability to send data to a stream.
@@ -40,7 +86,7 @@ For a message in a stream to be acknowledged, it must be processed without throw
 
 - A Redis server must be running (since this is a REDIS STREAMS abstraction)
 
-### EventBus
+### EventBus Methods
 
 #### `const EventBusInstance = new EventBus(config: EventBusConfig, logger: Logger, workerDir: string)`
 
@@ -69,15 +115,15 @@ Creates a new EventBus instance.
 
     ```
 
-    - `connectionOptions` is the configuration for the Redis client used by the components to connect to the Redis server. Can either conform to the `RedisConfig` type or the `RedisClientOptions` type from the `redis` library.
+  - `connectionOptions` is the configuration for the Redis client used by the components to connect to the Redis server. Can either conform to the `RedisConfig` type or the `RedisClientOptions` type from the `redis` library.
 
-    - `consumerGroup` is the name of the consumer group that the listener process will be a part of; this is used so that multiple instances of the application can run without the messages being duplicated across the instances.
+  - `consumerGroup` is the name of the consumer group that the listener process will be a part of; this is used so that multiple instances of the application can run without the messages being duplicated across the instances.
 
-    - `consumerName` is the name of the consumer that the listener process will be using; this is used to identify the consumer in the consumer group.
+  - `consumerName` is the name of the consumer that the listener process will be using; this is used to identify the consumer in the consumer group.
 
-    - `maxCount` is the maximum number of messages that the listening process can pull from each stream.
+  - `maxCount` is the maximum number of messages that the listening process can pull from each stream.
 
-    - `maxConcurrent` is the maximum number of messages that can be processed at the same time by the listening process. This is used to prevent overwhelming the system with too many messages being processed at the same time.
+  - `maxConcurrent` is the maximum number of messages that can be processed at the same time by the listening process. This is used to prevent overwhelming the system with too many messages being processed at the same time.
 
 - `Logger` is a pino logger instance
 

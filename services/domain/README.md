@@ -65,7 +65,7 @@ The creation and deletion of Profiles are triggered by the creation and deletion
 
 - GET `/profile/search?email=<email>&limit=<limit>` - Search for users by their email
 
-For more details on the api endpoints, please look at the api documentaion in the docs folder.
+**For more details on the api endpoints, please look at the api documentaion in the docs folder.**
 
 ## Event Bus
 
