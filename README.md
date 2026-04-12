@@ -20,6 +20,7 @@ The system is currently built using NodeJS and React.
 
 The system also utilises software such as:
 
+- Docker for containerization and easy deployment of the system.
 - PostgreSQL and MongoDB for databases
 - Redis for time-sensitive data storage and as an event bus.
 - Docker for containerization and easy deployment of the system.

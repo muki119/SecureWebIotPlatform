@@ -142,4 +142,4 @@ vite.config.ts.timestamp-*
 .DS_Store
 build
 meta.json
-auth-built-in-db-bootstrap.example.csv
+auth-built-in-db-bootstrap.csv
