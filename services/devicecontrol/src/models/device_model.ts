@@ -89,17 +89,15 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
     }
 
     async delete(id: string, externalSession?: ClientSession): Promise<Result<IDevice>> {
-        return await this.transactionWrap(async (session) => {
-            try {
-                const deleted = await this.model.findOneAndUpdate({ _id: id, deletedAt: null }, { $set: { deletedAt: new Date() } }, { session }).exec()
-                if (!deleted) {
-                    return [null, new Error("Device not found")]
-                }
-                return [deleted.toObject(), null]
-            } catch (error) {
-                throw new Error("Error deleting device", { cause: error })
+        try {
+            const deleted = await this.model.findOneAndUpdate({ _id: id, deletedAt: null }, { $set: { deletedAt: new Date() } }).exec()
+            if (!deleted) {
+                return [null, new Error("Device not found")]
             }
-        }, externalSession)
+            return [deleted.toObject(), null]
+        } catch (error) {
+            throw new Error("Error deleting device", { cause: error })
+        }
     }
 
     verifyCapabilityValue(capabilityType: CapabilityTypes, value: string | number | boolean, capabilityDetails: DeviceCapabilities): boolean {
@@ -150,28 +148,26 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
     }
 
     async create(item: ModelDTO<Omit<IDevice, "currentState">>, externalSession?: ClientSession): Promise<Result<IDevice>> {
-        return await this.transactionWrap(async (session) => {
-            try {
-                const [err] = await this.verifyCapabilities(item.capabilities)
-                if (err) {
-                    return [null, err]
-                }
-                const currentState = await this.createCurrentStateMap(item.capabilities)
-                const newDevice = new this.model({
-                    name: item.name,
-                    domainId: item.domainId,
-                    createdBy: item.createdBy,
-                    capabilities: item.capabilities,
-                    currentState
-                })
-                console.log("New device to be created: ", newDevice)
-                await newDevice.save({ session })
-                return [newDevice.toObject(), null]
+        try {
+            const [err] = await this.verifyCapabilities(item.capabilities)
+            if (err) {
+                return [null, err]
             }
-            catch (error) {
-                throw new Error("Error creating device", { cause: error })
-            }
-        }, externalSession)
+            const currentState = await this.createCurrentStateMap(item.capabilities)
+            const newDevice = new this.model({
+                name: item.name,
+                domainId: item.domainId,
+                createdBy: item.createdBy,
+                capabilities: item.capabilities,
+                currentState
+            })
+            console.log("New device to be created: ", newDevice)
+            await newDevice.save()
+            return [newDevice.toObject(), null]
+        }
+        catch (error) {
+            throw new Error("Error creating device", { cause: error })
+        }
     }
 
     async findById(id: string): Promise<IDevice | null> {
@@ -189,21 +185,19 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
         }
     }
     async update(id: string, patch: UpdatePatch<IDevice>, externalSession?: ClientSession): Promise<UpdateResult<IDevice>> {
-        return await this.transactionWrap(async (session) => {
-            try {
-                const [updateObject, error] = await this.createUpdateObject(patch)
-                if (error) {
-                    return [null, error]
-                }
-                const updatedDevice = await this.model.findOneAndUpdate({ _id: id, deletedAt: null }, updateObject, { session, returnDocument: "after" }).exec()
-                if (!updatedDevice) {
-                    return [null, new Error("Device not found")]
-                }
-                return [updatedDevice.toObject(), null]
-            } catch (error) {
-                throw new Error("Error updating device", { cause: error })
+        try {
+            const [updateObject, error] = await this.createUpdateObject(patch)
+            if (error) {
+                return [null, error]
             }
-        }, externalSession)
+            const updatedDevice = await this.model.findOneAndUpdate({ _id: id, deletedAt: null }, updateObject, { returnDocument: "after" }).exec()
+            if (!updatedDevice) {
+                return [null, new Error("Device not found")]
+            }
+            return [updatedDevice.toObject(), null]
+        } catch (error) {
+            throw new Error("Error updating device", { cause: error })
+        }
     }
 
 }

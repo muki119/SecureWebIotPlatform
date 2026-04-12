@@ -14,15 +14,13 @@ export class UserRoleModel extends MongoAssociationModel<IUserRole> {
         super(db, schema, modelName)
     }
     async create(item: ModelDTO<IUserRole>, externalSession?: ClientSession): Promise<Result<IUserRole>> {
-        return await this.transactionWrap(async (session) => {
-            try {
-                const newRole = new this.model(item)
-                await newRole.save({ session })
-                return [newRole.toObject(), null]
-            } catch (error) {
-                throw new Error("Error creating user role", { cause: error })
-            }
-        }, externalSession)
+        try {
+            const newRole = new this.model(item)
+            await newRole.save()
+            return [newRole.toObject(), null]
+        } catch (error) {
+            throw new Error("Error creating user role", { cause: error })
+        }
     }
 
     async findByUserId(userId: string): Promise<IUserRole[]> {
@@ -73,44 +71,37 @@ export class UserRoleModel extends MongoAssociationModel<IUserRole> {
     }
 
     async updateRole(userId: string, domainId: string, newRole: Role, externalSession?: ClientSession): Promise<UpdateResult<IUserRole>> {
-        return await this.transactionWrap(async (session) => {
-            try {
-                const isValidRole = (newRole) && newRole.toUpperCase() in ROLES
-                if (!isValidRole) {
-                    return [null, new Error("Invalid role provided")]
-                }
-                const updateObject = { role: newRole }
-                const result = await this.model.findOneAndUpdate({ userId, domainId, deletedAt: null }, updateObject, { session, returnDocument: "after" }).exec()
-                if (!result) {
-                    return [null, new Error("User role not found for update")]
-                }
-                return [result.toObject(), null]
-            } catch (error) {
-                throw new Error("Error updating user role", { cause: error })
+        try {
+            const isValidRole = (newRole) && newRole.toUpperCase() in ROLES
+            if (!isValidRole) {
+                return [null, new Error("Invalid role provided")]
             }
-        }, externalSession)
+            const updateObject = { role: newRole }
+            const result = await this.model.findOneAndUpdate({ userId, domainId, deletedAt: null }, updateObject, { returnDocument: "after" }).exec()
+            if (!result) {
+                return [null, new Error("User role not found for update")]
+            }
+            return [result.toObject(), null]
+        } catch (error) {
+            throw new Error("Error updating user role", { cause: error })
+        }
     }
 
     async delete(userId: string, domainId: string, externalSession?: ClientSession): Promise<Result<boolean>> {
-        return await this.transactionWrap(async (session) => {
-            const result = await this.model.findOneAndUpdate({ userId, domainId, deletedAt: null }, { deletedAt: new Date() }, { session }).exec()
-            if (!result) {
-                return [null, new Error("User role not found for deletion")]
-            }
-            return [true, null]
-        }, externalSession)
+        const result = await this.model.findOneAndUpdate({ userId, domainId, deletedAt: null }, { deletedAt: new Date() }).exec()
+        if (!result) {
+            return [null, new Error("User role not found for deletion")]
+        }
+        return [true, null]
     }
     async deleteByUserId(userId: string, externalSession?: ClientSession): Promise<Result<boolean>> {
-        return await this.transactionWrap(async (session) => {
-            const result = await this.model.updateMany({ userId, deletedAt: null }, { deletedAt: new Date() }, { session }).exec()
-            if (result.modifiedCount === 0) {
-                return [null, new Error("No user roles found for deletion")]
-            }
-            return [true, null]
-        }, externalSession)
+        const result = await this.model.updateMany({ userId, deletedAt: null }, { deletedAt: new Date() }).exec()
+        if (result.modifiedCount === 0) {
+            return [null, new Error("No user roles found for deletion")]
+        }
+        return [true, null]
     }
 
 }
-
 
 export const UserRoleModelInstance = new UserRoleModel(MongoConnection, UserRolesSchema, "UserRoles")
