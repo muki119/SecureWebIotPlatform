@@ -50,13 +50,6 @@ export class EventBus {
 				},
 			});
 		}
-		if (!message.action) {
-			throw new Error("Message must have an action", {
-				cause: {
-					message,
-				},
-			});
-		}
 		return this.sender.send(stream, {
 			...message,
 			timestamp: new Date().toISOString(),
