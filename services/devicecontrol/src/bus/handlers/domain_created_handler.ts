@@ -1,5 +1,5 @@
 import type { EventPayload } from "@services/eventbus";
-import { UserRoleModelInstance } from "@services/domain/src/models";
+import { UserRoleModelInstance } from "../../models"
 import type { Role } from "@services/common/types";
 
 export async function DomainCreatedHandler(message: EventPayload) {

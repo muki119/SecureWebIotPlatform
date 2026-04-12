@@ -1,5 +1,5 @@
 import type { EventPayload } from "@services/eventbus";
-import { UserRoleModelInstance } from "@services/domain/src/models";
+import { UserRoleModelInstance } from "../../models"
 import { SocketEmitterInstance } from "../../config";
 import { SOCKET_EVENTS } from "../../constants/";
 export async function DomainUserRemovedHandler(message: EventPayload) {

@@ -5,6 +5,7 @@ import { BaseWorker } from "@services/eventbus";
 import { STREAMS } from "@services/common/config";
 import { DomainUserAddedHandler, DomainUserRemovedHandler, DomainUserRoleUpdatedHandler, UserDeletedHandler } from "./handlers";
 import { logger } from "../config";
+import { RecursiveError } from "@services/common/utilities";
 export class DeviceControlServiceWorker extends BaseWorker {
     onCreate() {
         this.handler(STREAMS.DOMAIN_SERVICE.DOMAIN_CREATED, DomainUserAddedHandler) // only has to create a user role for domain owner
@@ -13,7 +14,7 @@ export class DeviceControlServiceWorker extends BaseWorker {
         this.handler(STREAMS.DOMAIN_SERVICE.DOMAIN_USER_ROLE_UPDATED, DomainUserRoleUpdatedHandler) // should update the user role with the new information
         this.handler(STREAMS.AUTH_SERVICE.USER_DELETED, UserDeletedHandler) // should delete the user role 
         this.errorHandler((error, payload) => {
-            logger.error({ error, payload }, "Error in DeviceControlServiceWorker:");
+            logger.error({ ...RecursiveError(error), payload }, "Error in DeviceControlServiceWorker:");
         })
     }
 

@@ -1,5 +1,5 @@
 import type { EventPayload } from "@services/eventbus";
-import { UserRoleModelInstance } from "@services/domain/src/models";
+import { UserRoleModelInstance } from "../../models"
 import type { Role } from "@services/common/types";
 import { SocketEmitterInstance } from "../../config";
 import { SOCKET_EVENTS } from "../../constants/";
@@ -13,6 +13,7 @@ export async function DomainUserAddedHandler(message: EventPayload) {
 
         const roleObj = { userId: userRole.userId, domainId: userRole.domainId };
         await UserRoleModelInstance.create({ ...roleObj, role: userRole.role as Role }); // create the new role in the database
+        console.log(`Added user ${userRole.userId} to domain ${userRole.domainId} with role ${userRole.role}`);
         SocketEmitterInstance.in(userRole.userId).socketsJoin(userRole.domainId);
         SocketEmitterInstance.to(userRole.domainId).emit(SOCKET_EVENTS.SERVER_EMITTED.DOMAIN.USER_ADDED, roleObj); // notify connected clients
         SocketEmitterInstance.to(userRole.userId).emit(SOCKET_EVENTS.SERVER_EMITTED.USER.JOINED_DOMAIN, { domainId: userRole.domainId, userId: userRole.userId }); // tell user theyve been added to a domain
