@@ -23,7 +23,7 @@ const eventBusConfig = {
 const EventBusInstance = new EventBus(
     eventBusConfig,
     logger,
-    "./src/bus/device_service_worker.ts",
+    "./src/bus/device_control_service_worker",
 );
 
 EventBusInstance.handleDebugMessage = (message) => {

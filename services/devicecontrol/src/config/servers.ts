@@ -4,10 +4,11 @@
 import { Server } from "socket.io";
 import { createServer } from "http";
 import express from "express";
-import { RedisAdapter } from "./";
+import { CreateRedisAdapter } from "./";
 
 export const app = express();
 export const httpServer = createServer(app);
+const RedisAdapter = await CreateRedisAdapter();
 export const io = new Server(httpServer, {
     adapter: RedisAdapter
 });

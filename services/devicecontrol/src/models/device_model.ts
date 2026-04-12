@@ -3,7 +3,7 @@ import type { IDevice, DeviceCapabilities, CurrentDeviceState } from "../types"
 import { CapabilityTypes } from "../types"
 import { MongoDatabaseModel, type ModelDTO, type MongoModelSchema, type UpdatePatch, type UpdateResult, type Result } from "@services/common/types"
 import { MongoConnection } from "../config"
-import { Schema, Connection, Model, type ClientSession } from "mongoose";
+import { Schema, type Connection, type ClientSession } from "mongoose";
 
 
 export class DeviceModel extends MongoDatabaseModel<IDevice> {

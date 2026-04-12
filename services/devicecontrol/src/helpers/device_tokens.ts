@@ -16,7 +16,7 @@ export function CreateDeviceToken(device: IDevice): string {
             iat: Math.floor(Date.now() / 1000),
             capabilities: Object.fromEntries(device.capabilities) // turn the map to an object , makes it easier to send telemetry and the capabilities is in the jwt which gets checked every send to the service
         };
-        return jwt.sign(payload, GetEnvString("DEVICE_TOKEN_SECRET"), { algorithm: 'HS256', });
+        return jwt.sign(payload, GetEnvString("DEVICE_TOKEN_SECRET_KEY"), { algorithm: 'HS256', });
     } catch (error) {
         throw new Error("Error creating device token", { cause: error });
     }
@@ -24,7 +24,7 @@ export function CreateDeviceToken(device: IDevice): string {
 
 export function VerifyDeviceToken(token: string): Result<DeviceTokenClaims> {
     try {
-        const r = jwt.verify(token, GetEnvString("DEVICE_TOKEN_SECRET"), { algorithms: ['HS256'] }) as DeviceTokenClaims
+        const r = jwt.verify(token, GetEnvString("DEVICE_TOKEN_SECRET_KEY"), { algorithms: ['HS256'] }) as DeviceTokenClaims
         return [r, null]
     } catch (error) {
         if (error instanceof jwt.TokenExpiredError) {

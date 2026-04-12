@@ -3,7 +3,7 @@ import { MongoAssociationModel } from "@services/common/types";
 import { ROLES, ROLE_PERMISSIONS } from "@services/common/constants";
 import UserRolesSchema from "../db/user_roles_schema";
 import { MongoConnection } from "../config";
-import { Schema, Connection, type ClientSession } from "mongoose";
+import { Schema, type Connection, type ClientSession } from "mongoose";
 
 export class UserRoleModel extends MongoAssociationModel<IUserRole> {
 
