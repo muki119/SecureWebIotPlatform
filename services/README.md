@@ -41,3 +41,28 @@ This allows for better scalability and maintainability as each service can be ru
   - Contains the implementation of the event bus, which is used for communication between services. It handles the publishing and subscribing of events, allowing services to communicate asynchronously.
 
 **Please look at the individual service directories for more details on their implementation and functionality.**
+
+
+## Conventions
+
+- Each service is named according to its main functionality, such as `auth`, `domain`, `device`, and `ledger`.
+
+- The main entry point for each service is named `index.ts`.
+
+- each service directory follows a model-controller-service structure where the models directory contains all the database models , the controllers contains the request handling logic and the services directory contains the business logic ,service and model interactions.
+
+- file names are in snake_case
+
+- class names are in PascalCase
+
+- exported functions and variables are in PascalCase
+
+- variables and function parameters are in camelCase
+
+- constants are in UPPER_SNAKE_CASE
+
+- types and interfaces are in PascalCase and prefixed with I for interfaces
+
+- file names not in common directory are suffixed with their directory or purpose , since there are file with the same name but different purposes in the same service.
+
+- e.g `get_profile_controller.ts` and `get_profile_service.ts` are both in the domain service and both have the same name but have different purposes, so they are suffixed with their purpose to avoid confusion.
