@@ -1,7 +1,7 @@
 
 import { XSRF_TOKEN } from "../constants/xsrf_token";
 
-export function getCookie(cname: string): string {
+export function GetCookie(cname: string): string {
     const name = cname + "=";
     const decodedCookie = decodeURIComponent(document.cookie);
     const ca = decodedCookie.split(';');
@@ -18,7 +18,7 @@ export function getCookie(cname: string): string {
 }
 
 export function CheckXSRFToken(): boolean {
-    const token = getCookie(XSRF_TOKEN)
+    const token = GetCookie(XSRF_TOKEN)
     if (!token) {
         return false
     }

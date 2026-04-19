@@ -1,4 +1,7 @@
 import { useReducer, createContext } from "react";
+import { AuthClientRequest } from "@/helpers/client_request";
+import { API_ROUTES } from "@/constants/api_routes";
+import type { AxiosResponse } from "axios";
 /**
  * This is going to hold the authentication state of the user
  * when logged in this will hold the access token and userInfo
@@ -16,6 +19,15 @@ const AuthUserState: TAuthState = {
 	user: null,
 	accessToken: null,
 };
+
+export const AuthContext = createContext<
+	| {
+			authState: TAuthState;
+			dispatch: React.Dispatch<unknown>;
+			authClientRequest: AuthClientRequest;
+	  }
+	| undefined
+>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [authState, dispatch] = useReducer((state, action) => {
@@ -50,13 +62,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		}
 	}, AuthUserState);
 
-	const AuthContext = createContext<{
-		authState: TAuthState;
-		dispatch: React.Dispatch<TAuthState>;
-	} | null>(null);
+	const refreshCallback = (refreshData: AxiosResponse) => {
+		const newAccessToken = refreshData.data.accessToken;
+		dispatch({
+			type: "REFRESH_TOKEN",
+			payload: { accessToken: newAccessToken },
+		});
+	};
+
+	const authClientRequest = new AuthClientRequest(
+		API_ROUTES.AUTH.REFRESH.path,
+		refreshCallback,
+	);
 
 	return (
-		<AuthContext.Provider value={{ authState, dispatch }}>
+		<AuthContext.Provider value={{ authState, dispatch, authClientRequest }}>
 			{children}
 		</AuthContext.Provider>
 	);

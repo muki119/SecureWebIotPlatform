@@ -1,11 +1,11 @@
 import { GetEnvVariable } from "@/utilities/get_env";
 
 
-const BASE_URL = GetEnvVariable("VITE_API_BASE_URL"); // base url is mainly for if their is a gateway being used , if not then the individual urls fro each service will have to be used
-const AUTH_BASE_URL = GetEnvVariable("VITE_AUTH_BASE_URL", BASE_URL) // should include port and /api/v1/*
-const DOMAIN_BASE_URL = GetEnvVariable("VITE_DOMAIN_BASE_URL", BASE_URL)
-const PROFILE_BASE_URL = GetEnvVariable("VITE_PROFILE_BASE_URL", BASE_URL)
-const DEVICE_BASE_URL = GetEnvVariable("VITE_DEVICE_BASE_URL", BASE_URL)
+const BASE_URL = GetEnvVariable("VITE_API_BASE_URL", "http://localhost/api/v1/"); // base url is mainly for if their is a gateway being used , if not then the individual urls fro each service will have to be used
+const AUTH_BASE_URL = GetEnvVariable("VITE_AUTH_BASE_URL", `${BASE_URL}auth/`); // should include port and /api/v1/*
+const DOMAIN_BASE_URL = GetEnvVariable("VITE_DOMAIN_BASE_URL", `${BASE_URL}domains/`)
+const PROFILE_BASE_URL = GetEnvVariable("VITE_PROFILE_BASE_URL", `${BASE_URL}profiles/`)
+const DEVICE_BASE_URL = GetEnvVariable("VITE_DEVICE_BASE_URL", `${BASE_URL}devices/`)
 
 export const API_ROUTES = {
     AUTH: {

@@ -23,7 +23,11 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-export default function LoginForm() {
+export default function LoginForm({
+	userCredentials,
+	handleInputChange,
+	handleLogin,
+}) {
 	const loginFormSchema = {
 		email: {
 			type: "string",
@@ -35,6 +39,7 @@ export default function LoginForm() {
 			required: true,
 		},
 	};
+
 	return (
 		<Card className="w-full max-w-sm mx-auto">
 			<CardHeader>
@@ -44,7 +49,7 @@ export default function LoginForm() {
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<form>
+				<form onSubmit={handleLogin} className="w-full">
 					<FieldGroup>
 						<div id="inputs" className="flex flex-col gap-4">
 							<div className="grid gap-4 mb-4">
@@ -53,8 +58,11 @@ export default function LoginForm() {
 									<Input
 										id="email"
 										type="email"
+										name="email"
 										placeholder="you@anywhere.com"
 										required={loginFormSchema.email.required}
+										value={userCredentials.email}
+										onChange={handleInputChange}
 									/>
 								</Field>
 							</div>
@@ -73,30 +81,32 @@ export default function LoginForm() {
 										id="password"
 										minLength={loginFormSchema.password.minLength}
 										type="password"
+										name="password"
 										placeholder="********"
 										required={loginFormSchema.password.required}
+										value={userCredentials.password}
+										onChange={handleInputChange}
 									/>
 								</Field>
+							</div>
+							<div className="flex flex-col gap-4 w-full items-center">
+								<Button className="w-full">Login</Button>
+								<span>
+									Don&apos;t have an account?{" "}
+									<a
+										className="ml-auto inline-block text-sm underline-offset-4 underline"
+										href="/register"
+									>
+										Create an account
+									</a>
+								</span>
 							</div>
 						</div>
 						<FieldError></FieldError>
 					</FieldGroup>
 				</form>
 			</CardContent>
-			<CardFooter>
-				<div className="flex flex-col gap-4 w-full items-center">
-					<Button className="w-full">Login</Button>
-					<span>
-						Don&apos;t have an account?{" "}
-						<a
-							className="ml-auto inline-block text-sm underline-offset-4 underline"
-							href="/register"
-						>
-							Create an account
-						</a>
-					</span>
-				</div>
-			</CardFooter>
+			<CardFooter></CardFooter>
 		</Card>
 	);
 }

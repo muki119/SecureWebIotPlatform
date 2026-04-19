@@ -2,22 +2,28 @@
 
 import axios, { isAxiosError } from "axios";
 import type { AxiosRequestConfig, AxiosResponse, CreateAxiosDefaults, AxiosInstance } from "axios";
-import { type Result } from "@/types/result";
+import { GetCookie } from "@/utilities/check_xsrf";
+import type { Result } from "../types/result";
 
 /**
  * Whole point of this class is a abstraction that automatically attempts to refresh the access token 
  * this is only for authenticated requests that need an access token
  */
+
+
+export type RefreshCallback = (refreshData: AxiosResponse) => void;
 export class AuthClientRequest {
     private refreshUrl: string
     private retryCount: number
     private axiosInstance: AxiosInstance
+    private refreshCallback: RefreshCallback; // callback becasue the token needs to be stored in state so the app can 
     static ErrInvalidRefreshToken = new Error("Invalid refresh token, please login again")
     static ErrUnauthorized = new Error("Unauthorized, refresh failed or max retries reached")
     static ErrServerError = new Error("Server error while refreshing token")
 
-    constructor(refreshUrl: string, retryCount = 1, config?: CreateAxiosDefaults) {
+    constructor(refreshUrl: string, refreshCallback: RefreshCallback, retryCount = 1, config?: CreateAxiosDefaults) {
         this.refreshUrl = refreshUrl;
+        this.refreshCallback = refreshCallback;
         this.retryCount = retryCount;
         this.refreshPromise = null; // initialize the refresh promise to null
         this.axiosInstance = axios.create({ withCredentials: true, ...config });
@@ -33,7 +39,17 @@ export class AuthClientRequest {
 
         this.refreshPromise = (async () => { // if there isnt a request in progress then make a new one
             try {
-                await this.axiosInstance.get(this.refreshUrl, { withCredentials: true }); // make the refresh request with credentials to include the refresh token cookie
+
+                const xsrfToken = GetCookie("XSRF-TOKEN");
+                if (!xsrfToken) {
+                    return [null, new Error("No XSRF token found")];
+                }
+                const r = await this.axiosInstance.get(this.refreshUrl, {
+                    withCredentials: true, headers: {
+                        "x-xsrf-token": xsrfToken
+                    }
+                }); // make the refresh request with credentials to include the refresh token cookie
+                this.refreshCallback(r); // call the callback to update the access token in state
                 return [true, null];
             } catch (error) {
                 if (isAxiosError(error) && error.response) { // if a error was returned
@@ -44,6 +60,8 @@ export class AuthClientRequest {
                     }
                 }
                 return [null, new Error("Error refreshing access token", { cause: error })];
+            } finally {
+                this.refreshPromise = null;
             }
         })();
 
@@ -74,8 +92,6 @@ export class AuthClientRequest {
 
             }
             return [null, new Error("Error making post request", { cause: error })];
-        } finally {
-            this.refreshPromise = null;
         }
 
     }
@@ -94,6 +110,31 @@ export class AuthClientRequest {
 
     async patch(url: string, data?: unknown, config?: AxiosRequestConfig, retry = this.retryCount) {
         return this.performRequest(() => this.axiosInstance.patch(url, data, config), retry);
+    }
+
+
+    async login(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<Result<AxiosResponse>> {
+        try {
+            const r = await this.axiosInstance.post(url, data, config);
+            return [r, null];
+        } catch (error) {
+            if (isAxiosError(error) && error.response) {
+                return [error.response, null]; // return the response data as the result, this way the frontend can handle the error based on the status code and message from the server
+            }
+            return [null, new Error("Error making post request", { cause: error })];
+        }
+    }
+
+    async logout(url: string, config?: AxiosRequestConfig): Promise<Result<AxiosResponse>> {
+        try {
+            const r = await this.axiosInstance.post(url, null, config);
+            return [r, null];
+        } catch (error) {
+            if (isAxiosError(error) && error.response) {
+                return [error.response, null]; // return the response data as the result, this way the frontend can handle the error based on the status code and message from the server
+            }
+            return [null, new Error("Error making post request", { cause: error })];
+        }
     }
 
 }
