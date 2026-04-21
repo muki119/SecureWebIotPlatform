@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import {
 	Card,
-	CardAction,
 	CardContent,
 	CardDescription,
 	CardFooter,
@@ -11,15 +10,9 @@ import {
 
 import {
 	Field,
-	FieldContent,
-	FieldDescription,
 	FieldError,
 	FieldGroup,
 	FieldLabel,
-	FieldLegend,
-	FieldSeparator,
-	FieldSet,
-	FieldTitle,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
@@ -27,6 +20,7 @@ export default function LoginForm({
 	userCredentials,
 	handleInputChange,
 	handleLogin,
+	loginError,
 }) {
 	const loginFormSchema = {
 		email: {
@@ -51,6 +45,7 @@ export default function LoginForm({
 			<CardContent>
 				<form onSubmit={handleLogin} className="w-full">
 					<FieldGroup>
+						<FieldError>{loginError}</FieldError>
 						<div id="inputs" className="flex flex-col gap-4">
 							<div className="grid gap-4 mb-4">
 								<Field>
@@ -102,7 +97,6 @@ export default function LoginForm({
 								</span>
 							</div>
 						</div>
-						<FieldError></FieldError>
 					</FieldGroup>
 				</form>
 			</CardContent>

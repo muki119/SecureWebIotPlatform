@@ -30,6 +30,21 @@ export const AuthContext = createContext<
 >(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+	const refreshCallback = async (refreshData: AxiosResponse) => {
+		const newAccessToken = refreshData.data.accessToken;
+		await dispatch({
+			type: "REFRESH_TOKEN",
+			payload: { accessToken: newAccessToken },
+		});
+	};
+
+	const authClientRequest = new AuthClientRequest(
+		API_ROUTES.AUTH.REFRESH.path,
+		refreshCallback,
+	);
+	const Logout = async () => {
+		const _ = authClientRequest.logout(API_ROUTES.AUTH.LOGOUT.path);
+	};
 	const [authState, dispatch] = useReducer((state, action) => {
 		switch (action.type) {
 			case "LOGIN":
@@ -46,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					accessToken: action.payload.accessToken,
 				};
 			case "LOGOUT":
+				Logout();
 				return {
 					...state,
 					isAuthenticated: false,
@@ -61,19 +77,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				return state;
 		}
 	}, AuthUserState);
-
-	const refreshCallback = (refreshData: AxiosResponse) => {
-		const newAccessToken = refreshData.data.accessToken;
-		dispatch({
-			type: "REFRESH_TOKEN",
-			payload: { accessToken: newAccessToken },
-		});
-	};
-
-	const authClientRequest = new AuthClientRequest(
-		API_ROUTES.AUTH.REFRESH.path,
-		refreshCallback,
-	);
 
 	return (
 		<AuthContext.Provider value={{ authState, dispatch, authClientRequest }}>

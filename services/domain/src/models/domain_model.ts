@@ -59,7 +59,7 @@ export class DomainModel extends PostgresDatabaseModel<IDomain> {
         return this.poolWrap(async (conn) => {
             try {
                 const query = `
-                SELECT d.id, d.name, d.owner_id as "ownerId"
+                SELECT d.id, d.name, d.owner_id as "ownerId", d.created_at as "createdAt"
                 FROM domains d
                 INNER JOIN user_domains ud ON d.id = ud.domain_id
                 WHERE ud.user_id = $1 AND d.deleted_at IS NULL AND ud.deleted_at IS NULL

@@ -1,13 +1,8 @@
 import {
-	SidebarInset,
-	SidebarProvider,
 	Sidebar,
 	SidebarGroup,
 	SidebarHeader,
 	SidebarGroupContent,
-	SidebarGroupLabel,
-	SidebarFooter,
-	SidebarMenu,
 	SidebarMenuItem,
 	SidebarMenuButton,
 	SidebarContent,
@@ -15,92 +10,397 @@ import {
 	SidebarInput,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { Card } from "@/components/ui/card";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
-	DropdownMenuGroup,
 	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User, CirclePlus, Group, EllipsisVerticalIcon } from "lucide-react";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+
+import { EllipsisVerticalIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { API_ROUTES } from "@/constants/api_routes";
+import { AuthContext } from "@/contexts/auth_context";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 
-export default function DashboardSidebar({ ...props }) {
+import DashboardIconSidebar from "./sidebar/dahsboard_icon_sidebar";
+import { AuthClientRequest } from "@/helpers/client_request";
+import {
+	Field,
+	FieldContent,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+
+export default function DashboardSidebar({
+	domains,
+	setDomains,
+	selectedDomain,
+	setSelectedDomain,
+	logout,
+	...props
+}) {
+	const navigate = useNavigate();
+	const { authState, authClientRequest, dispatch } = useContext(AuthContext)!;
+	const [createDomainSuccess, setCreateDomainSuccess] = useState<
+		[boolean, string | null]
+	>([false, null]);
+	const [leaveDomainSuccess, setLeaveDomainSuccess] = useState<
+		[boolean, string | null]
+	>([false, null]);
+	const [leaveDomainId, setLeaveDomainId] = useState(null);
+	const [selectedInfoDomain, setSelectedInfoDomain] = useState(null);
+	const [updateDomainSuccess, setUpdateDomainSuccess] = useState<
+		[boolean, string | null]
+	>([false, null]);
+	const createDomain = async (domainName) => {
+		try {
+			if (!domainName) {
+				setCreateDomainSuccess([false, "Domain name is required"]);
+				return;
+			}
+			const [r, err] = await authClientRequest.post(
+				API_ROUTES.DOMAIN.CREATE_DOMAIN.path,
+				{
+					name: domainName,
+				},
+				{
+					headers: {
+						Authorization: AuthClientRequest.createAuthHeader(
+							authState.accessToken!,
+						),
+					},
+				},
+			);
+			if (err !== null) {
+				// create a toast for error
+				return;
+			}
+			if (r?.status === 201) {
+				const newDomain = r.data.domain;
+				setDomains((prev) => ({ [newDomain.id]: newDomain, ...prev }));
+				setCreateDomainSuccess([true, "Domain created successfully"]);
+			}
+			if (r?.status === 400) {
+				setCreateDomainSuccess([false, r.data]);
+			}
+			if (r?.status === 401) {
+				dispatch({ type: "LOGOUT" });
+				navigate("/login");
+			}
+		} catch (error) {
+			/// create a toast for error
+			console.log("Error creating domain:", error);
+		}
+	};
+
+	const leaveDomain = async (domainId) => {
+		try {
+			if (!domainId) {
+				setLeaveDomainSuccess([false, "Domain id is required"]);
+				return;
+			}
+			const [r, err] = await authClientRequest.post(
+				API_ROUTES.DOMAIN.LEAVE_DOMAIN(domainId).path,
+				null,
+				{
+					headers: {
+						Authorization: AuthClientRequest.createAuthHeader(
+							authState.accessToken!,
+						),
+					},
+				},
+			);
+			if (err !== null) {
+				// create a toast for error
+				return;
+			}
+			if (r?.status === 200) {
+				/// close the alerr dialog and create a success toast
+				setDomains((prev) => {
+					const newDomains = { ...prev };
+					delete newDomains[domainId];
+					return newDomains;
+				});
+				setLeaveDomainSuccess([true, "Left domain successfully"]);
+				setLeaveDomainId(null);
+			}
+			if (r?.status === 400) {
+				setLeaveDomainSuccess([false, r.data.message]);
+			}
+		} catch (error) {
+			// create a toast for error
+			console.log("Error leaving domain:", error);
+		}
+	};
+
+	const updateDomainName = async (domainId, domainName) => {
+		try {
+			if (!domainId || !domainName) {
+				// create a toast for error
+				return;
+			}
+			const [r, err] = await authClientRequest.patch(
+				API_ROUTES.DOMAIN.UPDATE_DOMAIN(domainId).path,
+				{
+					changes: [{ field: "name", value: domainName }],
+				},
+				{
+					headers: {
+						Authorization: AuthClientRequest.createAuthHeader(
+							authState.accessToken!,
+						),
+					},
+				},
+			);
+			if (err !== null) {
+				// create a toast for error
+				return;
+			}
+			if (r?.status === 200) {
+				const newDomain = r.data;
+				setDomains((prev) => ({
+					...prev,
+					[domainId]: { ...prev[domainId], ...newDomain },
+				}));
+				setUpdateDomainSuccess([true, "Domain name updated successfully"]);
+			}
+			if (r?.status === 400) {
+				setUpdateDomainSuccess([false, r.data.message]);
+			}
+		} catch (error) {
+			// create a toast for error
+			console.log("Error updating domain name:", error);
+		}
+	};
+
+	const fetchDomainUsers = async (domainId) => {
+		try {
+			if (!domainId) {
+				// create a toast for error
+				return;
+			}
+			const [r, err] = await authClientRequest.get(
+				API_ROUTES.DOMAIN.GET_DOMAIN_USERS(domainId).path,
+				{
+					headers: {
+						Authorization: AuthClientRequest.createAuthHeader(
+							authState.accessToken!,
+						),
+					},
+				},
+			);
+			if (err !== null) {
+				if (
+					err === AuthClientRequest.ErrUnauthorized ||
+					err === AuthClientRequest.ErrInvalidRefreshToken
+				) {
+					logout();
+					return;
+				}
+				if (err === AuthClientRequest.ErrServerError) {
+					// Probably a toast for error
+				}
+			}
+			if (r?.status === 200) {
+				const usersData = r.data;
+				setDomains((prev) => ({
+					...prev,
+					[domainId]: { ...prev[domainId], users: usersData },
+				}));
+			}
+		} catch (error) {
+			// Probably a toast for error
+			console.log("Error fetching domain users:", error);
+		}
+	};
 	return (
-		<Sidebar
-			collapsible="icon"
-			variant="sidebar"
-			className="overflow-hidden *:data-[sidebar=sidebar]:flex-row"
-			{...props}
-		>
-			<DashboardIconSidebar />
-			<DashboardSecondMenu />
-		</Sidebar>
+		<>
+			<LeaveDomainAlertDialog
+				domainId={leaveDomainId}
+				leaveDomain={leaveDomain}
+				setLeaveDomainId={setLeaveDomainId}
+				leaveDomainSuccess={leaveDomainSuccess}
+			/>
+			<UpdateDomainDialog
+				domains={domains}
+				selectedInfoDomain={selectedInfoDomain}
+				setSelectedInfoDomain={setSelectedInfoDomain}
+				authState={authState}
+				updateDomainSuccess={updateDomainSuccess}
+				updateDomainName={updateDomainName}
+			/>
+			<Sidebar
+				collapsible="icon"
+				variant="sidebar"
+				className="overflow-hidden *:data-[sidebar=sidebar]:flex-row"
+				{...props}
+			>
+				<DashboardIconSidebar
+					createDomain={createDomain}
+					createDomainSuccess={createDomainSuccess}
+					authState={authState}
+					logout={logout}
+				/>
+				<DashboardSecondMenu
+					{...{
+						domains,
+						selectedDomain,
+						setSelectedDomain,
+						leaveDomain,
+						setLeaveDomainId,
+						setSelectedInfoDomain,
+						fetchDomainUsers,
+					}}
+				/>
+			</Sidebar>
+		</>
 	);
 }
 
-const DashboardIconSidebar = () => {
+const UpdateDomainDialog = ({
+	domains,
+	selectedInfoDomain,
+	authState,
+	setSelectedInfoDomain,
+	updateDomainSuccess,
+	updateDomainName,
+}) => {
+	const [domainDetails, setDomainDetails] = useState(
+		domains[selectedInfoDomain],
+	);
+
+	const handleChange = (e) => {
+		setDomainDetails({ ...domainDetails, name: e.target.value });
+	};
+
+	useEffect(() => {
+		setDomainDetails(domains[selectedInfoDomain]);
+	}, [selectedInfoDomain, domains]);
+
+	const isOwner = useMemo(() => {
+		if (!domainDetails || !authState.user) return false;
+		return domainDetails.ownerId === authState.user.userId;
+	}, [domainDetails, authState.user]);
+	const [successfulUpdate, updateMessage] = updateDomainSuccess;
 	return (
-		<Sidebar
-			collapsible="none"
-			className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r"
+		<Dialog
+			open={selectedInfoDomain !== null}
+			onOpenChange={() => setSelectedInfoDomain(null)}
 		>
-			<SidebarHeader>
-				<SidebarMenu>
-					<SidebarMenuItem>
-						<SidebarMenuButton></SidebarMenuButton>
-					</SidebarMenuItem>
-				</SidebarMenu>
-			</SidebarHeader>
-			<SidebarContent>
-				<SidebarGroup>
-					<SidebarMenu>
-						<SidebarMenuItem>
-							<SidebarMenuButton size="default" asChild>
-								<Button>
-									<CirclePlus data-icon="inline-start" strokeWidth={0.95} />
-								</Button>
-							</SidebarMenuButton>
-						</SidebarMenuItem>
-					</SidebarMenu>
-				</SidebarGroup>
-				<SidebarGroup>
-					<SidebarGroupContent>
-						<SidebarMenu>
-							<SidebarMenuItem>
-								<SidebarMenuButton isActive size="default" asChild>
-									{/**This should be the default active button , this is the domains button that shows a list of the users domains */}
-									<Group />
-								</SidebarMenuButton>
-							</SidebarMenuItem>
-						</SidebarMenu>
-					</SidebarGroupContent>
-				</SidebarGroup>
-			</SidebarContent>
-			<SidebarFooter>
-				<SidebarMenu>
-					<SidebarMenuItem>
-						<UserMenuItem />
-					</SidebarMenuItem>
-				</SidebarMenu>
-			</SidebarFooter>
-		</Sidebar>
+			{" "}
+			<DialogContent>
+				<DialogHeader>
+					<DialogTitle>Domain Information</DialogTitle>
+				</DialogHeader>
+				<FieldGroup>
+					<Field>
+						<FieldLabel>Name</FieldLabel>
+						<FieldGroup>
+							<span className="text-green-500">
+								{successfulUpdate && updateMessage}
+							</span>
+						</FieldGroup>
+						<Input
+							type="text"
+							value={domainDetails?.name || ""}
+							onChange={handleChange}
+							readOnly={!isOwner}
+							placeholder="Domain Name"
+						/>
+						<Button
+							variant="outline"
+							disabled={
+								!isOwner ||
+								domainDetails?.name === "" ||
+								domainDetails?.name === domains[selectedInfoDomain]?.name
+							}
+							onClick={() =>
+								updateDomainName(selectedInfoDomain, domainDetails?.name)
+							}
+						>
+							Save
+						</Button>
+						<FieldError>{!successfulUpdate && updateMessage}</FieldError>
+					</Field>
+				</FieldGroup>
+			</DialogContent>
+		</Dialog>
 	);
 };
 
-const DashboardSecondMenu = () => {
+const LeaveDomainAlertDialog = ({
+	domainId,
+	leaveDomain,
+	setLeaveDomainId,
+	leaveDomainSuccess,
+}) => {
+	return (
+		<AlertDialog open={domainId !== null}>
+			{" "}
+			<AlertDialogTrigger asChild></AlertDialogTrigger>
+			<AlertDialogContent>
+				<AlertDialogHeader>
+					<AlertDialogTitle>Leave Domain</AlertDialogTitle>
+					<AlertDialogDescription>
+						Are you sure you want to leave this domain?
+					</AlertDialogDescription>
+				</AlertDialogHeader>
+				<AlertDialogFooter>
+					<FieldGroup>
+						<Field>
+							<AlertDialogCancel onClick={() => setLeaveDomainId(null)}>
+								Cancel
+							</AlertDialogCancel>
+							<AlertDialogAction onClick={() => leaveDomain(domainId)}>
+								Leave
+							</AlertDialogAction>
+						</Field>
+						<Field>
+							<FieldContent>
+								<FieldError>{leaveDomainSuccess[1]}</FieldError>
+							</FieldContent>
+						</Field>
+					</FieldGroup>
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
+	);
+};
+
+const DashboardSecondMenu = ({
+	domains,
+	selectedDomain,
+	setSelectedDomain,
+	setLeaveDomainId,
+	setSelectedInfoDomain,
+}) => {
 	const { state } = useSidebar();
 	return (
 		<Sidebar
 			collapsible="none"
-			className={`hidden flex-1 ${state === "expanded" ? "md:flex" : ""}`}
+			className={` flex-1 ${state === "expanded" ? "md:flex" : ""}`}
 		>
 			<SidebarHeader className="gap-3.5 border-b">
 				<div className="flex w-full items-center justify-between">
@@ -111,11 +411,17 @@ const DashboardSecondMenu = () => {
 			<SidebarContent>
 				<SidebarGroup className="">
 					<SidebarGroupContent>
-						<DomainMenuItem isCurrent={true} id="1" name="Domain 1" />
-						<DomainMenuItem id="2" name="Domain 2" />
-						<DomainMenuItem id="3" name="Domain 3" />
-						<DomainMenuItem id="4" name="Domain 4" />
-						<DomainMenuItem id="5" name="Domain 5" />
+						{Object.values(domains).map((domain) => (
+							<DomainMenuItem
+								key={domain.id}
+								isCurrent={selectedDomain === domain.id}
+								id={domain.id}
+								name={domain.name}
+								onSelect={() => setSelectedDomain(domain.id)}
+								setLeaveDomainId={setLeaveDomainId}
+								setSelectedInfoDomain={setSelectedInfoDomain}
+							/>
+						))}
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
@@ -126,8 +432,10 @@ const DashboardSecondMenu = () => {
 const DomainMenuItem = ({
 	id,
 	name,
-	changeCurrentDomain = null,
 	isCurrent = false,
+	onSelect,
+	setLeaveDomainId,
+	setSelectedInfoDomain,
 }) => {
 	// basically will be a menu item that when clicked will change the current domain in the main dashboard content to the domain that was clicked
 	//
@@ -135,7 +443,12 @@ const DomainMenuItem = ({
 	return (
 		<DropdownMenu>
 			<SidebarMenuItem className="w-full flex items-center justify-center align-middle">
-				<SidebarMenuButton isActive={isCurrent} className="w-full" size="lg">
+				<SidebarMenuButton
+					onClick={onSelect}
+					isActive={isCurrent}
+					className="w-full"
+					size="lg"
+				>
 					<div>
 						<div className="text-sm font-medium">{name}</div>
 						<div className="text-xs text-muted-foreground">{"wefw"}</div>
@@ -150,41 +463,14 @@ const DomainMenuItem = ({
 				</SidebarMenuButton>
 			</SidebarMenuItem>
 			<DropdownMenuContent>
-				<DropdownMenuItem>View Domain</DropdownMenuItem>
-				<DropdownMenuItem>Edit Domain</DropdownMenuItem>{" "}
+				<DropdownMenuItem onClick={onSelect}>View Domain</DropdownMenuItem>
+				<DropdownMenuItem onClick={() => setSelectedInfoDomain(id)}>
+					Edit Domain
+				</DropdownMenuItem>
 				{/* this is where you can see domain details , edit domain users ,transfer ownership and delete domain */}
-				<DropdownMenuItem>Leave Domain</DropdownMenuItem>
-			</DropdownMenuContent>
-		</DropdownMenu>
-	);
-};
-
-const UserMenuItem = () => {
-	const { isMobile } = useSidebar();
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<SidebarMenuButton className="justify-center" size="default" asChild>
-					<Avatar className="rounded-full">
-						<AvatarFallback>
-							<User size={64} />
-						</AvatarFallback>
-					</Avatar>
-				</SidebarMenuButton>
-			</DropdownMenuTrigger>
-
-			<DropdownMenuContent
-				align="end"
-				side={isMobile ? "top" : "right"}
-				sideOffset={4}
-			>
-				<DropdownMenuLabel>My Account</DropdownMenuLabel>
-				<DropdownMenuSeparator />
-				<DropdownMenuGroup>
-					<DropdownMenuItem>Profile</DropdownMenuItem>
-					<DropdownMenuItem>Settings</DropdownMenuItem>
-					<DropdownMenuItem>Logout</DropdownMenuItem>
-				</DropdownMenuGroup>
+				<DropdownMenuItem onClick={() => setLeaveDomainId(id)}>
+					Leave Domain
+				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
 	);

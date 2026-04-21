@@ -4,8 +4,6 @@ import {
 	Card,
 	CardAction,
 	CardContent,
-	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
@@ -25,7 +23,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 
-export default function DeviceView() {
+export default function DeviceView({ device }) {
 	// this is going to be a full view for a device
 	// should show all the controls and readings for a device
 	// top should show the read only readings

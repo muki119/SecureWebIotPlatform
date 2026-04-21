@@ -14,6 +14,7 @@ export default function Login() {
 		email: "",
 		password: "",
 	});
+	const [loginError, setLoginError] = useState<string | null>(null);
 
 	const handleLogin = async (e) => {
 		e.preventDefault();
@@ -22,11 +23,16 @@ export default function Login() {
 		});
 		if (err !== null) {
 			console.error("Login failed:", err); // should really show a toast
+			setLoginError("Invalid email or password");
 			return;
 		}
 		if (r.status === 200) {
-			dispatch({ type: "LOGIN_SUCCESS", payload: r.data });
+			dispatch({ type: "LOGIN", payload: r.data });
 			navigate("/dashboard");
+		}
+
+		if (r.status === 401) {
+			setLoginError("Invalid email or password");
 		}
 	};
 
@@ -48,6 +54,7 @@ export default function Login() {
 				userCredentials={userCredentials}
 				handleInputChange={handleInputChange}
 				handleLogin={handleLogin}
+				loginError={loginError}
 			/>
 		</div>
 	);
