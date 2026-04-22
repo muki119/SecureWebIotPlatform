@@ -35,6 +35,8 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 
+import { toast } from "sonner";
+
 import { EllipsisVerticalIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { API_ROUTES } from "@/constants/api_routes";
@@ -52,6 +54,7 @@ import {
 	FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import DomaindDetailsDialog from "./sidebar/domain_info_dialog";
 
 export default function DashboardSidebar({
 	domains,
@@ -74,6 +77,14 @@ export default function DashboardSidebar({
 	const [updateDomainSuccess, setUpdateDomainSuccess] = useState<
 		[boolean, string | null]
 	>([false, null]);
+
+	const [updateDomainUserSuccess, setUpdateDomainUserSuccess] = useState<
+		[boolean, string | null]
+	>([false, null]);
+
+	const [selectedViewDetailsDomain, setSelectedViewDetailsDomain] =
+		useState(null); // for viewing domain details and users
+
 	const createDomain = async (domainName) => {
 		try {
 			if (!domainName) {
@@ -94,7 +105,19 @@ export default function DashboardSidebar({
 				},
 			);
 			if (err !== null) {
-				// create a toast for error
+				if (
+					err === AuthClientRequest.ErrUnauthorized ||
+					err === AuthClientRequest.ErrInvalidRefreshToken
+				) {
+					logout();
+					return;
+				}
+				if (err === AuthClientRequest.ErrServerError) {
+					toast.error("Server error while creating domain", {
+						description: "Please try again later",
+					});
+				}
+				setCreateDomainSuccess([false, err]);
 				return;
 			}
 			if (r?.status === 201) {
@@ -105,13 +128,9 @@ export default function DashboardSidebar({
 			if (r?.status === 400) {
 				setCreateDomainSuccess([false, r.data]);
 			}
-			if (r?.status === 401) {
-				dispatch({ type: "LOGOUT" });
-				navigate("/login");
-			}
 		} catch (error) {
 			/// create a toast for error
-			console.log("Error creating domain:", error);
+			toast.error("Error creating domain");
 		}
 	};
 
@@ -133,7 +152,20 @@ export default function DashboardSidebar({
 				},
 			);
 			if (err !== null) {
-				// create a toast for error
+				if (
+					err === AuthClientRequest.ErrUnauthorized ||
+					err === AuthClientRequest.ErrInvalidRefreshToken
+				) {
+					logout();
+					return;
+				}
+				if (err === AuthClientRequest.ErrServerError) {
+					toast.error("Server error while fetching domain users", {
+						description: "Please try again later",
+					});
+					return;
+				}
+				toast.error("Error leaving domain");
 				return;
 			}
 			if (r?.status === 200) {
@@ -151,7 +183,7 @@ export default function DashboardSidebar({
 			}
 		} catch (error) {
 			// create a toast for error
-			console.log("Error leaving domain:", error);
+			toast.error("Error leaving domain");
 		}
 	};
 
@@ -161,6 +193,7 @@ export default function DashboardSidebar({
 				// create a toast for error
 				return;
 			}
+			setUpdateDomainSuccess([false, null]);
 			const [r, err] = await authClientRequest.patch(
 				API_ROUTES.DOMAIN.UPDATE_DOMAIN(domainId).path,
 				{
@@ -175,6 +208,18 @@ export default function DashboardSidebar({
 				},
 			);
 			if (err !== null) {
+				if (
+					err === AuthClientRequest.ErrUnauthorized ||
+					err === AuthClientRequest.ErrInvalidRefreshToken
+				) {
+					logout();
+					return;
+				}
+				if (err === AuthClientRequest.ErrServerError) {
+					toast.error("Server error while fetching domain users", {
+						description: "Please try again later",
+					});
+				}
 				// create a toast for error
 				return;
 			}
@@ -191,7 +236,137 @@ export default function DashboardSidebar({
 			}
 		} catch (error) {
 			// create a toast for error
-			console.log("Error updating domain name:", error);
+			toast.error("Error updating domain name");
+		}
+	};
+
+	const removeUser = async (domainId, userId) => {
+		try {
+			if (!domainId) {
+				// create a toast for error
+				return;
+			}
+			if (!userId) {
+				return;
+			}
+
+			if (userId === authState?.user?.userId) {
+				// error toast
+				return;
+			}
+			const [r, err] = await authClientRequest.delete(
+				API_ROUTES.DOMAIN.DELETE_USER(domainId, userId).path,
+				{
+					headers: {
+						Authorization: AuthClientRequest.createAuthHeader(
+							authState.accessToken!,
+						),
+					},
+				},
+			);
+			if (err !== null) {
+				if (
+					err === AuthClientRequest.ErrUnauthorized ||
+					err === AuthClientRequest.ErrInvalidRefreshToken
+				) {
+					logout();
+					return;
+				}
+				if (err === AuthClientRequest.ErrServerError) {
+					toast.error("Server error while fetching domain users", {
+						description: "Please try again later",
+					});
+				}
+			}
+			if (r?.status === 200) {
+				setDomains((prev) => {
+					const newUsers = { ...prev[domainId].users };
+					delete newUsers[userId];
+					return {
+						...prev,
+						[domainId]: { ...prev[domainId], users: newUsers },
+					};
+				});
+				setUpdateDomainUserSuccess([true, r.data.message]);
+			}
+		} catch (error) {
+			// Probably a toast for error
+			toast.error("Error fetching domain users");
+		}
+	};
+
+	const updateUserRole = async (
+		domainId: string,
+		userId: string,
+		newRole: string,
+	) => {
+		try {
+			if (!domainId) {
+				// create a toast for error
+				return;
+			}
+			if (!userId) {
+				return;
+			}
+			if (!newRole) {
+				return;
+			}
+			if (newRole === "OWNER") {
+				// create a toast for error
+				return;
+			}
+			setUpdateDomainUserSuccess([false, null]);
+			const [r, err] = await authClientRequest.patch(
+				API_ROUTES.DOMAIN.UPDATE_USER_ROLE(domainId, userId).path,
+				{
+					role: newRole.toUpperCase(),
+				},
+				{
+					headers: {
+						Authorization: AuthClientRequest.createAuthHeader(
+							authState.accessToken!,
+						),
+					},
+				},
+			);
+			if (err !== null) {
+				if (
+					err === AuthClientRequest.ErrUnauthorized ||
+					err === AuthClientRequest.ErrInvalidRefreshToken
+				) {
+					logout();
+					return;
+				}
+				if (err === AuthClientRequest.ErrServerError) {
+					toast.error("Server error while fetching domain users", {
+						description: "Please try again later",
+					});
+				}
+			}
+			if (r?.status === 400) {
+				setUpdateDomainUserSuccess([false, r.data.message]);
+				return;
+			}
+			if (r?.status === 200) {
+				const successMessage = r.data.message;
+				setUpdateDomainUserSuccess([true, successMessage]);
+				setDomains((prev) => ({
+					...prev,
+					[domainId]: {
+						...prev[domainId],
+						users: {
+							...prev[domainId].users,
+							[userId]: {
+								...prev[domainId].users[userId],
+								role: newRole.toUpperCase(),
+							},
+						},
+					},
+				}));
+			}
+		} catch (error) {
+			// Probably a toast for error
+			toast.error("Error updating user role");
 		}
 	};
 
@@ -220,21 +395,75 @@ export default function DashboardSidebar({
 					return;
 				}
 				if (err === AuthClientRequest.ErrServerError) {
-					// Probably a toast for error
+					toast.error("Server error while fetching domain users", {
+						description: "Please try again later",
+					});
 				}
 			}
 			if (r?.status === 200) {
 				const usersData = r.data;
+				const usersObject = {};
+				usersData.forEach((user) => {
+					usersObject[user.userId] = user;
+				});
+
 				setDomains((prev) => ({
 					...prev,
-					[domainId]: { ...prev[domainId], users: usersData },
+					[domainId]: { ...prev[domainId], users: usersObject },
 				}));
 			}
 		} catch (error) {
 			// Probably a toast for error
-			console.log("Error fetching domain users:", error);
+			toast.error("Error fetching domain users");
 		}
 	};
+
+	const deleteDomain = async (domainId) => {
+		try {
+			if (!domainId) {
+				// create a toast for error
+				return;
+			}
+			const [r, err] = await authClientRequest.delete(
+				API_ROUTES.DOMAIN.DELETE_DOMAIN(domainId).path,
+				{
+					headers: {
+						Authorization: AuthClientRequest.createAuthHeader(
+							authState.accessToken!,
+						),
+					},
+				},
+			);
+			if (err !== null) {
+				if (
+					err === AuthClientRequest.ErrUnauthorized ||
+					err === AuthClientRequest.ErrInvalidRefreshToken
+				) {
+					logout();
+					return;
+				}
+				if (err === AuthClientRequest.ErrServerError) {
+					toast.error("Server error while deleting domain", {
+						description: "Please try again later",
+					});
+				}
+			}
+			if (r?.status === 200) {
+				setSelectedViewDetailsDomain(null);
+				setDomains((prev) => {
+					const newDomains = { ...prev };
+					delete newDomains[domainId];
+					return newDomains;
+				});
+				toast.success("Domain deleted successfully");
+			}
+		} catch (error) {
+			//toast
+			toast.error("Error deleting domain");
+			return;
+		}
+	};
+
 	return (
 		<>
 			<LeaveDomainAlertDialog
@@ -251,6 +480,18 @@ export default function DashboardSidebar({
 				updateDomainSuccess={updateDomainSuccess}
 				updateDomainName={updateDomainName}
 			/>
+			<DomaindDetailsDialog
+				deleteDomain={deleteDomain}
+				authState={authState}
+				selectedViewDetailsDomain={selectedViewDetailsDomain}
+				fetchDomainUsers={fetchDomainUsers}
+				setSelectedViewDetailsDomain={setSelectedViewDetailsDomain}
+				domains={domains}
+				removeUser={removeUser}
+				updateUserRole={updateUserRole}
+				updateDomainUserSuccess={updateDomainUserSuccess}
+				setUpdateDomainUserSuccess={setUpdateDomainUserSuccess}
+			/>
 			<Sidebar
 				collapsible="icon"
 				variant="sidebar"
@@ -265,6 +506,7 @@ export default function DashboardSidebar({
 				/>
 				<DashboardSecondMenu
 					{...{
+						authState,
 						domains,
 						selectedDomain,
 						setSelectedDomain,
@@ -272,6 +514,7 @@ export default function DashboardSidebar({
 						setLeaveDomainId,
 						setSelectedInfoDomain,
 						fetchDomainUsers,
+						setSelectedViewDetailsDomain,
 					}}
 				/>
 			</Sidebar>
@@ -395,8 +638,10 @@ const DashboardSecondMenu = ({
 	setSelectedDomain,
 	setLeaveDomainId,
 	setSelectedInfoDomain,
+	setSelectedViewDetailsDomain,
 }) => {
 	const { state } = useSidebar();
+	const [filter, setFilter] = useState("");
 	return (
 		<Sidebar
 			collapsible="none"
@@ -406,22 +651,31 @@ const DashboardSecondMenu = ({
 				<div className="flex w-full items-center justify-between">
 					<div className="text-base font-medium text-foreground">Domains</div>
 				</div>
-				<SidebarInput placeholder="Type to search..." />
+				<SidebarInput
+					placeholder="Type to search..."
+					value={filter}
+					onChange={(e) => setFilter(e.target.value)}
+				/>
 			</SidebarHeader>
 			<SidebarContent>
 				<SidebarGroup className="">
 					<SidebarGroupContent>
-						{Object.values(domains).map((domain) => (
-							<DomainMenuItem
-								key={domain.id}
-								isCurrent={selectedDomain === domain.id}
-								id={domain.id}
-								name={domain.name}
-								onSelect={() => setSelectedDomain(domain.id)}
-								setLeaveDomainId={setLeaveDomainId}
-								setSelectedInfoDomain={setSelectedInfoDomain}
-							/>
-						))}
+						{Object.values(domains)
+							.filter((domain) =>
+								domain.name.toLowerCase().includes(filter.toLowerCase()),
+							)
+							.map((domain) => (
+								<DomainMenuItem
+									key={domain.id}
+									isCurrent={selectedDomain === domain.id}
+									id={domain.id}
+									name={domain.name}
+									onSelect={() => setSelectedDomain(domain.id)}
+									setLeaveDomainId={setLeaveDomainId}
+									setSelectedInfoDomain={setSelectedInfoDomain}
+									setSelectedViewDetailsDomain={setSelectedViewDetailsDomain}
+								/>
+							))}
 					</SidebarGroupContent>
 				</SidebarGroup>
 			</SidebarContent>
@@ -436,6 +690,7 @@ const DomainMenuItem = ({
 	onSelect,
 	setLeaveDomainId,
 	setSelectedInfoDomain,
+	setSelectedViewDetailsDomain,
 }) => {
 	// basically will be a menu item that when clicked will change the current domain in the main dashboard content to the domain that was clicked
 	//
@@ -464,6 +719,10 @@ const DomainMenuItem = ({
 			</SidebarMenuItem>
 			<DropdownMenuContent>
 				<DropdownMenuItem onClick={onSelect}>View Domain</DropdownMenuItem>
+				<DropdownMenuItem onClick={() => setSelectedViewDetailsDomain(id)}>
+					Domain Details
+				</DropdownMenuItem>
+				{/* this is where you can see domain details , edit domain users ,transfer ownership and delete domain */}
 				<DropdownMenuItem onClick={() => setSelectedInfoDomain(id)}>
 					Edit Domain
 				</DropdownMenuItem>

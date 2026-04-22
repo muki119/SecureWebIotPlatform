@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import { AuthProvider } from "./contexts/auth_context";
 import { Suspense, lazy } from "react";
 import Loading from "./pages/loading/loading";
+import { Toaster } from "@/components/ui/sonner";
 const Home = lazy(() => import("./pages/home/home"));
 const Dashboard = lazy(() => import("./pages/dashboard/dashboard"));
 const Login = lazy(() => import("./pages/login/login"));
@@ -17,6 +18,7 @@ const ForgotPassword = lazy(
 function App() {
 	return (
 		<AuthProvider>
+			<Toaster position="top-center" />
 			<BrowserRouter>
 				<Suspense fallback={<Loading />}>
 					<Routes>
