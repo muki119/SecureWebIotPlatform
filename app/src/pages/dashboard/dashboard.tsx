@@ -2,8 +2,9 @@ import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import DashboardSidebar from "./dashboard_sidebar";
 import { API_ROUTES } from "@/constants/api_routes";
-import DomainView from "./domain_view";
+import DomainView from "./domiain_view/domain_view";
 import { AuthClientRequest } from "@/helpers/client_request";
+import { toast } from "sonner";
 import DeviceView from "./device_view";
 import {
 	SidebarProvider,
@@ -43,7 +44,9 @@ export default function Dashboard() {
 				return;
 			}
 			if (err === AuthClientRequest.ErrServerError) {
-				// Probably a toast for error
+				toast.error("Server error while fetching user information", {
+					description: "Please try again later",
+				});
 			}
 		}
 		if (r?.status === 200) {
@@ -74,7 +77,9 @@ export default function Dashboard() {
 				return;
 			}
 			if (err === AuthClientRequest.ErrServerError) {
-				// Probably a toast for error
+				toast.error("Server error while fetching domains", {
+					description: "Please try again later",
+				});
 			}
 		}
 
@@ -92,6 +97,7 @@ export default function Dashboard() {
 		fetchDomains();
 		fetchUser();
 	}, []);
+
 	return (
 		<>
 			<SidebarProvider>

@@ -57,6 +57,24 @@ export default function DomaindDetailsDialog({
 	// going to dynamically load the users of the domain
 	// can remove users also - should either open a confirmation emergency dialog or just remove them
 	const [userSearch, setUserSearch] = useState("");
+
+	const filteredUsers = useMemo(() => {
+		if (!domains[selectedViewDetailsDomain]?.users) return [];
+		return Object.values(domains[selectedViewDetailsDomain].users).filter(
+			(user) =>
+				user.name
+					.toLowerCase()
+					.includes(userSearch.replace(/\s/g, "").toLowerCase()) ||
+				user.email
+					.toLowerCase()
+					.includes(userSearch.replace(/\s/g, "").toLowerCase()),
+		);
+	}, [userSearch, domains, selectedViewDetailsDomain]);
+
+	const handleChange = (e) => {
+		// purpose is to debounce at some point
+		setUserSearch(e.target.value);
+	};
 	useEffect(() => {
 		// if the domainid dosent have a users field then fetch the users and set it to the domain object
 		// dependent on changes to the selecteddomain id
@@ -97,7 +115,11 @@ export default function DomaindDetailsDialog({
 					<TableHeader>
 						<TableRow>
 							<TableHead colSpan={5} className="text-center">
-								<Input placeholder="Search users..." />
+								<Input
+									placeholder="Search users..."
+									value={userSearch}
+									onChange={handleChange}
+								/>
 							</TableHead>
 						</TableRow>
 						<TableRow>
@@ -109,47 +131,44 @@ export default function DomaindDetailsDialog({
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{domains[selectedViewDetailsDomain]?.users &&
-							Object.values(
-								domains[selectedViewDetailsDomain]?.users || {},
-							).map((user) => (
-								<TableRow key={user.userId}>
-									<TableCell>{user.name}</TableCell>
-									<TableCell>{user.email}</TableCell>
+						{filteredUsers.map((user) => (
+							<TableRow key={user.userId}>
+								<TableCell>{user.name}</TableCell>
+								<TableCell>{user.email}</TableCell>
 
-									<TableCell>
-										<RoleSwitch
-											currentRole={user.role}
-											onChange={(newRole) =>
-												updateUserRole(
-													selectedViewDetailsDomain,
-													user.userId,
-													newRole,
-												)
-											}
-										/>
-									</TableCell>
-									<TableCell>
-										<ConfirmationPopover
-											onConfirm={() =>
-												removeUser(selectedViewDetailsDomain, user.userId)
-											}
-											description="Are you sure you want to remove this user?"
+								<TableCell>
+									<RoleSwitch
+										currentRole={user.role}
+										onChange={(newRole) =>
+											updateUserRole(
+												selectedViewDetailsDomain,
+												user.userId,
+												newRole,
+											)
+										}
+									/>
+								</TableCell>
+								<TableCell>
+									<ConfirmationPopover
+										onConfirm={() =>
+											removeUser(selectedViewDetailsDomain, user.userId)
+										}
+										description="Are you sure you want to remove this user?"
+										disabled={user.role === "OWNER"}
+									>
+										<Button
+											variant="destructive"
 											disabled={user.role === "OWNER"}
 										>
-											<Button
-												variant="destructive"
-												disabled={user.role === "OWNER"}
-											>
-												Remove
-											</Button>
-										</ConfirmationPopover>
-									</TableCell>
-									<TableCell>
-										{new Date(user.dateJoined).toLocaleDateString()}
-									</TableCell>
-								</TableRow>
-							))}
+											Remove
+										</Button>
+									</ConfirmationPopover>
+								</TableCell>
+								<TableCell>
+									{new Date(user.dateJoined).toLocaleDateString()}
+								</TableCell>
+							</TableRow>
+						))}
 					</TableBody>
 				</Table>
 				<DialogFooter>
