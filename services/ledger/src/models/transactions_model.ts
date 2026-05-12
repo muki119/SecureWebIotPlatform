@@ -35,17 +35,17 @@ export class TransactionModel extends BasePostgresModel<ITransactionModel> {
         }, externalConn)
     }
 
-    public async findByDomainId(domainId: string, dateFrom: Date, dateTo?: Date): Promise<Result<ITransactionModel[]>> {
+    public async findByDomainId(domainId: string, dateFrom: Date, dateTo?: Date): Promise<Result<ITransactionModel[]>> { // date from is the starting point  - should always be earlier than date to 
         return this.poolWrap(async (conn) => {
             try {
                 let query = `
                 SELECT initiator_id AS "initiatorId", opperation_type AS "opperationType", opperation_target AS "opperationTarget", target_id AS "targetId", value, opperation_timestamp AS "opperationTimestamp", domain_id AS "domainId"
                 FROM transactions 
-                WHERE domain_id = $1 AND opperation_timestamp >= $2
+                WHERE domain_id = $1 AND opperation_timestamp <= $2
             `
                 const values: any[] = [domainId, dateFrom]
                 if (dateTo) {
-                    query += ` AND opperation_timestamp <= $3`
+                    query += ` AND opperation_timestamp >= $3`
                     values.push(dateTo)
                 }
                 query += ` ORDER BY opperation_timestamp DESC LIMIT 100`
