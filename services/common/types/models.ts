@@ -78,7 +78,7 @@ type DbOperation<T> = (conn: PoolClient) => Promise<T>
 /**
  * BasePostgresModel is a base class for all models that interface with the postgres database.
  */
-abstract class BasePostgresModel<T extends ModelSchema> {
+export abstract class BasePostgresModel<T extends ModelSchema> {
 	protected db: Pool
 	protected abstract updatableFieldsMap: Map<keyof ModelDTO<T>, string> // a map of the fields that can be updated and their corresponding data types - used for validation in updates
 	constructor(db: Pool) {

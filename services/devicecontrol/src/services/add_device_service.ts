@@ -2,11 +2,11 @@ import type { ModelDTO, ServiceResult } from "@services/common/types";
 import { PAIRING_CODE_REDIS_KEY_PREFIX } from "../constants";
 import { CreateDeviceToken } from "../helpers";
 import type { AddDeviceRequest, IDevice } from "../types"
-import { RedisClient } from "../config";
+import { RedisClient, io, EventBusInstance } from "../config";
 import { VerifyPairingCode } from "../helpers";
 import { UserRoleModelInstance, DeviceModelInstance } from "../models"
-import { io } from "../config";
 import { SOCKET_EVENTS } from "../constants/";
+import { STREAMS } from "@services/common/config"
 export async function AddDeviceService(pairingCode: string, deviceInfo: AddDeviceRequest): Promise<ServiceResult<string>> {
     // get the pairing code
     try {
@@ -43,6 +43,7 @@ export async function AddDeviceService(pairingCode: string, deviceInfo: AddDevic
         }
         const deviceToken = CreateDeviceToken(device!)
         io.to(codeInfo.domainId).emit(SOCKET_EVENTS.SERVER_EMITTED.DEVICE.ADDED, { deviceId: device!.id, domainId: codeInfo.domainId }); // notify connected clients that a new device has been added to the domain
+        await EventBusInstance.send(STREAMS.DEVICE_SERVICE.DEVICE_CREATED, { deviceId: device!.id, domainId: codeInfo.domainId, initiatorId: codeInfo.userId })
         return [deviceToken, null]
     } catch (error) {
         throw new Error("Failed to add device", { cause: error });

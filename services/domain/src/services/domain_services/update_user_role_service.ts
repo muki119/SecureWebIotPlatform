@@ -39,8 +39,7 @@ export default async function UpdateUserRoleService(updater: string, updatee: st
         }
 
         // send the patch to the event bus 
-        await EventBusInstance.send(STREAMS.DOMAIN_SERVICE.DOMAIN_USER_ROLE_UPDATED, { userId: updatee, domainId, role: newRole });
-
+        await EventBusInstance.send(STREAMS.DOMAIN_SERVICE.DOMAIN_USER_ROLE_UPDATED, { userId: updatee, domainId, role: newRole, initiatorId: updater })
         return [updatedRole, null];
     } catch (error) {
         throw new Error("Failed to update role", { cause: error });

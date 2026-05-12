@@ -32,7 +32,7 @@ export default async function AddUserService(inviter: string, invitee: string, d
             }
             return userRole
         })
-        await EventBusInstance.send(STREAMS.DOMAIN_SERVICE.DOMAIN_USER_ADDED, result) // send the new user role to the event bus - flat enough to not cause problems or need stringifying
+        await EventBusInstance.send(STREAMS.DOMAIN_SERVICE.DOMAIN_USER_ADDED, { ...result, initiatorId: inviter }) // send the new user role to the event bus - flat enough to not cause problems or need stringifying
         return [true, null]
     } catch (error) {
         throw new Error("Failed to add user to domain: ", { cause: error })

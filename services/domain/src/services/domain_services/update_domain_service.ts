@@ -1,5 +1,7 @@
 import type { ServiceResult, UpdatePatch } from "@services/common/types";
 import { DomainModelInstance, UserRoleModelInstance, type IDomain } from "../../models";
+import EventBusInstance from "../../config/event_bus";
+import { STREAMS } from "@services/common/config"
 export default async function UpdateDomainService(userId: string, domainId: string, updates: UpdatePatch<IDomain>): Promise<ServiceResult<IDomain>> {
     try {
         const userPermissions = await UserRoleModelInstance.userPermissions(userId, domainId);
@@ -16,6 +18,7 @@ export default async function UpdateDomainService(userId: string, domainId: stri
         if (!updatedDomain) {
             return [null, new Error("Failed to update domain")];
         }
+        await EventBusInstance.send(STREAMS.DOMAIN_SERVICE.DOMAIN_UPDATED, { domainId, changes: JSON.stringify(updates), initiatorId: userId }) // send the updated domain info to the event bus - we can send the whole updated domain or just the changes - for now we will send just the changes and the domain id and let the other services decide if they want to fetch the updated domain info or not
         return [updatedDomain, null];
     } catch (error) {
         throw new Error("Failed to update domain", { cause: error });
