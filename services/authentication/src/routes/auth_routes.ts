@@ -8,6 +8,7 @@ import {
     ResetPasswordController,
     CredentialChangeController,
     GetUserController,
+    DeleteUserController,
     MetricsController
 } from "../controllers";
 import { SessionMiddleware } from "@services/common/middleware"
@@ -26,6 +27,7 @@ authRoutes.post("/forgot-password", ForgotPasswordValidator, ForgotPasswordContr
 authRoutes.post("/reset-password", ResetPasswordValidator, ResetPasswordController); // only needs password and the id in the redis as a query parameter, the id will be used to verify that the request is valid and then the password will be updated in the database and the id will be deleted from redis
 authRoutes.patch("/credential-change", validSessionMiddleware, CredentialChangeController); // should be dynamic based on what credential is being changed, for example if email is being changed then we need to send a verification email to the new email address and if password is being changed then we need to send a verification email to the old email address
 authRoutes.get("/me", validSessionMiddleware, GetUserController)
+authRoutes.delete("/me", validSessionMiddleware, DeleteUserController)
 authRoutes.get("/metrics", MetricsController)
 // login - returns access token, refresh token, xsrf token in cookie and header
 // logout - no need for xsrf token, just need to clear the cookie

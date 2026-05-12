@@ -7,3 +7,4 @@ export { default as ResetPasswordController } from "./reset_password_controller"
 export { default as CredentialChangeController } from "./credential_change_controller";
 export { default as GetUserController } from "./get_user_controller"
 export { default as MetricsController } from "./metrics_controller"
+export { default as DeleteUserController } from "./delete_account_controller"

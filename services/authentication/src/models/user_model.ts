@@ -77,7 +77,7 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
             }
         })
     }
-    public async update(id: string, patch: UpdatePatch<IUser>): Promise<UpdateResult<IUser>> {
+    public async update(id: string, patch: UpdatePatch<IUser>, externalConn?: PoolClient): Promise<UpdateResult<IUser>> {
         // go through each change in the patch and build a query to update the record with all the changes
         return this.transactionWrap(async (conn) => {
             try {
@@ -96,9 +96,9 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
             } catch (err) {
                 throw new Error("Failed to update user: ", { cause: err })
             }
-        })
+        }, externalConn)
     }
-    public async delete(id: string): Promise<void> { // soft delete by setting deletedAt field to current timestamp
+    public async delete(id: string, externalConn?: any): Promise<void> { // soft delete by setting deletedAt field to current timestamp
         return this.transactionWrap(async (conn) => {
             try {
                 const query = `
@@ -110,7 +110,7 @@ export default class UserModel extends PostgresDatabaseModel<IUser> {
             } catch (err) {
                 throw new Error("Failed to delete user: ", { cause: err })
             }
-        })
+        }, externalConn)
     }
     public async findByEmail(email: string): Promise<IUser | null> {
         return this.poolWrap(async (conn) => {
