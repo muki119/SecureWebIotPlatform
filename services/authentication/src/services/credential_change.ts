@@ -29,16 +29,17 @@ export default async function CredentialChangeService(changes: UpdatePatch<IUser
         }
         // probably going to have to send these same changes - to the stream
         const [success, error]: Result<boolean> = await userModel.multiTableTransaction(async (transaction) => {
-            const [uI, err] = await userModel.update(userId, changes)
+            const [updatedUser, err] = await userModel.update(userId, changes)
             if (err) {
                 return [null, new Error(err.message)]
             }
-            if (!uI) { // if theres no updated item (somehow) then should probably return an error since this shouldnt be happening since unsuccessful has already been handled
+            if (!updatedUser) { // if theres no updated item (somehow) then should probably return an error since this shouldnt be happening since unsuccessful has already been handled
                 throw new Error("Update was successful but no updated item was returned")
             }
+            const changesToSend = changes.filter(change => change.field !== "password").map(change => ({ field: change.field, value: change.value })) // dont send password changes to the stream
             await EventSenderInstance.send(STREAMS.AUTH_SERVICE.USER_UPDATED, {
                 id: userId,
-                changes: JSON.stringify(changes),
+                changes: JSON.stringify(changesToSend),
                 timestamp: new Date().toISOString()
             })
             return [true, err]
