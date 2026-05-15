@@ -93,6 +93,26 @@ export class DomainModel extends PostgresDatabaseModel<IDomain> {
             }
         })
     }
+
+    public async updateOwner(id: string, newOwnerId: string, externalConn?: PoolClient): Promise<UpdateResult<IDomain>> {
+        return this.transactionWrap(async (conn) => {
+            try {
+                const updateQuery = `
+                    UPDATE domains
+                    SET owner_id = $2
+                    WHERE id = $1 AND deleted_at IS NULL
+                    RETURNING id, name, owner_id as "ownerId"
+                `
+                const result = await conn.query(updateQuery, [id, newOwnerId])
+                if (result.rowCount === 0) {
+                    return [null, new Error("Domain not found")]
+                }
+                return [result.rows[0], null]
+            } catch (error) {
+                throw new Error("Failed to update domain owner: ", { cause: error })
+            }
+        }, externalConn)
+    }
     public async delete(id: string, externalConn?: PoolClient): Promise<void> {
         return this.transactionWrap(async (conn) => {
             try {

@@ -7,7 +7,8 @@ import {
     AddUserController,
     DeleteUserController,
     UpdateUserRoleController,
-    LeaveDomainController
+    LeaveDomainController,
+    UpdateOwnerController
 } from "../controllers/domain_controllers"
 import { Router } from "express";
 
@@ -33,6 +34,7 @@ DomainRouter.delete("/:domainId", DeleteDomainController); // Deletes a domain -
 
 DomainRouter.post("/:domainId/leave", LeaveDomainController); // leave a domain
 DomainRouter.post("/:domainId/user", AddUserController); // Adds a user to a domain - admin+ only
+DomainRouter.patch("/:domainId/transfer-ownership", UpdateOwnerController); // changes domain owner but sets old owner to admin - owner only
 
 DomainRouter.delete("/:domainId/user/:userId", DeleteUserController); // Removes a user from domain - admin+ only
 DomainRouter.patch("/:domainId/user/:userId/role", UpdateUserRoleController); // Updates a users role in a domain - admin+ only

@@ -68,7 +68,7 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
         })
     }
 
-    public async updateRole(userId: string, domainId: string, newRole: Role): Promise<UpdateResult<IUserRole>> { // must be domain owner to update user role association - checked in the service layer
+    public async updateRole(userId: string, domainId: string, newRole: Role, externalConn?: PoolClient): Promise<UpdateResult<IUserRole>> { // must be domain owner to update user role association - checked in the service layer
         return this.transactionWrap(async (conn) => {
             try {
                 if (!(newRole in ROLES)) {
@@ -89,7 +89,7 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
             } catch (error) {
                 throw new Error("Failed to update user role : ", { cause: error })
             }
-        })
+        }, externalConn)
     }
 
     public async delete(userId: string, domainId: string, externalConn?: PoolClient): Promise<void> { // must be domain owner to delete user role association - checked in the service layer

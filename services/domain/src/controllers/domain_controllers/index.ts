@@ -7,5 +7,5 @@ export { default as AddUserController } from "./add_user_controller";
 export { default as DeleteUserController } from "./delete_user_controller";
 export { default as UpdateUserRoleController } from "./update_user_role_controller"
 export { default as LeaveDomainController } from "./leave_domain_controller"
-
+export { default as UpdateOwnerController } from "./update_owner_controller"
 
