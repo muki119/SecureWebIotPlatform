@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import ResetPasswordService from '../services/reset_password';
 import { validationResult } from 'express-validator';
-import logger from '../config/logger';
 
 export default async function ResetPasswordController(req: Request, res: Response, next: NextFunction) {
     try {

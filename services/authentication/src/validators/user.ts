@@ -72,6 +72,7 @@ const UserSchema: Schema<DefaultSchemaKeys> = {
         normalizeEmail: {
             options: {
                 all_lowercase: true, // convert to lowercase
+                gmail_remove_dots: false,
             },
         },
         errorMessage: "Invalid Email Address.",
