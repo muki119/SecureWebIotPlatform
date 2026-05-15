@@ -20,7 +20,7 @@ export default async function AddUserController(req: Request, res: Response, nex
         if (error) {
             return res.status(400).json({ message: error.message }).end();
         }
-        return res.status(200).json({ message: "User added to domain successfully" }).end();
+        return res.status(200).json({ message: "User successfully added to domain" }).end();
     } catch (error) {
         next(new Error("Failed to add user to domain: ", { cause: error }))
     }

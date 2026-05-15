@@ -20,7 +20,7 @@ export default async function DeleteDomainUserController(req: Request, res: Resp
         if (err) {
             return res.status(400).json({ message: err.message }).end();
         }
-        return res.status(200).json({ message: "User removed from domain successfully" }).end();
+        return res.status(200).json({ message: "User successfully removed from domain" }).end();
 
     } catch (error) {
         next(new Error("Error deleting user from domain", { cause: error }));

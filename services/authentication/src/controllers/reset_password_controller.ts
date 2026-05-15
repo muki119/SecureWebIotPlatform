@@ -17,19 +17,18 @@ export default async function ResetPasswordController(req: Request, res: Respons
         if (!password || !resetToken) {
             return res.status(400).json({ message: "Missing required fields" }).end();
         }
-        const result = await ResetPasswordService(resetToken, password);
-        if (!result.success) {
-            return res.status(400).json({ message: result.message }).end();
+        const [_, err] = await ResetPasswordService(resetToken, password);
+        if (err) {
+            return res.status(400).json({ message: err.message }).end();
         }
-        res.status(200).json({ message: result.message }).end();
-        logger.info({ userId: result.userId }, `Password reset successful`);
+        res.status(200).json({ message: "Password reset successful" }).end();
         // should validate the new password 
         // verify that token exists in redis db
         // get the tokens corresponding userid 
         // hash the new password and update the user in the main db
 
         // delete the token from the redis db to prevent reuse - or mark it as used for the time of its ttl - so if its attempted to be reused - can log from where 
-    } catch (err) {
-        next(err)
+    } catch (error) {
+        next(error)
     }
 }

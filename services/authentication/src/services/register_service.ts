@@ -1,20 +1,20 @@
 import { userModel, type IUser } from "../models/user_model";
 import { HashPassword } from "../utilities/password_hash";
 import type { ModelDTO } from "@services/common/types";
-import type { ServiceResult } from "../types/service";
+import type { Result } from "@services/common/types";
 import EventSenderInstance from "../config/event_sender";
 import { STREAMS } from "@services/common/config";
-export default async function RegisterService(user: ModelDTO<IUser>): Promise<ServiceResult> {
+export default async function RegisterService(user: ModelDTO<IUser>): Promise<Result<null>> {
     try {
 
         const existingUser = await userModel.existsByEmail(user.email)
         if (existingUser) {
-            return { success: false, message: "Email already in use" }
+            return [null, new Error("Email already in use")]
         }
 
         const passwordHash = await HashPassword(user.password)
         user.password = passwordHash
-        userModel.multiTableTransaction(async (conn) => { // make sure the user is created and the event is sent before committing
+        await userModel.multiTableTransaction(async (conn) => { // make sure the user is created and the event is sent before committing
             const createdUser = await userModel.create(user, conn) // will be used to send to stream for record creation in other services- like the domain service - to be added
             await EventSenderInstance.send(STREAMS.AUTH_SERVICE.USER_CREATED, {
                 id: createdUser.id,
@@ -25,7 +25,7 @@ export default async function RegisterService(user: ModelDTO<IUser>): Promise<Se
         })
 
         // send id email and full name to stream for record creation in other services- like the domain service 
-        return { success: true, }
+        return [null, null]
     } catch (error) {
         throw new Error("Error in register service", { cause: error })
     }

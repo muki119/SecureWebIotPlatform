@@ -18,16 +18,13 @@ export default async function ForgotPasswordController(req: Request, res: Respon
             logger.warn(LogWarningDefault(req), "Forgot password attempt with missing email")
             return res.status(400).json({ message: "Email is required" }).end();
         }
-        const result = await ForgotpasswordService(email)
-        if (result.message == "Email is required") { // somehow then needs to be flagged and logged - since this is boarderline impossible
-            logger.warn(LogWarningDefault(req), "Forgot password attempt with missing email")
+        const [_, err] = await ForgotpasswordService(email)
+        if (err) {
+            res.status(400).json({ message: err.message }).end();
+            return
         }
-        if (result.message == "Email not found") { // this is a common occurrence and not really a warning - but should be logged for metrics and monitoring purposes
-            logger.info({ ...LogWarningDefault(req), email }, "Email not found in system")
-        }
-        logger.info({ email, result }, "Forgot password attempt")
         res.status(200).json({ message: "If the email exists in our system, a reset token will be sent" }).end(); // for security , dosent matter the result
-    } catch (err) {
-        next(err)
+    } catch (error) {
+        next(error)
     }
 }

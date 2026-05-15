@@ -19,7 +19,7 @@ export async function GetDomainTransactionsController(req: Request, res: Respons
         if (err) {
             return res.status(400).json({ error: err.message })
         }
-        res.json({ transactions });
+        res.json(transactions).end();
     } catch (error) {
         next(new Error("Failed to get domain transactions", { cause: error }))
     }

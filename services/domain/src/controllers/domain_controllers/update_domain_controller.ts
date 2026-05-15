@@ -12,7 +12,7 @@ export default async function UpdateDomainController(req: Request, res: Response
             return res.status(400).json({ message: "Domain ID is required" }).end();
         }
         if (!changes || Object.keys(changes).length === 0) {
-            return res.status(400).json({ message: "At least one change is required" }).end();
+            return res.status(400).json({ message: "No changes provided" }).end();
         }
         const [updatedDomain, err] = await UpdateDomainService(userId, domainId as string, changes);
         if (err) {

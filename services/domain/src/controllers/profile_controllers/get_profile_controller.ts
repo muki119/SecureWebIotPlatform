@@ -10,7 +10,6 @@ export default async function GetProfileController(req: Request, res: Response, 
     // for single lookup of a profile - when a user want to see anothers
     try {
         const { userId } = req.params;
-        console.log(userId)
         if (!userId) {
             return res.status(400).json({ error: "User ID is required" });
         }

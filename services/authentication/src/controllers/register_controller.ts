@@ -13,13 +13,13 @@ export default async function RegisterController(req: Request, res: Response, ne
         if (!email || !password || !forename || !surname) {
             return res.status(400).json({ message: "Missing required fields" }).end();
         }
-        const result = await RegisterService({ email, password, forename, surname });
-        if (!result.success) {
-            return res.status(400).json({ message: result.message });
+        const [_, err] = await RegisterService({ email, password, forename, surname });
+        if (err) {
+            return res.status(400).json({ message: err.message });
         }
-        res.json({ message: result.message }).end();
+        res.status(201).json({ message: "User registered successfully" }).end();
         return;
-    } catch (err) {
-        next(err)
+    } catch (error) {
+        next(error)
     }
 }

@@ -10,7 +10,7 @@ export async function CreatePairingCodeService(userId: string, domainId: string)
             return [null, err]
         }
         if (!userPermissions || !userPermissions.canManageDevices) {
-            return [null, new Error("Unauthorized")]
+            return [null, new Error("User does not have permission to manage devices in this domain")]
         }
         const pairingCode = GeneratePairingCode()
         const expiry = new Date(Date.now() + PAIRING_CODE_EXPIRY_SECONDS * 1000); // pairing code expires in 5 minutes
