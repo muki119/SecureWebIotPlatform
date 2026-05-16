@@ -1,0 +1,20 @@
+{
+	"name": "demo_device",
+	"version": "1.0.0",
+	"description": "A demo device that simulates all capabilities available to devices on the Secure Web IoT Platform. This is used for testing and demonstration purposes.",
+	"main": "index.js",
+	"scripts": {
+		"start": "ts-node index.ts",
+		"dev": "npx tsx --env-file=./.env index.ts",
+		"build": "tsc"
+	},
+	"dependencies": {
+		"mqtt": "^5.15.1",
+		"systeminformation": "^5.31.6",
+		"tsx": "^4.21.0"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"type": "commonjs"
+}

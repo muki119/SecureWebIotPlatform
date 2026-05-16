@@ -22,6 +22,7 @@ const server = httpServer.listen(port, async () => {
     logger.info(`Listening on port ${port}`)
     await EventBusInstance.init();
     await EventBusInstance.start();
+    MqttRoutes();
     logger.info('Event bus started');
 });
 server.on('error', (e) => {

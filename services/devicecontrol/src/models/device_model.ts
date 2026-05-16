@@ -144,7 +144,7 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
         }
         device.currentState.set(capabilityKey, { value: newValue, timestamp: new Date() })
         await device.save()
-        return [device.toObject(), null]
+        return [{ ...device.toObject(), id: device._id.toString() }, null]
     }
 
     async create(item: ModelDTO<Omit<IDevice, "currentState">>, externalSession?: ClientSession): Promise<Result<IDevice>> {
@@ -163,7 +163,7 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
             })
             console.log("New device to be created: ", newDevice)
             await newDevice.save()
-            return [newDevice.toObject(), null]
+            return [{ ...newDevice.toObject(), id: newDevice._id.toString() }, null]
         }
         catch (error) {
             throw new Error("Error creating device", { cause: error })
@@ -179,7 +179,7 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
             if (!device) {
                 return null
             }
-            return device.toObject()
+            return { ...device.toObject(), id: device._id.toString() }
         } catch (error) {
             throw new Error("Error attempting to find device by id", { cause: error })
         }
@@ -194,7 +194,7 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
             if (!updatedDevice) {
                 return [null, new Error("Device not found")]
             }
-            return [updatedDevice.toObject(), null]
+            return [{ ...updatedDevice.toObject(), id: updatedDevice._id.toString() }, null]
         } catch (error) {
             throw new Error("Error updating device", { cause: error })
         }

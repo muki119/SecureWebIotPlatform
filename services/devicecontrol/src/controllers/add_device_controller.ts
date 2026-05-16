@@ -9,8 +9,8 @@ export async function AddDeviceController(req: Request, res: Response, next: Nex
 
     try {
         // needs no authentication since this is onboarding
-        const { code, capabilities } = req.body
-        const [deviceToken, err] = await AddDeviceService(code, capabilities)
+        const { code, deviceInfo } = req.body
+        const [deviceToken, err] = await AddDeviceService(code, deviceInfo)
         if (err) {
             return res.status(400).json({ error: err.message })
         }
