@@ -143,3 +143,5 @@ vite.config.ts.timestamp-*
 build
 meta.json
 auth-built-in-db-bootstrap.csv
+*.crt
+*.key
