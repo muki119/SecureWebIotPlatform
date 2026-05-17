@@ -13,7 +13,7 @@ export const DeviceCurrentStateSchema = new Schema<CurrentDeviceState>({
     }
 }, { _id: false, timestamps: false })
 export const DeviceCapabilitiesSchema = new Schema<DeviceCapabilities>({
-    Label: {
+    label: {
         type: String,
         required: true
     },
@@ -24,7 +24,9 @@ export const DeviceCapabilitiesSchema = new Schema<DeviceCapabilities>({
     },
     metric: { // unit's of measurement - could enum it with common units 
         type: String,
-        required: true
+    },
+    step: { // for range types - the step value for the slider
+        type: Number
     },
     min: { // for range types -  min is -2^53 because of js numbers are always a 64 bit float - will support more if i move to different programming language 
         type: Number

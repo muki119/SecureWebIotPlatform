@@ -11,6 +11,8 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
         super(db, schema, modelName)
     }
 
+
+    public static ErrDeviceNotFound = new Error("Device not found")
     protected updatableFieldMap = new Map<keyof ModelDTO<IDevice>, string>([
         ["name", "string"]
     ])
@@ -51,8 +53,8 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
     async verifyCapabilities(capabilities: Map<string, DeviceCapabilities>): Promise<[Error] | [null]> {
         try {
             capabilities.forEach((capability, key) => {
-                if (!capability.Label || typeof capability.Label !== "string") {
-                    return [new Error(`Capability ${key} is missing a valid Label`)]
+                if (!capability.label || typeof capability.label !== "string") {
+                    return [new Error(`Capability ${key} is missing a valid label`)]
                 }
                 if (!capability.type || typeof capability.type !== "string" || !Object.values(CapabilityTypes).includes(capability.type)) {
                     return [new Error(`Capability ${key} has an invalid type`)]
@@ -67,6 +69,9 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
                         }
                         if (capability.min >= capability.max) {
                             return [new Error(`Capability ${key} of type RANGE must have min value less than max value`)]
+                        }
+                        if (capability.step !== undefined && (typeof capability.step !== "number" || capability.step <= 0)) {
+                            return [new Error(`Capability ${key} of type RANGE has an invalid step value`)]
                         }
                         break
                     case "ENUM":
@@ -94,7 +99,7 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
             if (!deleted) {
                 return [null, new Error("Device not found")]
             }
-            return [deleted.toObject(), null]
+            return [{ ...deleted.toObject({ flattenMaps: true, virtuals: true }), id: deleted._id.toString(), domainId: deleted.domainId.toString() }, null]
         } catch (error) {
             throw new Error("Error deleting device", { cause: error })
         }
@@ -133,8 +138,10 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
     async updateCurrentState(id: string, capabilityKey: string, newValue: string | number | boolean, externalSession?: ClientSession): Promise<Result<IDevice>> {
         const device = await this.model.findOne({ _id: id, deletedAt: null }).exec() // get the device
         if (!device) {
-            return [null, new Error("Device not found")]
+            return [null, DeviceModel.ErrDeviceNotFound]
         }
+        device.currentState = device.currentState as Map<string, CurrentDeviceState> // typescript map voodoo - mongoose maps are weird
+        device.capabilities = device.capabilities as Map<string, DeviceCapabilities>
         const capability = device.capabilities.get(capabilityKey) // find if the device is even capable of the requested control 
         if (!capability) {
             return [null, new Error("Capability not found on device")]
@@ -144,16 +151,16 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
         }
         device.currentState.set(capabilityKey, { value: newValue, timestamp: new Date() })
         await device.save()
-        return [{ ...device.toObject(), id: device._id.toString() }, null]
+        return [{ ...device.toObject({ flattenMaps: true, virtuals: true }), id: device._id.toString(), domainId: device.domainId.toString() }, null]
     }
 
     async create(item: ModelDTO<Omit<IDevice, "currentState">>, externalSession?: ClientSession): Promise<Result<IDevice>> {
         try {
-            const [err] = await this.verifyCapabilities(item.capabilities)
+            const [err] = await this.verifyCapabilities(item.capabilities as Map<string, DeviceCapabilities>) // theyre in map state here 
             if (err) {
                 return [null, err]
             }
-            const currentState = await this.createCurrentStateMap(item.capabilities)
+            const currentState = await this.createCurrentStateMap(item.capabilities as Map<string, DeviceCapabilities>)
             const newDevice = new this.model({
                 name: item.name,
                 domainId: item.domainId,
@@ -163,7 +170,7 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
             })
             console.log("New device to be created: ", newDevice)
             await newDevice.save()
-            return [{ ...newDevice.toObject(), id: newDevice._id.toString() }, null]
+            return [{ ...newDevice.toObject({ flattenMaps: true, virtuals: true }), id: newDevice._id.toString(), domainId: newDevice.domainId.toString() }, null]
         }
         catch (error) {
             throw new Error("Error creating device", { cause: error })
@@ -179,7 +186,7 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
             if (!device) {
                 return null
             }
-            return { ...device.toObject(), id: device._id.toString() }
+            return { ...device.toObject({ flattenMaps: true, virtuals: true }), id: device._id.toString(), domainId: device.domainId.toString() }
         } catch (error) {
             throw new Error("Error attempting to find device by id", { cause: error })
         }
@@ -192,9 +199,9 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
             }
             const updatedDevice = await this.model.findOneAndUpdate({ _id: id, deletedAt: null }, updateObject, { returnDocument: "after" }).exec()
             if (!updatedDevice) {
-                return [null, new Error("Device not found")]
+                return [null, DeviceModel.ErrDeviceNotFound]
             }
-            return [{ ...updatedDevice.toObject(), id: updatedDevice._id.toString() }, null]
+            return [{ ...updatedDevice.toObject({ flattenMaps: true, virtuals: true }), id: updatedDevice._id.toString(), domainId: updatedDevice.domainId.toString() }, null]
         } catch (error) {
             throw new Error("Error updating device", { cause: error })
         }

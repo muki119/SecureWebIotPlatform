@@ -1,0 +1,55 @@
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+	Field,
+	FieldContent,
+	FieldError,
+	FieldGroup,
+} from "@/components/ui/field";
+
+export default function LeaveDomainAlertDialog({
+	domainId,
+	leaveDomain,
+	setLeaveDomainId,
+	leaveDomainSuccess,
+}) {
+	return (
+		<AlertDialog open={domainId !== null}>
+			<AlertDialogTrigger asChild></AlertDialogTrigger>
+			<AlertDialogContent>
+				<AlertDialogHeader>
+					<AlertDialogTitle>Leave Domain</AlertDialogTitle>
+					<AlertDialogDescription>
+						Are you sure you want to leave this domain?
+					</AlertDialogDescription>
+				</AlertDialogHeader>
+				<AlertDialogFooter>
+					<FieldGroup>
+						<Field>
+							<AlertDialogCancel onClick={() => setLeaveDomainId(null)}>
+								Cancel
+							</AlertDialogCancel>
+							<AlertDialogAction onClick={() => leaveDomain(domainId)}>
+								Leave
+							</AlertDialogAction>
+						</Field>
+						<Field>
+							<FieldContent>
+								<FieldError>{leaveDomainSuccess[1]}</FieldError>
+							</FieldContent>
+						</Field>
+					</FieldGroup>
+				</AlertDialogFooter>
+			</AlertDialogContent>
+		</AlertDialog>
+	);
+}

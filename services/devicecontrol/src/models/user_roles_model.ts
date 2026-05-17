@@ -32,6 +32,15 @@ export class UserRoleModel extends MongoAssociationModel<IUserRole> {
         }
     }
 
+    async getDomainIdsByUserId(userId: string): Promise<string[]> {
+        try {
+            const userRoles = await this.model.find({ userId, deletedAt: null }, "domainId").exec()
+            return userRoles.map(role => role.domainId as string)
+        } catch (error) {
+            throw new Error("Error finding user roles by user id", { cause: error })
+        }
+    }
+
     async find(userId: string, domainId: string): Promise<IUserRole | null> {
         try {
             if (!domainId) {

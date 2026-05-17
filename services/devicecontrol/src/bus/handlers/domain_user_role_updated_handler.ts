@@ -15,6 +15,7 @@ export async function DomainUserRoleUpdatedHandler(message: EventPayload) {
         userRoleUpdate.role = userRoleUpdate.role.toUpperCase();
         await UserRoleModelInstance.updateRole(userRoleUpdate.userId, userRoleUpdate.domainId, userRoleUpdate.role as Role);
         SocketEmitterInstance.to(userRoleUpdate.domainId).emit(SOCKET_EVENTS.SERVER_EMITTED.DOMAIN.USER_ROLE_UPDATED, { userId: userRoleUpdate.userId, domainId: userRoleUpdate.domainId, newRole: userRoleUpdate.role });
+        SocketEmitterInstance.to(userRoleUpdate.userId).emit(SOCKET_EVENTS.SERVER_EMITTED.USER.ROLE_UPDATED, { domainId: userRoleUpdate.domainId, newRole: userRoleUpdate.role }); // also emit to the user directly in case they are not currently in the domain room or have multiple domains and need to know which one was updated
         return;
     } catch (error) {
         throw new Error("Failed to process domain user role updated event", { cause: error });

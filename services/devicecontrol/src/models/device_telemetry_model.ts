@@ -50,7 +50,7 @@ export class DeviceTelemetryModel { // extends nothing because telemetry is only
     }
 
     isNumericCapability(capabilityType: CapabilityTypes): boolean {
-        return capabilityType === CapabilityTypes.RANGE || capabilityType === CapabilityTypes.GUAGE
+        return capabilityType === CapabilityTypes.RANGE || capabilityType === CapabilityTypes.GAUGE
     }
 
     async findByDeviceId(deviceId: string, capability: string, capabilityType: CapabilityTypes, queryDate: Date | null = null, interval = Intervals.WEEK): Promise<Result<any[]>> { // will be paginated by week or day

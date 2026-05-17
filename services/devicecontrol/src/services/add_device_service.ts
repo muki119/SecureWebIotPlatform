@@ -42,8 +42,7 @@ export async function AddDeviceService(pairingCode: string, deviceInfo: AddDevic
             return [null, err]
         }
         const deviceToken = CreateDeviceToken(device!)
-        io.to(codeInfo.domainId).emit(SOCKET_EVENTS.SERVER_EMITTED.DEVICE.ADDED, { deviceId: device!.id, domainId: codeInfo.domainId }); // notify connected clients that a new device has been added to the domain
-        console.log({ deviceId: device!.id, domainId: codeInfo.domainId, initiatorId: codeInfo.userId })
+        io.to(codeInfo.domainId).emit(SOCKET_EVENTS.SERVER_EMITTED.DEVICE.ADDED, { domainId: codeInfo.domainId, device });
         await EventBusInstance.send(STREAMS.DEVICE_SERVICE.DEVICE_CREATED, { deviceId: device!.id, domainId: codeInfo.domainId, initiatorId: codeInfo.userId })
         return [deviceToken, null]
     } catch (error) {

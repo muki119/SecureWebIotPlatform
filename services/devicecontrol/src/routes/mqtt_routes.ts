@@ -13,9 +13,8 @@ import { MqttClientInstance } from "../config";
 import { MQTT_TOPICS } from "../constants";
 import { logger } from "../config";
 import { RecursiveError } from "@services/common/utilities";
-import { HandleDeviceTelemetry } from "../handlers/";
+import { HandleDeviceTelemetry, HandleDeviceStatus } from "../handlers/";
 export function MqttRoutes() {
-    console.log(MqttClientInstance)
     MqttClientInstance.subscribe(MQTT_TOPICS.DEVICE_EMITTED.TELEMETRY, (err) => {
         if (err) {
             logger.error({ error: RecursiveError(err as Error) }, "Failed to subscribe to device telemetry topic: ")
@@ -24,15 +23,23 @@ export function MqttRoutes() {
         }
     })
 
+    MqttClientInstance.subscribe(MQTT_TOPICS.DEVICE_EMITTED.STATUS, (err) => {
+        if (err) {
+            logger.error({ error: RecursiveError(err as Error) }, "Failed to subscribe to device status topic: ")
+        } else {
+            logger.info("Subscribed to device status topic")
+        }
+    })
+
     MqttClientInstance.on("message", async (topic, message) => {
-        const topicParts = topic.split("/"); // will seperate int
-        console.log(topicParts, message.toString());
-        // ["","device","deviceId","telemetry"]
-        const deviceId = topicParts[2]; // get the device id from the topic
+        const topicParts = topic.split("/");
+        // ["", "device", "deviceId", "telemetry"|"status"]
+        const deviceId = topicParts[2];
 
         if (topicParts[1] === "device" && topicParts[3] === "telemetry") {
             await HandleDeviceTelemetry(deviceId!, message);
+        } else if (topicParts[1] === "device" && topicParts[3] === "status") {
+            await HandleDeviceStatus(deviceId!, message);
         }
-
     })
 }

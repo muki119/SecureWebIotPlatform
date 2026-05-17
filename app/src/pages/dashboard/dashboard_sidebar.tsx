@@ -1,71 +1,27 @@
-import {
-	Sidebar,
-	SidebarGroup,
-	SidebarHeader,
-	SidebarGroupContent,
-	SidebarMenuItem,
-	SidebarMenuButton,
-	SidebarContent,
-	SidebarMenuAction,
-	SidebarInput,
-	useSidebar,
-} from "@/components/ui/sidebar";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
-
+import { Sidebar } from "@/components/ui/sidebar";
 import { toast } from "sonner";
-
-import { EllipsisVerticalIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { API_ROUTES } from "@/constants/api_routes";
 import { AuthContext } from "@/contexts/auth_context";
-import { useContext, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
+import { DashboardContext } from "../../contexts/dashboard_context";
+import { useContext, useState } from "react";
+import { AuthClientRequest } from "@/helpers/client_request";
 
 import DashboardIconSidebar from "./sidebar/dahsboard_icon_sidebar";
-import { AuthClientRequest } from "@/helpers/client_request";
-import {
-	Field,
-	FieldContent,
-	FieldError,
-	FieldGroup,
-	FieldLabel,
-} from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import DashboardSecondMenu from "./sidebar/dashboard_second_menu";
 import DomaindDetailsDialog from "./sidebar/domain_info_dialog";
+import LeaveDomainAlertDialog from "./sidebar/leave_domain_alert_dialog";
+import UpdateDomainDialog from "./sidebar/update_domain_dialog";
 
-export default function DashboardSidebar({
-	domains,
-	setDomains,
-	selectedDomain,
-	setSelectedDomain,
-	logout,
-	...props
-}) {
-	const navigate = useNavigate();
-	const { authState, authClientRequest, dispatch } = useContext(AuthContext)!;
+export default function DashboardSidebar() {
+	const { authState, authClientRequest } = useContext(AuthContext)!;
+	const {
+		domains,
+		setDomains,
+		selectedDomain,
+		setSelectedDomain,
+		logout,
+		isAdmin,
+	} = useContext(DashboardContext)!;
 	const [createDomainSuccess, setCreateDomainSuccess] = useState<
 		[boolean, string | null]
 	>([false, null]);
@@ -77,13 +33,11 @@ export default function DashboardSidebar({
 	const [updateDomainSuccess, setUpdateDomainSuccess] = useState<
 		[boolean, string | null]
 	>([false, null]);
-
 	const [updateDomainUserSuccess, setUpdateDomainUserSuccess] = useState<
 		[boolean, string | null]
 	>([false, null]);
-
 	const [selectedViewDetailsDomain, setSelectedViewDetailsDomain] =
-		useState(null); // for viewing domain details and users
+		useState(null);
 
 	const createDomain = async (domainName) => {
 		try {
@@ -93,9 +47,7 @@ export default function DashboardSidebar({
 			}
 			const [r, err] = await authClientRequest.post(
 				API_ROUTES.DOMAIN.CREATE_DOMAIN.path,
-				{
-					name: domainName,
-				},
+				{ name: domainName },
 				{
 					headers: {
 						Authorization: AuthClientRequest.createAuthHeader(
@@ -128,8 +80,7 @@ export default function DashboardSidebar({
 			if (r?.status === 400) {
 				setCreateDomainSuccess([false, r.data]);
 			}
-		} catch (error) {
-			/// create a toast for error
+		} catch {
 			toast.error("Error creating domain");
 		}
 	};
@@ -160,7 +111,7 @@ export default function DashboardSidebar({
 					return;
 				}
 				if (err === AuthClientRequest.ErrServerError) {
-					toast.error("Server error while fetching domain users", {
+					toast.error("Server error while leaving domain", {
 						description: "Please try again later",
 					});
 					return;
@@ -169,11 +120,10 @@ export default function DashboardSidebar({
 				return;
 			}
 			if (r?.status === 200) {
-				/// close the alerr dialog and create a success toast
 				setDomains((prev) => {
-					const newDomains = { ...prev };
-					delete newDomains[domainId];
-					return newDomains;
+					const next = { ...prev };
+					delete next[domainId];
+					return next;
 				});
 				setLeaveDomainSuccess([true, "Left domain successfully"]);
 				setLeaveDomainId(null);
@@ -181,24 +131,18 @@ export default function DashboardSidebar({
 			if (r?.status === 400) {
 				setLeaveDomainSuccess([false, r.data.message]);
 			}
-		} catch (error) {
-			// create a toast for error
+		} catch {
 			toast.error("Error leaving domain");
 		}
 	};
 
 	const updateDomainName = async (domainId, domainName) => {
 		try {
-			if (!domainId || !domainName) {
-				// create a toast for error
-				return;
-			}
+			if (!domainId || !domainName) return;
 			setUpdateDomainSuccess([false, null]);
 			const [r, err] = await authClientRequest.patch(
 				API_ROUTES.DOMAIN.UPDATE_DOMAIN(domainId).path,
-				{
-					changes: [{ field: "name", value: domainName }],
-				},
+				{ changes: [{ field: "name", value: domainName }] },
 				{
 					headers: {
 						Authorization: AuthClientRequest.createAuthHeader(
@@ -216,11 +160,10 @@ export default function DashboardSidebar({
 					return;
 				}
 				if (err === AuthClientRequest.ErrServerError) {
-					toast.error("Server error while fetching domain users", {
+					toast.error("Server error while updating domain", {
 						description: "Please try again later",
 					});
 				}
-				// create a toast for error
 				return;
 			}
 			if (r?.status === 200) {
@@ -234,26 +177,15 @@ export default function DashboardSidebar({
 			if (r?.status === 400) {
 				setUpdateDomainSuccess([false, r.data.message]);
 			}
-		} catch (error) {
-			// create a toast for error
+		} catch {
 			toast.error("Error updating domain name");
 		}
 	};
 
 	const removeUser = async (domainId, userId) => {
 		try {
-			if (!domainId) {
-				// create a toast for error
-				return;
-			}
-			if (!userId) {
-				return;
-			}
-
-			if (userId === authState?.user?.userId) {
-				// error toast
-				return;
-			}
+			if (!domainId || !userId) return;
+			if (userId === authState?.user?.userId) return;
 			const [r, err] = await authClientRequest.delete(
 				API_ROUTES.DOMAIN.DELETE_USER(domainId, userId).path,
 				{
@@ -273,7 +205,7 @@ export default function DashboardSidebar({
 					return;
 				}
 				if (err === AuthClientRequest.ErrServerError) {
-					toast.error("Server error while fetching domain users", {
+					toast.error("Server error while removing user", {
 						description: "Please try again later",
 					});
 				}
@@ -289,9 +221,8 @@ export default function DashboardSidebar({
 				});
 				setUpdateDomainUserSuccess([true, r.data.message]);
 			}
-		} catch (error) {
-			// Probably a toast for error
-			toast.error("Error fetching domain users");
+		} catch {
+			toast.error("Error removing user");
 		}
 	};
 
@@ -301,26 +232,11 @@ export default function DashboardSidebar({
 		newRole: string,
 	) => {
 		try {
-			if (!domainId) {
-				// create a toast for error
-				return;
-			}
-			if (!userId) {
-				return;
-			}
-			if (!newRole) {
-				return;
-			}
-			if (newRole === "OWNER") {
-				// create a toast for error
-				return;
-			}
+			if (!domainId || !userId || !newRole || newRole === "OWNER") return;
 			setUpdateDomainUserSuccess([false, null]);
 			const [r, err] = await authClientRequest.patch(
 				API_ROUTES.DOMAIN.UPDATE_USER_ROLE(domainId, userId).path,
-				{
-					role: newRole.toUpperCase(),
-				},
+				{ role: newRole.toUpperCase() },
 				{
 					headers: {
 						Authorization: AuthClientRequest.createAuthHeader(
@@ -338,7 +254,7 @@ export default function DashboardSidebar({
 					return;
 				}
 				if (err === AuthClientRequest.ErrServerError) {
-					toast.error("Server error while fetching domain users", {
+					toast.error("Server error while updating role", {
 						description: "Please try again later",
 					});
 				}
@@ -348,8 +264,7 @@ export default function DashboardSidebar({
 				return;
 			}
 			if (r?.status === 200) {
-				const successMessage = r.data.message;
-				setUpdateDomainUserSuccess([true, successMessage]);
+				setUpdateDomainUserSuccess([true, r.data.message]);
 				setDomains((prev) => ({
 					...prev,
 					[domainId]: {
@@ -364,18 +279,14 @@ export default function DashboardSidebar({
 					},
 				}));
 			}
-		} catch (error) {
-			// Probably a toast for error
+		} catch {
 			toast.error("Error updating user role");
 		}
 	};
 
 	const fetchDomainUsers = async (domainId) => {
 		try {
-			if (!domainId) {
-				// create a toast for error
-				return;
-			}
+			if (!domainId) return;
 			const [r, err] = await authClientRequest.get(
 				API_ROUTES.DOMAIN.GET_DOMAIN_USERS(domainId).path,
 				{
@@ -401,29 +312,23 @@ export default function DashboardSidebar({
 				}
 			}
 			if (r?.status === 200) {
-				const usersData = r.data;
 				const usersObject = {};
-				usersData.forEach((user) => {
+				r.data.forEach((user) => {
 					usersObject[user.userId] = user;
 				});
-
 				setDomains((prev) => ({
 					...prev,
 					[domainId]: { ...prev[domainId], users: usersObject },
 				}));
 			}
-		} catch (error) {
-			// Probably a toast for error
+		} catch {
 			toast.error("Error fetching domain users");
 		}
 	};
 
 	const deleteDomain = async (domainId) => {
 		try {
-			if (!domainId) {
-				// create a toast for error
-				return;
-			}
+			if (!domainId) return;
 			const [r, err] = await authClientRequest.delete(
 				API_ROUTES.DOMAIN.DELETE_DOMAIN(domainId).path,
 				{
@@ -451,16 +356,14 @@ export default function DashboardSidebar({
 			if (r?.status === 200) {
 				setSelectedViewDetailsDomain(null);
 				setDomains((prev) => {
-					const newDomains = { ...prev };
-					delete newDomains[domainId];
-					return newDomains;
+					const next = { ...prev };
+					delete next[domainId];
+					return next;
 				});
 				toast.success("Domain deleted successfully");
 			}
-		} catch (error) {
-			//toast
+		} catch {
 			toast.error("Error deleting domain");
-			return;
 		}
 	};
 
@@ -479,6 +382,7 @@ export default function DashboardSidebar({
 				authState={authState}
 				updateDomainSuccess={updateDomainSuccess}
 				updateDomainName={updateDomainName}
+				isAdmin={isAdmin}
 			/>
 			<DomaindDetailsDialog
 				deleteDomain={deleteDomain}
@@ -491,12 +395,12 @@ export default function DashboardSidebar({
 				updateUserRole={updateUserRole}
 				updateDomainUserSuccess={updateDomainUserSuccess}
 				setUpdateDomainUserSuccess={setUpdateDomainUserSuccess}
+				isAdmin={isAdmin}
 			/>
 			<Sidebar
 				collapsible="icon"
 				variant="sidebar"
 				className="overflow-hidden *:data-[sidebar=sidebar]:flex-row"
-				{...props}
 			>
 				<DashboardIconSidebar
 					createDomain={createDomain}
@@ -505,232 +409,14 @@ export default function DashboardSidebar({
 					logout={logout}
 				/>
 				<DashboardSecondMenu
-					{...{
-						authState,
-						domains,
-						selectedDomain,
-						setSelectedDomain,
-						leaveDomain,
-						setLeaveDomainId,
-						setSelectedInfoDomain,
-						fetchDomainUsers,
-						setSelectedViewDetailsDomain,
-					}}
+					domains={domains}
+					selectedDomain={selectedDomain}
+					setSelectedDomain={setSelectedDomain}
+					setLeaveDomainId={setLeaveDomainId}
+					setSelectedInfoDomain={setSelectedInfoDomain}
+					setSelectedViewDetailsDomain={setSelectedViewDetailsDomain}
 				/>
 			</Sidebar>
 		</>
 	);
 }
-
-const UpdateDomainDialog = ({
-	domains,
-	selectedInfoDomain,
-	authState,
-	setSelectedInfoDomain,
-	updateDomainSuccess,
-	updateDomainName,
-}) => {
-	const [domainDetails, setDomainDetails] = useState(
-		domains[selectedInfoDomain],
-	);
-
-	const handleChange = (e) => {
-		setDomainDetails({ ...domainDetails, name: e.target.value });
-	};
-
-	useEffect(() => {
-		setDomainDetails(domains[selectedInfoDomain]);
-	}, [selectedInfoDomain, domains]);
-
-	const isOwner = useMemo(() => {
-		if (!domainDetails || !authState.user) return false;
-		return domainDetails.ownerId === authState.user.userId;
-	}, [domainDetails, authState.user]);
-	const [successfulUpdate, updateMessage] = updateDomainSuccess;
-	return (
-		<Dialog
-			open={selectedInfoDomain !== null}
-			onOpenChange={() => setSelectedInfoDomain(null)}
-		>
-			{" "}
-			<DialogContent>
-				<DialogHeader>
-					<DialogTitle>Domain Information</DialogTitle>
-				</DialogHeader>
-				<FieldGroup>
-					<Field>
-						<FieldLabel>Name</FieldLabel>
-						<FieldGroup>
-							<span className="text-green-500">
-								{successfulUpdate && updateMessage}
-							</span>
-						</FieldGroup>
-						<Input
-							type="text"
-							value={domainDetails?.name || ""}
-							onChange={handleChange}
-							readOnly={!isOwner}
-							placeholder="Domain Name"
-						/>
-						<Button
-							variant="outline"
-							disabled={
-								!isOwner ||
-								domainDetails?.name === "" ||
-								domainDetails?.name === domains[selectedInfoDomain]?.name
-							}
-							onClick={() =>
-								updateDomainName(selectedInfoDomain, domainDetails?.name)
-							}
-						>
-							Save
-						</Button>
-						<FieldError>{!successfulUpdate && updateMessage}</FieldError>
-					</Field>
-				</FieldGroup>
-			</DialogContent>
-		</Dialog>
-	);
-};
-
-const LeaveDomainAlertDialog = ({
-	domainId,
-	leaveDomain,
-	setLeaveDomainId,
-	leaveDomainSuccess,
-}) => {
-	return (
-		<AlertDialog open={domainId !== null}>
-			{" "}
-			<AlertDialogTrigger asChild></AlertDialogTrigger>
-			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogTitle>Leave Domain</AlertDialogTitle>
-					<AlertDialogDescription>
-						Are you sure you want to leave this domain?
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<FieldGroup>
-						<Field>
-							<AlertDialogCancel onClick={() => setLeaveDomainId(null)}>
-								Cancel
-							</AlertDialogCancel>
-							<AlertDialogAction onClick={() => leaveDomain(domainId)}>
-								Leave
-							</AlertDialogAction>
-						</Field>
-						<Field>
-							<FieldContent>
-								<FieldError>{leaveDomainSuccess[1]}</FieldError>
-							</FieldContent>
-						</Field>
-					</FieldGroup>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
-	);
-};
-
-const DashboardSecondMenu = ({
-	domains,
-	selectedDomain,
-	setSelectedDomain,
-	setLeaveDomainId,
-	setSelectedInfoDomain,
-	setSelectedViewDetailsDomain,
-}) => {
-	const { state } = useSidebar();
-	const [filter, setFilter] = useState("");
-	return (
-		<Sidebar
-			collapsible="none"
-			className={` flex-1 ${state === "expanded" ? "md:flex" : ""}`}
-		>
-			<SidebarHeader className="gap-3.5 border-b">
-				<div className="flex w-full items-center justify-between">
-					<div className="text-base font-medium text-foreground">Domains</div>
-				</div>
-				<SidebarInput
-					placeholder="Type to search..."
-					value={filter}
-					onChange={(e) => setFilter(e.target.value)}
-				/>
-			</SidebarHeader>
-			<SidebarContent>
-				<SidebarGroup className="">
-					<SidebarGroupContent>
-						{Object.values(domains)
-							.filter((domain) =>
-								domain.name.toLowerCase().includes(filter.toLowerCase()),
-							)
-							.map((domain) => (
-								<DomainMenuItem
-									key={domain.id}
-									isCurrent={selectedDomain === domain.id}
-									id={domain.id}
-									name={domain.name}
-									onSelect={() => setSelectedDomain(domain.id)}
-									setLeaveDomainId={setLeaveDomainId}
-									setSelectedInfoDomain={setSelectedInfoDomain}
-									setSelectedViewDetailsDomain={setSelectedViewDetailsDomain}
-								/>
-							))}
-					</SidebarGroupContent>
-				</SidebarGroup>
-			</SidebarContent>
-		</Sidebar>
-	);
-};
-
-const DomainMenuItem = ({
-	id,
-	name,
-	isCurrent = false,
-	onSelect,
-	setLeaveDomainId,
-	setSelectedInfoDomain,
-	setSelectedViewDetailsDomain,
-}) => {
-	// basically will be a menu item that when clicked will change the current domain in the main dashboard content to the domain that was clicked
-	//
-
-	return (
-		<DropdownMenu>
-			<SidebarMenuItem className="w-full flex items-center justify-center align-middle">
-				<SidebarMenuButton
-					onClick={onSelect}
-					isActive={isCurrent}
-					className="w-full"
-					size="lg"
-				>
-					<div>
-						<div className="text-sm font-medium">{name}</div>
-						<div className="text-xs text-muted-foreground">{"wefw"}</div>
-					</div>
-					<SidebarMenuAction asChild className="ml-auto">
-						<DropdownMenuTrigger>
-							<Button variant="ghost" size="icon">
-								<EllipsisVerticalIcon />
-							</Button>
-						</DropdownMenuTrigger>
-					</SidebarMenuAction>
-				</SidebarMenuButton>
-			</SidebarMenuItem>
-			<DropdownMenuContent>
-				<DropdownMenuItem onClick={onSelect}>View Domain</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => setSelectedViewDetailsDomain(id)}>
-					Domain Details
-				</DropdownMenuItem>
-				{/* this is where you can see domain details , edit domain users ,transfer ownership and delete domain */}
-				<DropdownMenuItem onClick={() => setSelectedInfoDomain(id)}>
-					Edit Domain
-				</DropdownMenuItem>
-				{/* this is where you can see domain details , edit domain users ,transfer ownership and delete domain */}
-				<DropdownMenuItem onClick={() => setLeaveDomainId(id)}>
-					Leave Domain
-				</DropdownMenuItem>
-			</DropdownMenuContent>
-		</DropdownMenu>
-	);
-};

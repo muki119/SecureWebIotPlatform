@@ -1,8 +1,8 @@
 import type { Result } from "@services/common/types";
 import { UserRoleModelInstance, DeviceModelInstance } from "../models"
 import type { IDevice } from "../types";
-import { io, EventBusInstance } from "../config";
-import { SOCKET_EVENTS } from "../constants/";
+import { io, EventBusInstance, MqttClientInstance } from "../config";
+import { SOCKET_EVENTS, MQTT_TOPICS } from "../constants/";
 import { STREAMS } from "@services/common/config"
 export async function DeleteDeviceService(userId: string, deviceId: string): Promise<Result<IDevice>> {
     try {
@@ -23,6 +23,7 @@ export async function DeleteDeviceService(userId: string, deviceId: string): Pro
         }
 
         io.to(device.domainId as string).emit(SOCKET_EVENTS.SERVER_EMITTED.DEVICE.REMOVED, { deviceId: device.id, domainId: device.domainId });
+        await MqttClientInstance.publish(MQTT_TOPICS.SERVER_EMITTED.UNLINKED(device.id), JSON.stringify({ deviceId: device.id }))
         await EventBusInstance.send(STREAMS.DEVICE_SERVICE.DEVICE_DELETED, { deviceId: device.id, domainId: device.domainId as string, initiatorId: userId });
         return [deletedDevice!, null]
 

@@ -8,7 +8,7 @@ export default async function HandleUserUpdated(message: EventPayload): Promise<
             throw new Error("Missing required fields in message");
         }
         let changesArr = JSON.parse(changes) // changes is strignified so it can be passed - the event bus has a flat payload - only like 2 layers of depth
-
+        // should probably check that these changes are even needed for this service- if not then its going to cause errors
         await ProfileModelInstance.update(id, changesArr)
         return;
     } catch (err) {

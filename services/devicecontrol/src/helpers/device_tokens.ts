@@ -14,7 +14,7 @@ export function CreateDeviceToken(device: IDevice): string {
             iss: "device-control",
             exp: Math.floor(Date.now() / 1000) + DEVICE_TOKEN_EXPIRY_SECONDS,
             iat: Math.floor(Date.now() / 1000),
-            capabilities: Object.fromEntries(device.capabilities) // turn the map to an object , makes it easier to send telemetry and the capabilities is in the jwt which gets checked every send to the service
+            capabilities: device.capabilities instanceof Map ? Object.fromEntries(device.capabilities) : device.capabilities as Record<string, DeviceCapabilities>
         };
         return jwt.sign(payload, GetEnvString("DEVICE_TOKEN_SECRET_KEY"), { algorithm: 'HS256', });
     } catch (error) {

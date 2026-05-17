@@ -77,6 +77,9 @@ export class UserDomainModel extends PostgresAssociationModel<IUserDomain> {
 
     public async isDomainMember(userId: string, domainId: string): Promise<boolean> {
         return this.poolWrap(async (conn) => {
+            if (!userId || !domainId) {
+                throw new Error("User ID and Domain ID are required to check domain membership")
+            }
             try {
                 const query = `
                 SELECT 1

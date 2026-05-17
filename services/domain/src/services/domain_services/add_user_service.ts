@@ -10,12 +10,11 @@ export default async function AddUserService(inviter: string, invitee: string, d
     // user domain model entry
     // user role model entry
     try {
+        if (!inviter || !invitee || !domainId) {
+            return [null, new Error("Inviter, invitee, and domain ID are required")]
+        }
         if (role === ROLES.OWNER) { // a user cannot be added as an owner - there will be a trnasfer ownership service at somepoint
             return [null, new Error("Cannot assign owner role to another user")]
-        }
-        const inviteeIsMember = await UserDomainModelInstance.isDomainMember(invitee, domainId)
-        if (inviteeIsMember) { // Shouldnt really happen because frontend shouldnt even show an already added member - only way is through a non ui client or a race condition 
-            return [null, new Error("User is already a member of the domain")]
         }
         const inviterIsAllowed = (await UserRoleModelInstance.userPermissions(inviter, domainId))
         if (!inviterIsAllowed) {
@@ -24,6 +23,11 @@ export default async function AddUserService(inviter: string, invitee: string, d
         if (!inviterIsAllowed.canManageUsers) {
             return [null, new Error("Inviter is not allowed to manage users in this domain")]
         }
+        const inviteeIsMember = await UserDomainModelInstance.isDomainMember(invitee, domainId)
+        if (inviteeIsMember) { // Shouldnt really happen because frontend shouldnt even show an already added member - only way is through a non ui client or a race condition 
+            return [null, new Error("User is already a member of the domain")]
+        }
+
         const result = await UserDomainModelInstance.multiTableTransaction(async (conn) => {
             await UserDomainModelInstance.create({ userId: invitee, domainId }, conn)
             const userRole = await UserRoleModelInstance.create({ userId: invitee, domainId, role: role.toUpperCase() as Role }, conn)

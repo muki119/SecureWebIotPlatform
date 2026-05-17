@@ -9,6 +9,9 @@ export default async function AddUserController(req: Request, res: Response, nex
     try {
         const { domainId } = req.params;
         const { id, role = ROLES.MEMBER } = req.body; // id of the user to be added  - the id will come from a search by email using the auth service - or maybe adding emails to the profile model and adding a search by email
+        if (!id) {
+            return res.status(400).json({ message: "User ID is required" }).end();
+        }
         if (role == ROLES.OWNER) {
             return res.status(400).json({ message: "Cannot assign owner role to another user" }).end();
         }

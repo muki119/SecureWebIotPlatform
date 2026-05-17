@@ -48,6 +48,9 @@ export class UserRoleModel extends PostgresAssociationModel<IUserRole> {
     public async userPermissions(userId: string, domainId: string): Promise<rolePermissions & { role: string } | null> {
         return this.poolWrap(async (conn) => {
             try {
+                if (!userId || !domainId) {
+                    throw new Error("User ID and Domain ID are required to get user permissions")
+                }
                 const query = `
                 SELECT role 
                 FROM user_roles 

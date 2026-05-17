@@ -51,6 +51,7 @@ export default function DomaindDetailsDialog({
 	updateDomainUserSuccess,
 	setUpdateDomainUserSuccess,
 	deleteDomain,
+	isAdmin,
 }) {
 	// get the domains object , the selected domain id and the set selected
 	// going to display the domain basic info and all the users(paginated)
@@ -139,6 +140,7 @@ export default function DomaindDetailsDialog({
 								<TableCell>
 									<RoleSwitch
 										currentRole={user.role}
+										isAdmin={isAdmin}
 										onChange={(newRole) =>
 											updateUserRole(
 												selectedViewDetailsDomain,
@@ -158,7 +160,7 @@ export default function DomaindDetailsDialog({
 									>
 										<Button
 											variant="destructive"
-											disabled={user.role === "OWNER"}
+											disabled={user.role === "OWNER" || !isAdmin}
 										>
 											Remove
 										</Button>
@@ -204,12 +206,12 @@ export default function DomaindDetailsDialog({
 	);
 }
 
-const RoleSwitch = ({ currentRole, onChange }) => {
+const RoleSwitch = ({ currentRole, onChange, isAdmin }) => {
 	return (
 		<Select
 			value={currentRole}
 			onValueChange={onChange}
-			disabled={currentRole === "OWNER"}
+			disabled={currentRole === "OWNER" || !isAdmin}
 		>
 			<SelectTrigger>
 				<SelectValue />

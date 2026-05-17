@@ -21,6 +21,7 @@ export const SOCKET_EVENTS = {
             DEVICE_INFO_UPDATED: "DEVICE_INFO_UPDATED", // when device information like name or location is updated , this is emitted with {domainid, deviceid, changes:{name?:string, location?:string} }
             UPDATED: "DEVICE_UPDATED", // shoudld probably follow the patch pattern of {capability:string , value:any}  so , {deviceId, changes:{capability:string, value:any} } // this is when a user updates a device capability and this is what the server sends to the clients in the domain - should be broadcasted
             TELEMETRY: "DEVICE_TELEMETRY", // is just {domainid, deviceId, data:{capability:string, value:any} }-  emitted when a device sends new telemetry data
+            STATUS: "DEVICE_STATUS", // is just {domainid, deviceId, data:{status:string} }- emitted when a device status changes
         },
         USER: { // user will connect to its own room which is its userid , needs to only folow {userid,domainid} // server emitted
             JOINED_DOMAIN: "USER_JOINED_DOMAIN", // when a user is added to a domain

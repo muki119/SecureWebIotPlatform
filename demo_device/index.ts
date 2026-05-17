@@ -6,9 +6,6 @@
 import mqtt, { type MqttClient } from "mqtt";
 import readline from "node:readline";
 import { DatabaseSync } from "node:sqlite";
-import sysInfo from "systeminformation";
-
-
 type Result<T> = [T | null, Error | null]
 const db = new DatabaseSync("device.db");
 db.exec(`
@@ -30,16 +27,18 @@ function getCredentials(): { deviceId: string, token: string } | null {
     return row ? { deviceId: row.device_id, token: row.token } : null;
 }
 
-const DEVICE_SERVICE_URL = process.env.DEVICE_SERVICE_URL || "http://localhost/api/v1/device";
+const DEVICE_SERVICE_URL = process.env.DEVICE_SERVICE_URL || "http://localhost:2558/api/v1/device";
 const MQTT_HOST = process.env.MQTT_BROKER_HOST || "localhost";
 const MQTT_PORT = parseInt(process.env.MQTT_BROKER_PORT || "1884");
 
-const capabilities = {
-    power: { Label: "Power", type: "BINARY", metric: "boolean" },
-    brightness: { Label: "Brightness", type: "RANGE", metric: "percentage", min: 0, max: 100 },
-    temperature: { Label: "Temperature", type: "GAUGE", metric: "celsius" },
-    mode: { Label: "Mode", type: "ENUM", metric: "state", enumValues: ["low", "medium", "high"] },
-    color: { Label: "Color", type: "COLOR", metric: "hex" }
+
+type DevicePermutations = { label: string, type: "BINARY" } | { label: string, type: "RANGE", metric: string, min: number, max: number } | { label: string, type: "GAUGE", metric: string, min: number, max: number } | { label: string, type: "ENUM", enumValues: string[] } | { label: string, type: "COLOR" }
+const capabilities: Record<string, DevicePermutations> = {
+    power: { label: "Power", type: "BINARY" },
+    brightness: { label: "Brightness", type: "RANGE", metric: "percentage", min: 0, max: 100 },
+    temperature: { label: "Temperature", type: "GAUGE", metric: "celsius", min: -40, max: 125 },
+    mode: { label: "Mode", type: "ENUM", enumValues: ["low", "medium", "high"] },
+    color: { label: "Color", type: "COLOR" }
 }
 
 const state: Record<string, any> = {
@@ -71,7 +70,7 @@ async function activateDevice(pairingCode: string): Promise<Result<{ deviceId: s
         body: JSON.stringify({
             code: pairingCode,
             deviceInfo: {
-                name: "Demo Device",
+                name: "DemoDeviceMk",
                 capabilities
             }
         })
@@ -98,6 +97,8 @@ function sendTelemetry(client: MqttClient, deviceId: string, capability: string,
 }
 
 function connectMqtt(deviceId: string, token: string): MqttClient {
+
+
     const client = mqtt.connect({
         host: MQTT_HOST,
         port: MQTT_PORT,
@@ -107,13 +108,19 @@ function connectMqtt(deviceId: string, token: string): MqttClient {
         clientId: `test_device_${deviceId}`,
         clean: true,
         reconnectPeriod: 3000,
+        will: { topic: `/device/${deviceId}/status`, payload: "offline", qos: 1, retain: true }
     });
 
     client.on("connect", () => {
         console.log(`Connected to MQTT broker as device ${deviceId}`);
+        client.publish(`/device/${deviceId}/status`, "online", { qos: 1, retain: true });
         client.subscribe(`/device/${deviceId}/commands`, { qos: 2 }, (err) => {
             if (err) console.error("Subscribe error:", err);
             else console.log("Subscribed to commands");
+        });
+        client.subscribe(`/device/${deviceId}/unlinked`, { qos: 2 }, (err) => {
+            if (err) console.error("Subscribe error:", err);
+            else console.log("Subscribed to unlink notifications");
         });
 
         // send initial state
@@ -130,6 +137,15 @@ function connectMqtt(deviceId: string, token: string): MqttClient {
 
     client.on("message", (topic, message) => {
         try {
+            const topicParts = topic.split("/");
+            if (topicParts[3] === "unlinked") {
+                console.log("Device has been unlinked, shutting down...");
+                const deviceId = topicParts[2];
+                db.prepare("DELETE FROM device WHERE device_id = ?").run(deviceId!);
+                client.end();
+                db.close();
+                process.exit(0);
+            }
             const { capability, value } = JSON.parse(message.toString());
             console.log(`Command — ${capability}: ${value}`);
             if (capability in state) {
