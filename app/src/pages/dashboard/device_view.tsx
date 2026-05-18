@@ -27,7 +27,7 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { DashboardContext } from "../../contexts/dashboard_context";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { HexColorPicker } from "react-colorful";
 import { SOCKET_EVENTS } from "@/constants/api_routes";
@@ -274,11 +274,17 @@ const RangeCapabilityCard = ({
 	handleCapabilityChange,
 	capabilityKey,
 }) => {
-	const min = capability.min ?? 0;
-	const max = capability.max ?? 100;
-	const step = capability.step ?? 1;
-	const value = currentState?.value ?? min;
-	const [sliderValue, setSliderValue] = useState(value);
+	const [sliderConfig] = useState({
+		min: capability.min ?? 0,
+		max: capability.max ?? 100,
+		step: capability.step ?? 1,
+	});
+	const [sliderValue, setSliderValue] = useState(
+		currentState?.value ?? sliderConfig.min,
+	);
+	useEffect(() => {
+		if (currentState?.value !== undefined) setSliderValue(currentState.value);
+	}, [currentState?.value]);
 	return (
 		<>
 			<CardHeader>
@@ -287,7 +293,7 @@ const RangeCapabilityCard = ({
 						{capability.label}
 					</CardTitle>
 					<span className="text-xs text-muted-foreground">
-						{sliderValue} / {max}
+						{sliderValue} / {sliderConfig.max}
 					</span>
 				</div>
 				<CardAction>
@@ -299,9 +305,9 @@ const RangeCapabilityCard = ({
 			<CardContent className="pt-0 pb-4">
 				<Slider
 					value={[sliderValue]}
-					min={min}
-					max={max}
-					step={step}
+					min={sliderConfig.min}
+					max={sliderConfig.max}
+					step={sliderConfig.step}
 					className="w-full"
 					onValueChange={(newValue) => setSliderValue(newValue[0])}
 					onValueCommit={(newValue) =>
@@ -309,8 +315,8 @@ const RangeCapabilityCard = ({
 					}
 				/>
 				<div className="flex justify-between text-xs text-muted-foreground mt-1">
-					<span>{min}</span>
-					<span>{max}</span>
+					<span>{sliderConfig.min}</span>
+					<span>{sliderConfig.max}</span>
 				</div>
 			</CardContent>
 		</>
@@ -325,6 +331,9 @@ const EnumCapabilityCard = ({
 }) => {
 	const options: string[] = capability.enumValues ?? [];
 	const [currentOption, setCurrentOption] = useState(currentState?.value ?? "");
+	useEffect(() => {
+		if (currentState?.value !== undefined) setCurrentOption(currentState.value);
+	}, [currentState?.value]);
 	return (
 		<>
 			<CardHeader>
@@ -424,6 +433,9 @@ const ColorCapabilityCard = ({
 	const [currentColor, setCurrentColor] = useState(
 		currentState?.value ?? "#ffffff",
 	);
+	useEffect(() => {
+		if (currentState?.value !== undefined) setCurrentColor(currentState.value);
+	}, [currentState?.value]);
 	return (
 		<>
 			<CardHeader>
