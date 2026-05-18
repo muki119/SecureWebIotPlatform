@@ -70,7 +70,6 @@ export default function Dashboard() {
 		socket.on("connect", () => {});
 
 		socket.on("connect_error", (err) => {
-			console.log(err.message);
 			if (err.message === "Authentication error: No token provided") {
 				return; // just ignore since this is just the initial connection attempt before the token is set
 			}

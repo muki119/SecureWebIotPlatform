@@ -22,7 +22,6 @@ export default function Login() {
 			...userCredentials,
 		});
 		if (err !== null) {
-			console.error("Login failed:", err); // should really show a toast
 			setLoginError("Invalid email or password");
 			return;
 		}

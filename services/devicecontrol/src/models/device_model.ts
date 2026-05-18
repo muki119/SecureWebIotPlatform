@@ -168,7 +168,6 @@ export class DeviceModel extends MongoDatabaseModel<IDevice> {
                 capabilities: item.capabilities,
                 currentState
             })
-            console.log("New device to be created: ", newDevice)
             await newDevice.save()
             return [{ ...newDevice.toObject({ flattenMaps: true, virtuals: true }), id: newDevice._id.toString(), domainId: newDevice.domainId.toString() }, null]
         }
