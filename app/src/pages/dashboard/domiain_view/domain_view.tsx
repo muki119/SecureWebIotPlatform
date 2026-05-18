@@ -1,40 +1,33 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardAction,
-	CardContent,
 	CardDescription,
 	CardFooter,
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { EllipsisVerticalIcon, WifiIcon } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
 	DropdownMenu,
+	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
-	DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
-import { AuthContext } from "@/contexts/auth_context";
-import {
-	Suspense,
-	useCallback,
-	useContext,
-	useEffect,
-	useState,
-	useRef,
-	use,
-} from "react";
 import { API_ROUTES } from "@/constants/api_routes";
+import { AuthContext } from "@/contexts/auth_context";
 import { AuthClientRequest } from "@/helpers/client_request";
-import DomainMenuBar from "./domain_menubar";
+import { EllipsisVerticalIcon, WifiIcon } from "lucide-react";
+import { Suspense, useCallback, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { DashboardContext } from "../../../contexts/dashboard_context";
 import AddDeviceDialog from "./add_device_dialog";
 import AddUserDialog from "./add_user_dialog";
-import EditDeviceDialog from "./edit_device_dialog";
 import DeleteDeviceDialog from "./delete_device_dialog";
+import DeviceTelemetrySheet from "./device_telemetry_sheet";
+import DomainLedgerSheet from "./domain_ledger_sheet";
+import DomainMenuBar from "./domain_menubar";
+import EditDeviceDialog from "./edit_device_dialog";
 import ViewDeviceInfoDialog from "./view_device_info_dialog";
 
 export default function DomainView() {
@@ -50,6 +43,11 @@ export default function DomainView() {
 
 	const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
 	const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false);
+	const [isDeviceTelemetryDialogOpen, setIsDeviceTelemetryDialogOpen] =
+		useState(false);
+
+	const [isDomainTransactionsDialogOpen, setIsDomainTransactionsDialogOpen] =
+		useState(false);
 	const [editingDevice, setEditingDevice] = useState(null);
 	const [deletingDevice, setDeletingDevice] = useState(null);
 	const [viewingDevice, setViewingDevice] = useState(null);
@@ -251,7 +249,7 @@ export default function DomainView() {
 				}
 				return false;
 			}
-			if (r?.status === 204) {
+			if (r?.status === 200) {
 				setDomainDevices((prev) => {
 					const updatedDevices = { ...prev[current] };
 					delete updatedDevices[deviceId];
@@ -385,6 +383,9 @@ export default function DomainView() {
 					<DomainMenuBar
 						setAddDeviceDialogOpen={setIsAddDeviceDialogOpen}
 						setAddUserDialogOpen={setIsAddUserDialogOpen}
+						setIsDomainTransactionsDialogOpen={
+							setIsDomainTransactionsDialogOpen
+						}
 					/>
 				</>
 			)}
@@ -405,6 +406,23 @@ export default function DomainView() {
 				onOpenChange={(open) => !open && setViewingDevice(null)}
 				device={viewingDevice}
 			/>
+			<DeviceTelemetrySheet
+				isOpen={isDeviceTelemetryDialogOpen}
+				onOpenChange={setIsDeviceTelemetryDialogOpen}
+			/>
+			<DomainLedgerSheet
+				isOpen={isDomainTransactionsDialogOpen}
+				onOpenChange={setIsDomainTransactionsDialogOpen}
+			/>
+			<div className="flex justify-end mb-1">
+				<Button
+					variant="outline"
+					size="sm"
+					onClick={() => setIsDeviceTelemetryDialogOpen(true)}
+				>
+					Telemetry History
+				</Button>
+			</div>
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
 				<Suspense fallback={<p>Loading devices...</p>}>
 					<>{renderDevices()}</>

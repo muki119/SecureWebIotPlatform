@@ -1,17 +1,9 @@
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardFooter,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-
-import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 export default function DomainMenuBar({
 	setAddDeviceDialogOpen,
 	setAddUserDialogOpen,
+	setIsDomainTransactionsDialogOpen,
 }) {
 	return (
 		<Card className="w-full mb-2">
@@ -29,6 +21,13 @@ export default function DomainMenuBar({
 					onClick={() => setAddDeviceDialogOpen(true)}
 				>
 					Add Device
+				</Button>
+				<Button
+					variant="outline"
+					className="mr-2"
+					onClick={() => setIsDomainTransactionsDialogOpen(true)}
+				>
+					View Ledger
 				</Button>
 			</CardContent>
 		</Card>

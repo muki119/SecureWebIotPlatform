@@ -1,6 +1,6 @@
 import { type Result } from "@services/common/types";
 import { MongoConnection } from "../config";
-import { Schema, type Connection, Model } from "mongoose";
+import { Types, Schema, type Connection, Model } from "mongoose";
 import DeviceTelemetrySchema from "../db/device_telemetry_schema";
 import { startOfISOWeek, endOfISOWeek, startOfMonth, endOfMonth, startOfDay, endOfDay } from "date-fns"
 import { type DeviceTelemetry, CapabilityTypes, Intervals, IntervalUnits } from "../types";
@@ -59,7 +59,7 @@ export class DeviceTelemetryModel { // extends nothing because telemetry is only
             const isNumeric = this.isNumericCapability(capabilityType) // if the capability is a numeric type
 
             const match: any = { // the match for the aggregation pipeline
-                "metadata.deviceId": deviceId,
+                "metadata.deviceId": new Types.UUID(deviceId),
                 timestamp: { $gte: lowerBound, $lte: upperBound },
                 "metadata.capability": capability
             }
@@ -68,7 +68,7 @@ export class DeviceTelemetryModel { // extends nothing because telemetry is only
                 _id: {
                     $dateTrunc: {
                         date: "$timestamp",
-                        unit: IntervalUnits[interval]
+                        unit: IntervalUnits[interval].toLowerCase()
                     }
                 }// group by the the timestamps being in the same interval
             }
@@ -84,6 +84,7 @@ export class DeviceTelemetryModel { // extends nothing because telemetry is only
                 { $sort: { "_id": 1 } } // sort by the interval time in ascending order
             ]).exec()
 
+            console.log("Telemetry query results:", results)
 
             return [results as DeviceTelemetry[], null]
         } catch (error) {

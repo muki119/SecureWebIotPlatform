@@ -6,39 +6,35 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import {
 	Table,
 	TableBody,
-	TableCaption,
 	TableCell,
 	TableHead,
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
-import {
-	Select,
-	SelectContent,
-	SelectLabel,
-	SelectItem,
-	SelectSeparator,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { ROLES } from "@/constants/role_permissions";
 
+import { Input } from "@/components/ui/input";
 import {
 	Popover,
 	PopoverContent,
 	PopoverDescription,
 	PopoverHeader,
-	PopoverTitle,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
 
 export default function DomaindDetailsDialog({
 	authState,
@@ -175,7 +171,7 @@ export default function DomaindDetailsDialog({
 				</Table>
 				<DialogFooter>
 					<Field>
-						<FieldLabel className="leading-7 [&:not(:first-child)]:mt-6 flex items-center justify-between">
+						<FieldLabel className="leading-7 not-first:mt-6 flex items-center justify-between">
 							Created:{" "}
 							{new Date(
 								domains[selectedViewDetailsDomain]?.createdAt,

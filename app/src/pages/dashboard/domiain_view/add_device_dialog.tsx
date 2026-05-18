@@ -6,11 +6,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 
-import { API_ROUTES } from "@/constants/api_routes";
-import { DashboardContext } from "@/contexts/dashboard_context";
-import { AuthClientRequest } from "@/helpers/client_request";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react";
 
 export default function AddDeviceDialog({
 	isOpen,

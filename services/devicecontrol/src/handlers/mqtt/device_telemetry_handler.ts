@@ -9,7 +9,9 @@ export async function HandleDeviceTelemetry(deviceId: string, message: Buffer) {
     // send to domain room for device telemetry update
     try {
         const { capability, value } = JSON.parse(message.toString()) as { capability: string, value: string | number | boolean };
-        await DeviceTelemetryModelInstance.create(deviceId, capability, value);
+        DeviceTelemetryModelInstance.create(deviceId, capability, value).catch((err) => {
+            logger.warn({ err }, "Failed to write telemetry for device emitted telemetry");
+        });
         const [updatedDevice, err] = await DeviceModelInstance.updateCurrentState(deviceId, capability, value);
         if (err) {
             logger.error({ error: err }, "Error updating device state:");

@@ -6,6 +6,7 @@ const AUTH_BASE_URL = GetEnvVariable("VITE_AUTH_BASE_URL", `${BASE_URL}auth/`); 
 const DOMAIN_BASE_URL = GetEnvVariable("VITE_DOMAIN_BASE_URL", `${BASE_URL}domain/`)
 const PROFILE_BASE_URL = GetEnvVariable("VITE_PROFILE_BASE_URL", `${BASE_URL}profile/`)
 const DEVICE_BASE_URL = GetEnvVariable("VITE_DEVICE_BASE_URL", `${BASE_URL}device/`)
+const LEDGER_BASE_URL = GetEnvVariable("VITE_LEDGER_BASE_URL", `${BASE_URL}transactions/`)
 
 export const SOCKET_URL = GetEnvVariable("VITE_SOCKET_URL", "https://localhost/");
 export const API_ROUTES = {
@@ -98,9 +99,14 @@ export const API_ROUTES = {
             type: "GET",
             path: `${DEVICE_BASE_URL}${deviceId}/telemetry`
         })
-
-
+    },
+    LEDGER: {
+        DOMAIN_LEDGER: (domainId: string) => ({
+            type: "GET",
+            path: `${LEDGER_BASE_URL}${domainId}/`
+        })
     }
+
 }
 
 export const SOCKET_EVENTS = {

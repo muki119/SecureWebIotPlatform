@@ -13,7 +13,7 @@ import DomainView from "./domiain_view/domain_view";
 import { AuthClientRequest } from "@/helpers/client_request";
 import { toast } from "sonner";
 import { io, type Socket } from "socket.io-client";
-
+import type { ITransactionModel } from "../../types/models";
 import DeviceView from "./device_view";
 import {
 	SidebarProvider,
@@ -28,6 +28,9 @@ export default function Dashboard() {
 	const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
 	const [domainDevices, setDomainDevices] = useState({});
 	const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+	const [domainTransactions, setDomainTransactions] = useState<
+		Record<string, ITransactionModel[]>
+	>({});
 	const navigate = useNavigate();
 	const { authState, dispatch, authClientRequest } = useContext(AuthContext)!;
 	const logout = async () => {
@@ -67,6 +70,10 @@ export default function Dashboard() {
 		socket.on("connect", () => {});
 
 		socket.on("connect_error", (err) => {
+			console.log(err.message);
+			if (err.message === "Authentication error: No token provided") {
+				return; // just ignore since this is just the initial connection attempt before the token is set
+			}
 			toast.error("Socket connection error", { description: err.message });
 		});
 
@@ -83,7 +90,6 @@ export default function Dashboard() {
 		socket.on(
 			SOCKET_EVENTS.SERVER_EMITTED.DEVICE.ADDED,
 			({ domainId, device }) => {
-				console.log("Device added", { domainId, device });
 				setDomainDevices((prev) => {
 					if (!(domainId in prev)) return prev;
 					return {
@@ -94,9 +100,9 @@ export default function Dashboard() {
 						},
 					};
 				});
-				toast.success(
-					`Device ${device.name} added to domain ${domains[domainId]?.name}`,
-				);
+				toast.success(`Device ${device.name} added to domain `, {
+					description: domains[domainId]?.name || domainId,
+				});
 			},
 		);
 
@@ -131,7 +137,6 @@ export default function Dashboard() {
 		socket.on(
 			SOCKET_EVENTS.SERVER_EMITTED.DEVICE.UPDATED,
 			({ domainId, deviceId, changes }) => {
-				console.log("Received device update", { domainId, deviceId, changes });
 				setDomainDevices((prev) => {
 					if (!(domainId in prev) || !(deviceId in prev[domainId])) return prev;
 					return {
@@ -238,7 +243,7 @@ export default function Dashboard() {
 				});
 			},
 		);
-	}, [socketRef, initSocket, authClientRequest]);
+	}, [socketRef, initSocket, authClientRequest, domains]);
 
 	useEffect(() => {
 		const newSocket = initSocket();
@@ -337,6 +342,8 @@ export default function Dashboard() {
 				isAdmin,
 				setSelectedDevice,
 				selectedDevice,
+				domainTransactions,
+				setDomainTransactions,
 			}}
 		>
 			<SidebarProvider>

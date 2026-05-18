@@ -1,6 +1,6 @@
 import type { ServiceResult } from "@services/common/types";
 import { DeviceModelInstance, UserRoleModelInstance, DeviceTelemetryModelInstance } from "../models";
-import { Intervals } from "../types";
+import { Intervals, type DeviceCapabilities } from "../types";
 
 export async function GetDeviceTelemetryService(userId: string, deviceId: string, capability: string, interval: Intervals, from: Date): Promise<ServiceResult<any>> {
     try {
@@ -16,7 +16,7 @@ export async function GetDeviceTelemetryService(userId: string, deviceId: string
         if (!isMember) {
             return [null, new Error("User is not a member of the device's domain")]
         }
-        const capabilityType = device.capabilities.get(capability)?.type // get the capability type from the device capabilities map
+        const capabilityType = (device.capabilities as Record<string, DeviceCapabilities>)[capability]?.type // get the capability type from the device capabilities map
         if (!capabilityType) {
             return [null, new Error("Capability not found on device")]
         }

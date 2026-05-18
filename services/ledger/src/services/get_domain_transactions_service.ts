@@ -15,7 +15,7 @@ export async function GetDomainTransactionsService(userId: string, domainId: str
         if (!userPermissions) {
             return [null, new Error("User is not a member of the domain or domain does not exist")]
         }
-        if (!userPermissions.canManageDomain) { // if they can manage the domain - means they can change domain or anything - they should be able to see the transactions
+        if (!userPermissions.canManageUsers) { // if they can manage the users and devices - means they can change domain or anything - they should be able to see the transactions
             return [null, new Error("User does not have permission to view transactions in this domain")]
         }
         const [transactions, error] = await TransactionModelInstance.findByDomainId(domainId, dateFrom, dateTo)

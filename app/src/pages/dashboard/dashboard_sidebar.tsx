@@ -21,6 +21,7 @@ export default function DashboardSidebar() {
 		setSelectedDomain,
 		logout,
 		isAdmin,
+		setSelectedDevice,
 	} = useContext(DashboardContext)!;
 	const [createDomainSuccess, setCreateDomainSuccess] = useState<
 		[boolean, string | null]
@@ -415,6 +416,7 @@ export default function DashboardSidebar() {
 					setLeaveDomainId={setLeaveDomainId}
 					setSelectedInfoDomain={setSelectedInfoDomain}
 					setSelectedViewDetailsDomain={setSelectedViewDetailsDomain}
+					setSelectedDevice={setSelectedDevice}
 				/>
 			</Sidebar>
 		</>

@@ -12,7 +12,6 @@ import {
 import {
 	Table,
 	TableBody,
-	TableCaption,
 	TableCell,
 	TableHead,
 	TableHeader,
@@ -20,8 +19,8 @@ import {
 } from "@/components/ui/table";
 
 import useDebounce from "@/hooks/use-debounce";
-import { useState } from "react";
 import { Search } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 export default function AddUserDialog({
 	isOpen,

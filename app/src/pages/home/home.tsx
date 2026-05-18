@@ -1,9 +1,9 @@
-import React from "react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
 
 export default function Home() {
-	return (
-		<div>
-			<h1>Home</h1>
-		</div>
-	);
+	const navigate = useNavigate();
+	useEffect(() => {
+		navigate("/login");
+	}, []);
 }

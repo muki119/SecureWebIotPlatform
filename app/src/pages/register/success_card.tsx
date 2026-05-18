@@ -7,10 +7,10 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { useNavigate } from "react-router";
 
 export default function SuccessCard() {
-	// just the card when the user has successfully registered
-
+	const navigate = useNavigate();
 	return (
 		<Card className="w-full max-w-sm mx-auto">
 			<CardHeader>
@@ -18,12 +18,13 @@ export default function SuccessCard() {
 			</CardHeader>
 			<CardContent>
 				<CardDescription>
-					Your account has been successfully created. You can now login to your
-					account.
+					Your account has been successfully created. You can now log in.
 				</CardDescription>
 			</CardContent>
 			<CardFooter>
-				<Button className="w-full">Go to Login</Button>
+				<Button className="w-full" onClick={() => navigate("/login")}>
+					Go to Login
+				</Button>
 			</CardFooter>
 		</Card>
 	);

@@ -8,81 +8,131 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+	Field,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+} from "@/components/ui/field";
+import { useState } from "react";
+import useDebounce from "@/hooks/use-debounce";
 
-export default function RegisterForm() {
-	const registerFormSchema = {
-		names: {
-			type: "string",
-			required: true,
-			minLength: 2,
-		},
-		email: {
-			type: "string",
-			required: true,
-		},
-		password: {
-			minLength: 8,
-			type: "string",
-			required: true,
-		},
+export default function RegisterForm({
+	onRegister,
+	error,
+	loading,
+}: {
+	onRegister: (
+		forename: string,
+		surname: string,
+		email: string,
+		password: string,
+	) => void;
+	error: string | null;
+	loading: boolean;
+}) {
+	const [form, setForm] = useState({
+		forename: "",
+		surname: "",
+		email: "",
+		password: "",
+	});
+
+	const handleChange = (e) => {
+		const { name, value } = e.target;
+		setForm((prev) => ({ ...prev, [name]: value }));
 	};
+
+	const debouncedRegister = useDebounce(onRegister, 500);
+
+	const handleSubmit = (e) => {
+		e.preventDefault();
+		debouncedRegister(
+			form.forename.trim(),
+			form.surname.trim(),
+			form.email.trim(),
+			form.password,
+		);
+	};
+
 	return (
 		<Card className="w-full max-w-sm mx-auto">
 			<CardHeader>
 				<CardTitle>Register for an account</CardTitle>
-				<CardDescription>Enter your credentials to register</CardDescription>
+				<CardDescription>
+					Enter your details to create an account
+				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<form>
-					<div id="inputs" className="flex flex-col gap-4">
-						<div className="grid gap-3 mb-4">
-							<Label> Forename</Label>
-							<Input
-								id="forename"
-								type="text"
-								placeholder="Avery"
-								required={registerFormSchema.names.required}
-							/>
-							<Label> Surname</Label>
-							<Input
-								id="surname"
-								type="text"
-								placeholder="Bradley"
-								required={registerFormSchema.names.required}
-							/>
-							<Label htmlFor="email">Email</Label>
-							<Input
-								id="email"
-								type="email"
-								placeholder="you@anywhere.com"
-								required={registerFormSchema.email.required}
-							/>
-							<Label htmlFor="password">Password</Label>
-							<Input
-								id="password"
-								minLength={registerFormSchema.password.minLength}
-								type="password"
-								placeholder="********"
-								required={registerFormSchema.password.required}
-							/>
+				<form onSubmit={handleSubmit}>
+					<FieldGroup>
+						<FieldError>{error}</FieldError>
+						<div className="flex flex-col gap-4">
+							<Field>
+								<FieldLabel htmlFor="forename">Forename</FieldLabel>
+								<Input
+									id="forename"
+									name="forename"
+									type="text"
+									placeholder="Avery"
+									required
+									minLength={2}
+									value={form.forename}
+									onChange={handleChange}
+								/>
+							</Field>
+							<Field>
+								<FieldLabel htmlFor="surname">Surname</FieldLabel>
+								<Input
+									id="surname"
+									name="surname"
+									type="text"
+									placeholder="Bradley"
+									required
+									minLength={2}
+									value={form.surname}
+									onChange={handleChange}
+								/>
+							</Field>
+							<Field>
+								<FieldLabel htmlFor="email">Email</FieldLabel>
+								<Input
+									id="email"
+									name="email"
+									type="email"
+									placeholder="you@anywhere.com"
+									required
+									value={form.email}
+									onChange={handleChange}
+								/>
+							</Field>
+							<Field>
+								<FieldLabel htmlFor="password">Password</FieldLabel>
+								<Input
+									id="password"
+									name="password"
+									type="password"
+									placeholder="********"
+									required
+									minLength={8}
+									value={form.password}
+									onChange={handleChange}
+								/>
+							</Field>
+							<Button className="w-full" type="submit" disabled={loading}>
+								{loading ? "Registering..." : "Register"}
+							</Button>
 						</div>
-					</div>
+					</FieldGroup>
 				</form>
 			</CardContent>
 			<CardFooter>
-				<div className="flex flex-col gap-4 w-full items-center">
-					<Button className="w-full">Register</Button>
-					<span>
-						Already have an account?{" "}
-						<a
-							className="ml-auto inline-block text-sm underline-offset-4 underline"
-							href="/login"
-						>
-							Log in to your account
-						</a>
-					</span>
-				</div>
+				<span className="text-sm text-center w-full">
+					Already have an account?{" "}
+					<a className="underline underline-offset-4" href="/login">
+						Log in
+					</a>
+				</span>
 			</CardFooter>
 		</Card>
 	);

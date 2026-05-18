@@ -13,7 +13,7 @@ export async function DeviceUpdatedHandler(message: EventPayload) {
             opperationTarget: "DEVICE",
             opperationType: "UPDATE",
             targetId: deviceInfo.deviceId,
-            value: JSON.parse(deviceInfo.changes as string),
+            value: deviceInfo.changes,
             opperationTimestamp: message.message.timestamp ? new Date(message.message.timestamp) : new Date()
         }
         const [_, err] = await TransactionModelInstance.create(transactionObj)

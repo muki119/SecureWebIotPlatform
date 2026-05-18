@@ -16,7 +16,7 @@ export default async function ForgotpasswordService(email: string): Promise<Resu
         }
         const user = await userModel.findByEmail(email)
         if (!user) {
-            return [null, new Error("Email not found")] // dont want to give away if the email exists or not for security reasons
+            return [null, null] // dont want to give away if the email exists or not for security reasons
         }
         const resetToken = await CreateResetToken(user.id)
         await SendResetTokenEmail(user.email, resetToken)

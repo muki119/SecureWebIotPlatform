@@ -17,6 +17,7 @@ export default function DashboardSecondMenu({
 	setLeaveDomainId,
 	setSelectedInfoDomain,
 	setSelectedViewDetailsDomain,
+	setSelectedDevice,
 }) {
 	const { state } = useSidebar();
 	const [filter, setFilter] = useState("");
@@ -49,7 +50,10 @@ export default function DashboardSecondMenu({
 									isCurrent={selectedDomain === domain.id}
 									id={domain.id}
 									name={domain.name}
-									onSelect={() => setSelectedDomain(domain.id)}
+									onSelect={() => {
+										setSelectedDomain(domain.id);
+										setSelectedDevice(null);
+									}}
 									setLeaveDomainId={setLeaveDomainId}
 									setSelectedInfoDomain={setSelectedInfoDomain}
 									setSelectedViewDetailsDomain={setSelectedViewDetailsDomain}

@@ -7,19 +7,21 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-
-import {
-	Field,
-	FieldContent,
-	FieldDescription,
-	FieldError,
-	FieldGroup,
-	FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useState } from "react";
 
-export default function ForgotPasswordForm() {
+export default function ForgotPasswordForm({ onSubmit, error }: {
+	onSubmit: (email: string) => void;
+	error: string | null;
+}) {
+	const [email, setEmail] = useState("");
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		onSubmit(email.trim());
+	};
+
 	return (
 		<Card className="w-full max-w-sm mx-auto">
 			<CardHeader>
@@ -29,25 +31,32 @@ export default function ForgotPasswordForm() {
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
-				<form>
+				<form onSubmit={handleSubmit}>
 					<FieldGroup>
-						<div className="grid gap-2">
-							<div className="grid gap-2">
-								<Field>
-									<FieldLabel htmlFor="email">Email</FieldLabel>
-									<Input
-										id="email"
-										type="email"
-										placeholder="you@example.com"
-									/>
-								</Field>
-							</div>
-						</div>
+						<FieldError>{error}</FieldError>
+						<Field>
+							<FieldLabel htmlFor="email">Email</FieldLabel>
+							<Input
+								id="email"
+								type="email"
+								placeholder="you@example.com"
+								required
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+							/>
+						</Field>
+						<Button className="w-full mt-4" type="submit">
+							Send Reset Instructions
+						</Button>
 					</FieldGroup>
 				</form>
 			</CardContent>
 			<CardFooter>
-				<Button className="w-full">Send Reset Instructions</Button>
+				<span className="text-sm text-center w-full">
+					<a className="underline underline-offset-4" href="/login">
+						Back to login
+					</a>
+				</span>
 			</CardFooter>
 		</Card>
 	);
