@@ -1,13 +1,14 @@
 import {
-	type EventBusConfig,
 	EventSender,
+	MessageFlags,
+	type EventBusConfig,
 	type EventMessage,
 } from "@services/eventbus";
 import { ChildProcess, fork } from "node:child_process";
+import fs from "node:fs";
+import path, { resolve } from "node:path";
 import url from "node:url";
-import path from "node:path";
-import { MessageFlags } from "@services/eventbus";
-import type { Logger } from "pino"
+import type { Logger } from "pino";
 
 /**
  * @description the event bus in its abstraction glory
@@ -29,15 +30,23 @@ export class EventBus {
 	private workerFile: string;
 	public handleDebugMessage: ((message: any) => void) | null = null; // handler for debug messages from worker process
 
+
+
+	private static resolveWorkerFilePath(workerDir: string): string {
+		const extension = path.extname(process.argv[1]); // get the extension of the entry file
+		const entryDir = path.dirname(process.argv[1]) + path.sep; // get the dir of the entry file - using path.sep for dos/unix/unix-like compatibility
+		const entryFile = new URL(workerDir, url.pathToFileURL(entryDir)).pathname + extension; // make a url for the worker file relative to the entry file 
+		return fs.existsSync(entryFile) ? entryFile : resolve(workerDir); // if a file exists at the entry files dir then use that , otherwise look for it , from the current working directory
+	}
+
 	constructor(config: EventBusConfig, logger: Logger, workerDir: string) {
 		this.config = config;
 		this.logger = logger;
 		this.isListening = false;
-		const entryDir = path.dirname(process.argv[1]) + path.sep;
-		const ext = path.extname(process.argv[1]);
-		this.workerFile = new URL(workerDir, url.pathToFileURL(entryDir)).pathname + ext;
+		this.workerFile = EventBus.resolveWorkerFilePath(workerDir);
 		this.sender = new EventSender(this.config);
 	}
+
 
 	/**
 	 *

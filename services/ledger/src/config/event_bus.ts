@@ -19,7 +19,7 @@ const eventBusConfig = {
 const EventBusInstance = new EventBus(
     eventBusConfig,
     logger,
-    "./src/bus/ledger_service_worker.js",
+    "./src/bus/ledger_service_worker",
 );
 
 EventBusInstance.handleDebugMessage = (message) => {
