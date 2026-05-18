@@ -19,11 +19,11 @@ COPY ledger/package*.json ./ledger/
 RUN npm ci
 
 # Copy the code thats actually needed for the build
-COPY domain/ ./domain/
+COPY domain/ ./ledger/
 COPY common/ ./common/
 COPY eventbus/ ./eventbus/
 
-WORKDIR /app/domain
+WORKDIR /app/ledger
 
 RUN npm run build
 
@@ -31,16 +31,16 @@ FROM node:24-bookworm-slim AS production
 WORKDIR /app
 
 # only need the dist and the package json , since every other dir is pre-build 
-COPY --from=build /app/domain/dist ./dist
-COPY --from=build /app/domain/package*.json ./
+COPY --from=build /app/ledger/dist ./dist
+COPY --from=build /app/ledger/package*.json ./
 
 
 ## only install production dependencies
 RUN npm install --production
 
 ENV NODE_ENV=production
-ENV PORT=2557
-EXPOSE 2557
+ENV PORT=2559
+EXPOSE 2559
 
 
 CMD [ "node","dist/index.js" ]

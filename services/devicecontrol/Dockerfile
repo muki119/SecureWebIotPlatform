@@ -39,8 +39,8 @@ COPY --from=build /app/devicecontrol/package*.json ./
 RUN npm install --production
 
 ENV NODE_ENV=production
-ENV PORT=2556
-EXPOSE 2556
+ENV PORT=2558
+EXPOSE 2558
 
 
 CMD [ "node","dist/index.js" ]
