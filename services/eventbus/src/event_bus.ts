@@ -4,6 +4,8 @@ import {
 	type EventMessage,
 } from "@services/eventbus";
 import { ChildProcess, fork } from "node:child_process";
+import url from "node:url";
+import path from "node:path";
 import { MessageFlags } from "@services/eventbus";
 import type { Logger } from "pino"
 
@@ -31,7 +33,9 @@ export class EventBus {
 		this.config = config;
 		this.logger = logger;
 		this.isListening = false;
-		this.workerFile = workerDir;
+		const entryDir = path.dirname(process.argv[1]) + path.sep;
+		const ext = path.extname(process.argv[1]);
+		this.workerFile = new URL(workerDir, url.pathToFileURL(entryDir)).pathname + ext;
 		this.sender = new EventSender(this.config);
 	}
 
