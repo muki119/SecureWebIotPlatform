@@ -63,6 +63,9 @@ This allows for better scalability and maintainability as each service can be ru
 
 - types and interfaces are in PascalCase and prefixed with I for interfaces
 
+
+For development all systems can be ran using npm run dev and also implementing their example env's
+
 - file names not in common directory are suffixed with their directory or purpose , since there are file with the same name but different purposes in the same service.
 
 - e.g `get_profile_controller.ts` and `get_profile_service.ts` are both in the domain service and both have the same name but have different purposes, so they are suffixed with their purpose to avoid confusion.
