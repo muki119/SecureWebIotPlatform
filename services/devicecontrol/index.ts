@@ -1,4 +1,5 @@
 import cookieParser from 'cookie-parser';
+import { rateLimit } from 'express-rate-limit';
 import { DeviceRouter, MqttRoutes, SocketRoutes } from "./src/routes";
 import { ErrorHandler, ValidSocketSessionMiddleware } from "./src/middleware";
 import { logger } from "./src/config";
@@ -7,10 +8,17 @@ import EventBusInstance from "./src/config/event_bus";
 import express from "express";
 import { app, httpServer, io } from "./src/config/";
 
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, limit: 100, validate: {
+        trustProxy: true
+    }
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.disable('x-powered-by')
+app.use(limiter);
 app.use('/api/v1/device', DeviceRouter);
 app.use(ErrorHandler);
 

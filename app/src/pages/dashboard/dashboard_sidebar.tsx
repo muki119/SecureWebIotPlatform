@@ -126,6 +126,8 @@ export default function DashboardSidebar() {
 					delete next[domainId];
 					return next;
 				});
+				setSelectedDomain(null);
+				setSelectedDevice(null);
 				setLeaveDomainSuccess([true, "Left domain successfully"]);
 				setLeaveDomainId(null);
 			}
@@ -356,6 +358,8 @@ export default function DashboardSidebar() {
 			}
 			if (r?.status === 200) {
 				setSelectedViewDetailsDomain(null);
+				setSelectedDomain(null);
+				setSelectedDevice(null);
 				setDomains((prev) => {
 					const next = { ...prev };
 					delete next[domainId];

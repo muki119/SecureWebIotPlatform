@@ -106,7 +106,7 @@ const UserMenuItem = ({ authState, logout }) => {
 				<SidebarMenuButton asChild>
 					<Avatar>
 						<AvatarFallback>
-							{(authState.user?.name ?? "").replaceAll(" ", "")}
+							{(authState.user?.name.charAt(0) ?? "").replaceAll(" ", "")}
 						</AvatarFallback>
 					</Avatar>
 				</SidebarMenuButton>

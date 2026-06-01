@@ -1,4 +1,5 @@
 import express from 'express';
+import { rateLimit } from 'express-rate-limit';
 import { GetEnvNumber } from '@services/common/utilities';
 import cookieParser from 'cookie-parser';
 import { LedgerRouter } from './src/routes';
@@ -6,10 +7,17 @@ import { logger, EventBusInstance } from './src/config';
 import { ErrorHandlerMiddleware } from './src/middleware';
 const app = express();
 
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, limit: 100, validate: {
+        trustProxy: true
+    }
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.disable('x-powered-by')
+app.use(limiter);
 
 
 app.use('/api/v1', LedgerRouter);

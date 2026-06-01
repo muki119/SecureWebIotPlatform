@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AuthContext } from "@/contexts/auth_context";
 import { DashboardContext } from "../../contexts/dashboard_context";
+import { decodeName } from "@/utilities/decode_name";
 
 export default function Dashboard() {
 	const [domains, setDomains] = useState({}); // going to do a key value where the key is the domain id and the value is the domain data
@@ -100,7 +101,7 @@ export default function Dashboard() {
 					};
 				});
 				toast.success(`Device ${device.name} added to domain `, {
-					description: domains[domainId]?.name || domainId,
+					description: decodeName(domains[domainId]?.name) || domainId,
 				});
 			},
 		);
@@ -228,6 +229,29 @@ export default function Dashboard() {
 				return next;
 			});
 			setSelectedDomain((prev) => (prev === domainId ? null : prev));
+		});
+
+		socket.on(SOCKET_EVENTS.SERVER_EMITTED.DOMAIN.DELETED, ({ domainId }) => {
+			toast("Domain has been deleted", {
+				description: decodeName(domains[domainId]?.name) || domainId,
+			});
+			setDomains((prev) => {
+				const next = { ...prev };
+				delete next[domainId];
+				return next;
+			});
+			setDomainDevices((prev) => {
+				const next = { ...prev };
+				delete next[domainId];
+				return next;
+			});
+			setDomainTransactions((prev) => {
+				const next = { ...prev };
+				delete next[domainId];
+				return next;
+			});
+			setSelectedDomain((prev) => (prev === domainId ? null : prev));
+			setSelectedDevice(null);
 		});
 
 		socket.on(

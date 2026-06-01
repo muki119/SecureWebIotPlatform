@@ -3,7 +3,7 @@
 
 import { BaseWorker } from "@services/eventbus";
 import { STREAMS } from "@services/common/config";
-import { DomainUserAddedHandler, DomainUserRemovedHandler, DomainUserRoleUpdatedHandler, UserDeletedHandler } from "./handlers";
+import { DomainUserAddedHandler, DomainUserRemovedHandler, DomainUserRoleUpdatedHandler, UserDeletedHandler, DomainDeletedHandler } from "./handlers";
 import { logger } from "../config";
 import { RecursiveError } from "@services/common/utilities";
 export class DeviceControlServiceWorker extends BaseWorker {
@@ -13,6 +13,7 @@ export class DeviceControlServiceWorker extends BaseWorker {
         this.handler(STREAMS.DOMAIN_SERVICE.DOMAIN_USER_REMOVED, DomainUserRemovedHandler) // should delete the user role 
         this.handler(STREAMS.DOMAIN_SERVICE.DOMAIN_USER_ROLE_UPDATED, DomainUserRoleUpdatedHandler) // should update the user role with the new information
         this.handler(STREAMS.AUTH_SERVICE.USER_DELETED, UserDeletedHandler) // should delete the user role 
+        this.handler(STREAMS.DOMAIN_SERVICE.DOMAIN_DELETED, DomainDeletedHandler) // should notify clients that the domain has been deleted
         this.errorHandler((error, payload) => {
             logger.error({ ...RecursiveError(error), payload }, "Error in DeviceControlServiceWorker:");
         })

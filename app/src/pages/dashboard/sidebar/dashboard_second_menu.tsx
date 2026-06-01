@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useState } from "react";
 import DomainMenuItem from "./domain_menu_item";
+import { decodeName } from "@/utilities/decode_name";
 
 export default function DashboardSecondMenu({
 	domains,
@@ -42,14 +43,14 @@ export default function DashboardSecondMenu({
 					<SidebarGroupContent>
 						{Object.values(domains)
 							.filter((domain) =>
-								domain.name.toLowerCase().includes(filter.toLowerCase()),
+								decodeName(domain.name).toLowerCase().includes(filter.toLowerCase()),
 							)
 							.map((domain) => (
 								<DomainMenuItem
 									key={domain.id}
 									isCurrent={selectedDomain === domain.id}
 									id={domain.id}
-									name={domain.name}
+									name={decodeName(domain.name)}
 									onSelect={() => {
 										setSelectedDomain(domain.id);
 										setSelectedDevice(null);

@@ -22,7 +22,10 @@ export default function ResetPassword() {
 		setError(null);
 		const [r, err] = await authClientRequest.post(
 			API_ROUTES.AUTH.RESET_PASSWORD.path,
-			{ token: resetToken, password },
+			{ password },
+			{
+				params: { token: resetToken },
+			},
 		);
 		if (err !== null) {
 			setError("Something went wrong. Please try again.");

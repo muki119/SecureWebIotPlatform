@@ -1,4 +1,5 @@
 import express from 'express';
+import { rateLimit } from 'express-rate-limit';
 import { ErrorHandlerMiddleware, RequestMetricsMiddleware } from './src/middleware';
 import { authRoutes } from './src/routes/auth_routes';
 import logger from './src/config/logger';
@@ -9,11 +10,17 @@ import { GetEnvNumber } from "@services/common/utilities"
 import EventSenderInstance from './src/config/event_sender';
 const app = express();
 
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, limit: 100, validate: {
+        trustProxy: true
+    }
+});
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.disable('x-powered-by')
+app.use(limiter);
 app.use(RequestMetricsMiddleware);
 
 app.use('/api/v1/auth', authRoutes);

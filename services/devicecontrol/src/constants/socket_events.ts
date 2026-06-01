@@ -14,6 +14,7 @@ export const SOCKET_EVENTS = {
             USER_REMOVED: "DOMAIN_USER_REMOVED", // WHEN A USER other than yourself is removed from a domain , just send the user id , the domain id is from the room they are in
             USER_ADDED: "DOMAIN_USER_ADDED", // {domainid, userid} when a user is added to a domain
             USER_ROLE_UPDATED: "DOMAIN_USER_ROLE_UPDATED",
+            DELETED: "DOMAIN_DELETED", // when a domain is deleted
         },
         DEVICE: { // this isnt a room but is emitted under the domains , needs to follow {domainid , deviceid} - this is server emitted
             ADDED: "DEVICE_ADDED",//{domainid, deviceid , the device details}

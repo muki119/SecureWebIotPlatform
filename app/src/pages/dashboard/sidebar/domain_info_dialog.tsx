@@ -28,6 +28,7 @@ import {
 import { ROLES } from "@/constants/role_permissions";
 
 import { Input } from "@/components/ui/input";
+import { decodeName } from "@/utilities/decode_name";
 import {
 	Popover,
 	PopoverContent,
@@ -96,7 +97,7 @@ export default function DomaindDetailsDialog({
 				<DialogHeader>
 					<DialogTitle>Domain Info</DialogTitle>
 					<DialogDescription>
-						Domain Name: {domains[selectedViewDetailsDomain]?.name}
+						Domain Name: {decodeName(domains[selectedViewDetailsDomain]?.name)}
 					</DialogDescription>
 				</DialogHeader>
 				<div>
