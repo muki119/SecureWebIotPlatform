@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { GetEnvString, GetPemKey } from "@services/common/utilities"
 import { CreateVerifyAccessTokenInstance } from "@services/common/helpers"
 import type { AccessTokenClaims, RefreshTokenClaims, Tokens, Seconds } from "@services/common/types"
+import type { Result } from '@services/common/types';
 // going to need the redis client for a blocklist - for refresh tokens , no need for access tokens since they are short lived and we can just wait for them to expire
 
 
@@ -16,6 +17,7 @@ const AUDIENCE = GetEnvString("TOKEN_AUDIENCE", "SecureWebIotPlatform"); // the 
 const ErrNoUserId = "User ID is required to generate token";
 const ErrNoExpire = "Expiration time is required to generate token";
 const ErrNoIssuer = "Issuer is required to generate token";
+export const ErrBlockedToken = "Token is blocked";
 
 const WEEK_IN_SECONDS = 7 * 24 * 60 * 60; // one week in seconds
 const ACCESS_TOKEN_EXPIRATION = 15 * 60; // access tokens expire in 15 minutes - in seconds
@@ -50,20 +52,24 @@ export class TokenBundle {
      * @returns Tokens - the new access token, refresh token and xsrf token
      * @description creates a new token bundle from the claims of the previous refresh token
      */
-    static async RefreshTokens(claims: RefreshTokenClaims): Promise<Tokens & { expiry: Seconds }> { // for token rotation
+    static async RefreshTokens(claims: RefreshTokenClaims): Promise<Result<Tokens & { expiry: Seconds }>> { // for token rotation
         try {
-            const { exp: oldExpiry } = claims;
+            const { exp: oldExpiry, jti: oldJti } = claims;
+            const isBlocked = await IsBlocked(oldJti);
+            if (isBlocked) {
+                return [null, new Error(ErrBlockedToken)];
+            }
             const issuer = "REFRESH";
             const { token: refreshToken, jti: newJti, expiry } = CreateRefreshFromClaims(claims); // create a new refresh token and a new jwt for the XSRF token
             const accessToken = CreateAccessToken(claims.sub, issuer);
             const xsrfToken = CreateXsrfToken(newJti, expiry, issuer); // xsrf token should expire at the same time as the refresh token
             await BlockToken(claims.jti, oldExpiry); // blocklist the old refresh token - we want to do this before returning the new tokens to prevent
-            return {
+            return [{
                 accessToken,
                 refreshToken,
                 xsrfToken,
                 expiry
-            }
+            }, null]
         } catch (error) {
             throw new Error(`Error refreshing tokens`, { cause: error });
         }

@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { VerifyRefreshToken, VerifyXsrfToken, TokenBundle } from '../helpers/token_helpers';
+import { VerifyRefreshToken, VerifyXsrfToken, TokenBundle, ErrBlockedToken } from '../helpers/token_helpers';
 import { tokenNames, RefreshTokenCookieOptions, XsrfTokenCookieOptions, ClearCookies } from '../config/cookies';
 import logger from '../config/logger';
 export default async function RefreshController(req: Request, res: Response, next: NextFunction) {
@@ -41,7 +41,13 @@ export default async function RefreshController(req: Request, res: Response, nex
             res.end();
             return
         }
-        const newTokenBundle = await TokenBundle.RefreshTokens(refreshTokenClaims)
+        const [newTokenBundle, error] = await TokenBundle.RefreshTokens(refreshTokenClaims);
+        if (error) {
+            if (error.message === ErrBlockedToken) {
+                res.status(401).json({ message: 'Token is Blocked' }).end();
+            }
+            return res.status(400).json({ message: error.message });
+        }
         res.cookie(tokenNames.REFRESH_TOKEN_COOKIE_NAME, newTokenBundle.refreshToken, RefreshTokenCookieOptions(newTokenBundle.expiry));
         res.cookie(tokenNames.XRSFTOKEN_COOKIE_NAME, newTokenBundle.xsrfToken, XsrfTokenCookieOptions(newTokenBundle.expiry));
         res.json({ accessToken: newTokenBundle.accessToken });

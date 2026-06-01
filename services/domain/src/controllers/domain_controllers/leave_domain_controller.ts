@@ -1,17 +1,18 @@
 import type { Request, Response, NextFunction } from 'express';
 import { LeaveDomainService } from '../../services';
+import { validationResult } from 'express-validator';
 
 export default async function LeaveDomainController(req: Request, res: Response, next: NextFunction) {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() }).end();
+        }
         const userId = req.user?.sub;
         const { domainId } = req.params;
 
         if (!userId) {
             return res.status(401).json({ message: "Unauthorized" }).end();
-        }
-
-        if (!domainId) {
-            return res.status(400).json({ message: "Domain ID is required" }).end();
         }
 
         const [_, error] = await LeaveDomainService(userId, domainId as string);

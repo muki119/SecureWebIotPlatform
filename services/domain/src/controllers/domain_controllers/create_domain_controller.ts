@@ -2,15 +2,17 @@ import type { Request, Response, NextFunction } from 'express';
 import logger from '../../config/logger';
 import { CreateDomainService } from '../../services';
 import { LogWarningDefault } from '@services/common/utilities';
+import { validationResult } from 'express-validator';
 
 export default async function CreateDomainController(req: Request, res: Response, next: NextFunction) {
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() }).end();
+        }
         // the domain model will create a new domain , join table entry and user role entry
         const { name } = req.body;
         const userID = req.user?.sub; // should be set by the auth middleware
-        if (!name) {
-            return res.status(400).json({ error: "Domain name is required" }).end();
-        }
         if (!userID) { // somehow got past the auth middleware
             logger.warn(LogWarningDefault(req), "Unauthorized access to CreateDomainController - no user ID in request");
             return res.status(401).json({ error: "Unauthorized" }).end();

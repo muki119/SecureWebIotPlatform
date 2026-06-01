@@ -1,15 +1,18 @@
 import type { Request, Response, NextFunction } from "express"
 import { CreatePairingCodeService } from "../services"
+import { validationResult } from "express-validator"
+
 export async function CreatePairingCodeController(req: Request, res: Response, next: NextFunction) {
     // get user id from request
     // create random pairing code
     // add pairing code to database with userid and expiration time
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() })
+        }
         const userId = req.user?.sub
         const { domainId } = req.params
-        if (!domainId) {
-            return res.status(400).json({ error: "Domain ID is required" })
-        }
         const [pairingInfo, err] = await CreatePairingCodeService(userId as string, domainId as string)
         if (err) {
             return res.status(400).json({ error: err.message })

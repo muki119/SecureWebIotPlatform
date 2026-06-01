@@ -1,17 +1,20 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ROLES } from '@services/common/constants';
 import { AddUserService } from '../../services';
+import { validationResult } from 'express-validator';
+
 export default async function AddUserController(req: Request, res: Response, next: NextFunction) {
     // adds a user to a domain with a specific role
     // only admin can add users to a domain
     // requires the users email and role
     // default role is member if not specified (somehow)
     try {
-        const { domainId } = req.params;
-        const { id, role = ROLES.MEMBER } = req.body; // id of the user to be added  - the id will come from a search by email using the auth service - or maybe adding emails to the profile model and adding a search by email
-        if (!id) {
-            return res.status(400).json({ message: "User ID is required" }).end();
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() }).end();
         }
+        const { domainId } = req.params;
+        const { id, role = ROLES.MEMBER } = req.body;
         if (role == ROLES.OWNER) {
             return res.status(400).json({ message: "Cannot assign owner role to another user" }).end();
         }

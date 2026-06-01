@@ -1,18 +1,21 @@
 import type { Request, Response, NextFunction } from 'express';
 import { UpdateUserRoleService } from '../../services';
+import { validationResult } from 'express-validator';
+
 export default async function UpdateUserRoleController(req: Request, res: Response, next: NextFunction) {
     // owner / admin cannot change their own role
     // only owner can make more admins
     // its a tiered system
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() }).end();
+        }
         const userId = req.user?.sub
-        const { domainId, userId: userToUpdate } = req.params;
+        const { domainId, userToUpdate } = req.params;
         const { role } = req.body;
         if (!userId) {  // shouldnt happen since protected route
             return res.status(401).json({ message: "Unauthorized" }).end();
-        }
-        if (!domainId || !userToUpdate || !role) {
-            return res.status(400).json({ message: "Domain ID, User ID to update, and new role are required" }).end();
         }
         if (userId === userToUpdate) {
             return res.status(400).json({ message: "Users cannot change their own role" }).end();

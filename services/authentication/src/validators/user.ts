@@ -81,7 +81,6 @@ const UserSchema: Schema<DefaultSchemaKeys> = {
         optional: false,
         isString: true,
         trim: true,
-        escape: true,
         isLength: {
             options: { min: UserConstraints.password.minLength, max: UserConstraints.password.maxLength },
         },
@@ -89,10 +88,6 @@ const UserSchema: Schema<DefaultSchemaKeys> = {
             options: {
                 ignore_whitespace: false, // whitespace is not allowed
             },
-        },
-        isAlphanumeric: {
-            // allow [a-zA-Z0-9] and _
-            options: ["en-GB", { ignore: "_" }], // include underscore
         },
         errorMessage: "Invalid Password.",
     }

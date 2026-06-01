@@ -1,17 +1,20 @@
 import type { Request, Response, NextFunction } from 'express';
 import { DeleteUserService } from '../../services';
+import { validationResult } from 'express-validator';
+
 export default async function DeleteDomainUserController(req: Request, res: Response, next: NextFunction) {
     // OWNER CANNOT DELETE THEMSELVES
     // multi table opperation
     // set delete to time to now
     try {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() }).end();
+        }
         const userId = req.user?.sub
-        const { domainId, userId: userToDelete } = req.params;
+        const { domainId, userToDelete } = req.params;
         if (!userId) {  // shouldnt happen since protected route
             return res.status(401).json({ message: "Unauthorized" }).end();
-        }
-        if (!domainId || !userToDelete) {
-            return res.status(400).json({ message: "Domain ID and User ID to remove are required" }).end();
         }
         if (userId === userToDelete) {
             return res.status(400).json({ message: "Users cannot remove themselves from the domain this way" }).end();

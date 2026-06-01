@@ -5,6 +5,9 @@ import {
     GetDeviceTelemetryController, DeleteDeviceController,
     GetDomainDevicesController, UpdateDeviceController
 } from "../controllers"
+
+import { DomainIdOnlyValidator } from "@services/common/validators";
+import { DeviceValidator } from "../validators/device_validator";
 /**
  * for adding device - POST /device/activate
  * for creating pairing code - POST /device/:domainId/pair
@@ -18,10 +21,10 @@ import {
 const DeviceRouter = Router(); // all under /api/v1/device
 
 DeviceRouter.post("/activate", AddDeviceController) // called by device - dosent need session middleware
-DeviceRouter.post("/domain/:domainId/pair", ValidSessionMiddleware, CreatePairingCodeController)
-DeviceRouter.get("/domain/:domainId", ValidSessionMiddleware, GetDomainDevicesController)
-DeviceRouter.delete("/:deviceId", ValidSessionMiddleware, DeleteDeviceController)
-DeviceRouter.patch("/:deviceId", ValidSessionMiddleware, UpdateDeviceController)
-DeviceRouter.get("/:deviceId/telemetry", ValidSessionMiddleware, GetDeviceTelemetryController)
+DeviceRouter.post("/domain/:domainId/pair", ValidSessionMiddleware, DomainIdOnlyValidator, CreatePairingCodeController)
+DeviceRouter.get("/domain/:domainId", ValidSessionMiddleware, DomainIdOnlyValidator, GetDomainDevicesController)
+DeviceRouter.delete("/:deviceId", ValidSessionMiddleware, DeviceValidator, DeleteDeviceController)
+DeviceRouter.patch("/:deviceId", ValidSessionMiddleware, DeviceValidator, UpdateDeviceController)
+DeviceRouter.get("/:deviceId/telemetry", ValidSessionMiddleware, DeviceValidator, GetDeviceTelemetryController)
 
 export { DeviceRouter }
