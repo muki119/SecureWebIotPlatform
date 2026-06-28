@@ -53,7 +53,17 @@ type Stream = string;
  */
 async function createConnection(options: RedisClientOptions) {
     try {
-        const client = await createClient(options);
+        const client = await createClient(options && {
+            socket: {
+                reconnectStrategy: (retries) => {
+                    if (retries > 10) {
+                        throw new Error("Unable to connect to Redis after 10 retries");
+                    }
+                    return Math.min(retries * 100, 3000); // wait for a max of 3 seconds before retrying
+                }
+            }
+
+        });
         client.on("error", (err) => {
             throw new Error("Redis Client Error: " + err);
         });

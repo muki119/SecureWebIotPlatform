@@ -6,6 +6,7 @@ export interface RedisConfig {
     port: number;
     password: string;
     db: number;
+    maxRetries?: number;
 }
 
 export async function ConnectToRedis(config: RedisConfig, logger: Logger) {
@@ -15,6 +16,15 @@ export async function ConnectToRedis(config: RedisConfig, logger: Logger) {
             socket: {
                 host: config.host,
                 port: config.port,
+                reconnectStrategy(retries, cause) {
+                    if (config.maxRetries && retries >= config.maxRetries) {
+                        logger.error({ cause }, `Max retries reached. Unable to connect to Redis`);
+                        return new Error('Max retries reached');
+                    }
+                    const delay = Math.min(100 * 2 ** retries, 3000);
+                    logger.warn({ cause }, `Redis connection lost. Retrying in ${delay}ms. Cause: ${cause}`);
+                    return delay;
+                },
             },
             password: config.password,
             database: config.db,
