@@ -1,4 +1,4 @@
-import { describe, expect, test, bench, assert } from "vitest"
+import { describe, expect, test, assert } from "vitest"
 import { HashPassword, VerifyPassword, PASSWORD_CONSTRAINTS, ErrMaxPasswordLength, ErrMinPasswordLength, ErrHashRequired } from "../src/utilities/password_hash"
 import { randomBytes, randomInt } from "crypto"
 

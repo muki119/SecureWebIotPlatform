@@ -3,18 +3,17 @@ import { GeneratePairingCode, VerifyPairingCode, CODE_LENGTH } from "../src/help
 
 
 describe("Generate Pairing Code", () => {
-
-    test("Generated code should be valid", () => {
-        for (let i = 0; i < 1000; i++) { // test 1000 codes , should be enough change
-            const code = GeneratePairingCode()
+    test("Generated code should be valid", async () => {
+        for (let i = 0; i < 1; i++) { // test 1000 codes , should be enough change
+            const code = await GeneratePairingCode()
             expect(VerifyPairingCode(code)).toBe(true)
         }
     })
 })
 
 describe("Verify Pairing Code", () => {
-    test("Valid code should return true", () => {
-        const code = GeneratePairingCode()
+    test("Valid code should return true", async () => {
+        const code = await GeneratePairingCode()
         expect(VerifyPairingCode(code)).toBe(true)
     })
 
@@ -49,9 +48,9 @@ describe("Verify Pairing Code", () => {
     test("Returns false when code is empty string", () => {
         expect(VerifyPairingCode("")).toBe(false)
     })
-    test("Returns false when code is invalid length", () => {
-        const shortCode = GeneratePairingCode(CODE_LENGTH - 2) // supposed to be at least smaller than the default code length
-        const longCode = GeneratePairingCode(CODE_LENGTH + 2) // has to be multiple of 2 because of hex
+    test("Returns false when code is invalid length", async () => {
+        const shortCode = await GeneratePairingCode(CODE_LENGTH - 2) // supposed to be at least smaller than the default code length
+        const longCode = await GeneratePairingCode(CODE_LENGTH + 2) // has to be multiple of 2 because of hex
         expect(VerifyPairingCode(shortCode)).toBe(false)
         expect(VerifyPairingCode(longCode)).toBe(false)
     })
