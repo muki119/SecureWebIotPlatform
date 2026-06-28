@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
-import { VerifyRefreshToken, VerifyXsrfToken, TokenBundle, ErrBlockedToken } from '../helpers/token_helpers';
+import { TokenBundleInstance } from '../helpers/token_helpers';
+import { ErrBlockedToken } from '../helpers/token_bundle';
 import { tokenNames, RefreshTokenCookieOptions, XsrfTokenCookieOptions, ClearCookies } from '../config/cookies';
 import logger from '../config/logger';
 export default async function RefreshController(req: Request, res: Response, next: NextFunction) {
@@ -24,7 +25,7 @@ export default async function RefreshController(req: Request, res: Response, nex
         if (xsrfToken !== xsrfTokenHeader) {
             return res.status(401).json({ message: 'Invalid XSRF token' });
         }
-        const refreshTokenClaims = VerifyRefreshToken(refreshToken);
+        const refreshTokenClaims = TokenBundleInstance.VerifyRefreshToken(refreshToken);
         if (!refreshTokenClaims) {
             // invalid refresh token - should clear cookie and force logout and login again
             ClearCookies(res)
@@ -32,7 +33,7 @@ export default async function RefreshController(req: Request, res: Response, nex
             res.end();
             return
         }
-        const xsrfTokenPayload = VerifyXsrfToken(xsrfToken, refreshTokenClaims.jti);
+        const xsrfTokenPayload = TokenBundleInstance.VerifyXsrfToken(xsrfToken, refreshTokenClaims.jti);
         if (!xsrfTokenPayload) {
             // if a bad token then its already logged in the verify function itself
             // invalid xsrf token - should clear cookie and force logout and login again
@@ -41,7 +42,7 @@ export default async function RefreshController(req: Request, res: Response, nex
             res.end();
             return
         }
-        const [newTokenBundle, error] = await TokenBundle.RefreshTokens(refreshTokenClaims);
+        const [newTokenBundle, error] = await TokenBundleInstance.RefreshTokens(refreshTokenClaims);
         if (error) {
             if (error.message === ErrBlockedToken) {
                 res.status(401).json({ message: 'Token is Blocked' }).end();
@@ -49,7 +50,7 @@ export default async function RefreshController(req: Request, res: Response, nex
             return res.status(400).json({ message: error.message });
         }
         res.cookie(tokenNames.REFRESH_TOKEN_COOKIE_NAME, newTokenBundle.refreshToken, RefreshTokenCookieOptions(newTokenBundle.expiry));
-        res.cookie(tokenNames.XRSFTOKEN_COOKIE_NAME, newTokenBundle.xsrfToken, XsrfTokenCookieOptions(newTokenBundle.expiry));
+        res.cookie(tokenNames.XSRF_TOKEN_COOKIE_NAME, newTokenBundle.xsrfToken, XsrfTokenCookieOptions(newTokenBundle.expiry));
         res.json({ accessToken: newTokenBundle.accessToken });
         res.end();
         return;

@@ -29,8 +29,8 @@ export default class SessionMiddleware extends MiddlewareBaseClass {
                 }
                 const token = authHeader.split(' ')[1];
                 if (!token || token === "null") { return unauthorisedResponse(); }
-                const payload = VerifyAccessTokenInstance(token); // needs the public key to verify 
-                if (!payload) { return unauthorisedResponse(); }
+                const [payload, error] = VerifyAccessTokenInstance(token); // needs the public key to verify 
+                if (error) { return unauthorisedResponse(); }
                 req.user = payload; // this will be used in the controllers to access the users information
                 next();
             } catch (error) {

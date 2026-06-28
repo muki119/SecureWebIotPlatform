@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import { RefreshTokenCookieOptions, XsrfTokenCookieOptions, tokenNames } from "../config/cookies"
 import LoginService from '../services/login_service';
-import { TokenBundle } from "../helpers/token_helpers"
+import { TokenBundleInstance } from "../helpers/token_helpers"
 import { validationResult } from 'express-validator';
 import logger from '../config/logger';
 
@@ -17,12 +17,12 @@ export default async function LoginController(req: Request, res: Response, next:
         if (!userId) { // if no token then the email or password is wrong
             return res.status(401).json({ message: 'Invalid email or password' });
         }
-        const { accessToken, refreshToken, xsrfToken, expiry } = TokenBundle.CreateBundle(userId); // should never throw an error - if it does then something is very wrong and we want to know about it
+        const { accessToken, refreshToken, xsrfToken, expiry } = TokenBundleInstance.CreateBundle(userId); // should never throw an error - if it does then something is very wrong and we want to know about it
 
         // accees is passed in the body
         // refresh and xsrf are passed in http only cookies
         res.cookie(tokenNames.REFRESH_TOKEN_COOKIE_NAME, refreshToken, RefreshTokenCookieOptions(expiry));
-        res.cookie(tokenNames.XRSFTOKEN_COOKIE_NAME, xsrfToken, XsrfTokenCookieOptions(expiry));
+        res.cookie(tokenNames.XSRF_TOKEN_COOKIE_NAME, xsrfToken, XsrfTokenCookieOptions(expiry));
         res.json({ accessToken });
         res.end();
         logger.info({ userId }, "User has logged in");

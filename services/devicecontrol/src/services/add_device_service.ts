@@ -22,9 +22,9 @@ export async function AddDeviceService(pairingCode: string, deviceInfo: AddDevic
         if (!codeInfo.userId || !codeInfo.domainId) {
             throw new Error("Invalid pairing code data");
         }
-        var [userPermissions, err] = await UserRoleModelInstance.userPermisisons(codeInfo.userId, codeInfo.domainId)
-        if (err) {
-            return [null, err]
+        const [userPermissions, permErr] = await UserRoleModelInstance.userPermisisons(codeInfo.userId, codeInfo.domainId)
+        if (permErr) {
+            return [null, permErr]
         }
         if (!userPermissions?.canManageDevices) { // this shouldnt ever happen because of the checks in the create pairing code service , but user role can change between
             return [null, new Error("Not authorized to add device to this domain")];
@@ -37,9 +37,9 @@ export async function AddDeviceService(pairingCode: string, deviceInfo: AddDevic
             capabilities: capabilitiesMap
         }
 
-        var [device, err] = await DeviceModelInstance.create(deviceData)
-        if (err !== null) {
-            return [null, err]
+        const [device, createErr] = await DeviceModelInstance.create(deviceData)
+        if (createErr !== null) {
+            return [null, createErr]
         }
         const deviceToken = CreateDeviceToken(device!)
         io.to(codeInfo.domainId).emit(SOCKET_EVENTS.SERVER_EMITTED.DEVICE.ADDED, { domainId: codeInfo.domainId, device });

@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import DeleteUserService from "../services/delete_user";
 import { tokenNames } from "../config/cookies";
-import { BlockToken, VerifyRefreshToken } from "../helpers/token_helpers";
+import { TokenBundleInstance } from "../helpers/token_helpers";
 export default async function DeleteUserController(req: Request, res: Response, next: NextFunction) {
     try {
 
@@ -19,9 +19,9 @@ export default async function DeleteUserController(req: Request, res: Response, 
         // should blocklist the refresh also
         const refreshToken = req.cookies[tokenNames.REFRESH_TOKEN_COOKIE_NAME];
         if (refreshToken) { // if theres a refresh token - blocklist it , otherwise it dosent matter since the user is deleted and all systems will catch up to that
-            const claims = VerifyRefreshToken(refreshToken);
+            const claims = TokenBundleInstance.VerifyRefreshToken(refreshToken);
             if (claims) {
-                await BlockToken(claims.jti, claims.exp)
+                await TokenBundleInstance.BlockToken(claims.jti, claims.exp)
             }
         }
         res.status(200).clearCookie(tokenNames.REFRESH_TOKEN_COOKIE_NAME).end();
