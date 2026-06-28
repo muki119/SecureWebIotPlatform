@@ -1,5 +1,6 @@
 import { scrypt, timingSafeEqual, randomBytes } from "node:crypto"
 import logger from "../config/logger"
+import { GenerateRandomBytes } from "@services/common/utilities"
 
 
 
@@ -17,17 +18,6 @@ function scryptAsync(plaintext: string, salt: Buffer, keylen: number, options: {
                 reject(err)
             } else {
                 resolve(derivedKey as Buffer)
-            }
-        })
-    })
-}
-function saltGenAsync(length: number): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-        randomBytes(length, (err, buf) => {
-            if (err) {
-                reject(err)
-            } else {
-                resolve(buf)
             }
         })
     })
@@ -57,7 +47,7 @@ export async function HashPassword(plaintext: string): Promise<string> {
         throw new Error(ErrMaxPasswordLength)
     }
     try {
-        const salt = await saltGenAsync(SALT_LENGTH);
+        const salt = await GenerateRandomBytes(SALT_LENGTH);
 
         const derivedKey = await scryptAsync(plaintext, salt, SCRYPT_CONFIG.keylen, { N: SCRYPT_CONFIG.N, r: SCRYPT_CONFIG.r, p: SCRYPT_CONFIG.p });
         const fString = `$${SCRYPT_CONFIG.N}$${SCRYPT_CONFIG.r}$${SCRYPT_CONFIG.p}$${salt.toString("base64")}$${derivedKey.toString("base64")}` // the formatted string - to be stored in the database§

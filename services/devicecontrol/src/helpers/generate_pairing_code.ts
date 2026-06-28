@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto"
+import { GenerateRandomBytes } from "@services/common/utilities"
 
 
 export const CODE_LENGTH = 6
@@ -27,10 +27,10 @@ export function VerifyPairingCode(code: string, CodeLength: number = CODE_LENGTH
     // check the code isnt incremental or decremental
 }
 
-export function GeneratePairingCode(CodeLength: number = CODE_LENGTH): string {
+export async function GeneratePairingCode(CodeLength: number = CODE_LENGTH): Promise<string> {
     while (true) {
-        const code = randomBytes(CodeLength / 2).toString("hex").toUpperCase()
-
+        const bytes = await GenerateRandomBytes(CodeLength / 2)
+        const code = bytes.toString("hex").toUpperCase()
         if (VerifyPairingCode(code, CodeLength)) { // check that the code is valid and not incremental or decremental
             return code
         }
