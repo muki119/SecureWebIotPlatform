@@ -1,6 +1,3 @@
-
-
-
 export const SOCKET_EVENTS = {
 
     CLIENT_EMITTED: {
