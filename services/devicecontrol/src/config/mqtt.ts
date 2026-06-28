@@ -5,9 +5,6 @@
 import mqtt, { type MqttClient, type IClientOptions, type MqttProtocol } from 'mqtt'
 import { GetEnvString, GetEnvNumber } from '@services/common/utilities'
 
-
-
-
 export async function ConnectMqtt(options?: IClientOptions): Promise<MqttClient> {
     try {
         const clientId = `mqtt_${Math.random().toString(16).slice(3)}`
@@ -19,7 +16,7 @@ export async function ConnectMqtt(options?: IClientOptions): Promise<MqttClient>
             clean: true,
             connectTimeout: 4000,
             username: GetEnvString("MQTT_BROKER_USERNAME", "device_service_user"),
-            password: GetEnvString("MQTT_BROKER_PASSWORD", "vCtAA4nvKTY8ekXuy8RP"),
+            password: GetEnvString("MQTT_BROKER_PASSWORD"),
             reconnectPeriod: 1000,
         }
         return await mqtt.connectAsync(options ? options : mqttOptions)

@@ -33,8 +33,9 @@ export class EventBus {
 
 
 	private static resolveWorkerFilePath(workerDir: string): string {
-		const extension = path.extname(process.argv[1]); // get the extension of the entry file
-		const entryDir = path.dirname(process.argv[1]) + path.sep; // get the dir of the entry file - using path.sep for dos/unix/unix-like compatibility
+		const entryFileArg = process.argv[1]!; // get the entry file of the process
+		const extension = path.extname(entryFileArg); // get the extension of the entry file
+		const entryDir = path.dirname(entryFileArg) + path.sep; // get the dir of the entry file - using path.sep for dos/unix/unix-like compatibility
 		const entryFile = new URL(workerDir, url.pathToFileURL(entryDir)).pathname + extension; // make a url for the worker file relative to the entry file 
 		return fs.existsSync(entryFile) ? entryFile : resolve(workerDir); // if a file exists at the entry files dir then use that , otherwise look for it , from the current working directory
 	}

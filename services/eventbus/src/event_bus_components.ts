@@ -55,7 +55,6 @@ async function createConnection(options: RedisClientOptions) {
     try {
         const client = await createClient(options);
         client.on("error", (err) => {
-            console.error("Redis Client Error", err);
             throw new Error("Redis Client Error: " + err);
         });
         await client.connect();
@@ -99,6 +98,7 @@ export class EventSender {
             if (!id) {
                 throw new Error("Failed to add message to stream " + stream);
             }
+            return
         } catch (error: any) {
             throw new Error(
                 `Error while sending message to stream "${stream}"`,
@@ -192,7 +192,7 @@ export class EventListener {
                     continue;
                 }
 
-                this.processStream({
+                await this.processStream({
                     name: stream.key,
                     messages: messages.messages,
                 });
@@ -296,16 +296,18 @@ export class EventListener {
                         },
                     );
                 }
-                incommingStreams.forEach((stream) => {
-                    if (!stream) {
-                        throw new Error("Invalid stream data", {
-                            cause: {
-                                incommingStreams,
-                            },
-                        });
-                    }
-                    this.processStream(stream as IncommingStream);
-                });
+                await Promise.all(
+                    incommingStreams.map(async (stream) => {
+                        if (!stream) {
+                            throw new Error("Invalid stream data", {
+                                cause: {
+                                    incommingStreams,
+                                },
+                            });
+                        }
+                        await this.processStream(stream as IncommingStream);
+                    })
+                );
             }
         } catch (error: any) {
             throw new Error(`Error while listening for messages`, {
@@ -319,7 +321,7 @@ export class EventListener {
      * @param stream - the stream object containing the messages to process
      * @description - processes messages for a stream by calling its handler and then acknowledging once completed
      */
-    private async processStream(stream: IncommingStream): Promise<void> {
+    private processStream(stream: IncommingStream): Promise<void[]> {
         const streamName = stream.name; // depending on if its from pending messages or new messages the key might be different - just for safety
         try {
             if (!stream) {
@@ -332,32 +334,35 @@ export class EventListener {
                     `No handler registered for stream "${streamName}"`,
                 );
             }
-            for (const message of stream.messages) {
-                await this.semaphore.acquire(); // wait for a slot to be available for processing
-                handler(message)
-                    .then(() => {
-                        // trying to make this as async as possible -> just handles a message and then releases a semaphore slot-> its async so it will just fire the handler and then go on to a next message , but if no slot left it will hold until
-                        this.nonBlockingConn.xAck(
-                            streamName,
-                            this.consumerGroup,
-                            message!.id,
-                        );
-                    })
-                    .catch((error) => {
-                        if (this.errorHandler) {
-                            this.errorHandler(error, message);
-                        } else {
-                            console.error(
-                                `Error processing message "${message!.id}" from stream "${streamName}":`,
-                                error,
+
+            return Promise.all(
+                stream.messages.map(async (message) => {
+                    await this.semaphore.acquire(); // wait for a slot to be available for processing
+                    return handler(message)
+                        .then(() => {
+                            // trying to make this as async as possible -> just handles a message and then releases a semaphore slot-> its async so it will just fire the handler and then go on to a next message , but if no slot left it will hold until
+                            this.nonBlockingConn.xAck(
+                                streamName,
+                                this.consumerGroup,
+                                message!.id,
                             );
-                        }
-                        // could potentially make a error handler for workers to handle
-                    })
-                    .finally(() => {
-                        this.semaphore.release();
-                    });
-            }
+                        })
+                        .catch((error) => {
+                            if (this.errorHandler) {
+                                this.errorHandler(error, message);
+                            } else {
+                                console.error(
+                                    `Error processing message "${message!.id}" from stream "${streamName}":`,
+                                    error,
+                                );
+                            }
+                            // could potentially make a error handler for workers to handle
+                        })
+                        .finally(() => {
+                            this.semaphore.release();
+                        });
+
+                }));
         } catch (error: any) {
             throw new Error(`Error processing stream "${streamName}"`, {
                 cause: error,
@@ -372,8 +377,8 @@ export class EventListener {
         // close listening process
         this.listening = false; // close the while loop
         await this.semaphore.wait(); // wait for all processing to finish
-        this.listenerConn.quit(); // then close all the connections
-        this.nonBlockingConn.quit();
+        await this.listenerConn.quit(); // then close all the connections
+        await this.nonBlockingConn.quit();
     }
 }
 
@@ -384,27 +389,49 @@ export class EventListener {
 class semaphore {
     private count: number; // somehow node dosent have atomic values or mutextes in the stdlib so this will do - if there any multithreading then this might break
     private maxCount: number;
+    private queue: Array<() => void> = [];
+    private waitPromise: (() => void) | null = null; // a promise that will be resolved when the semaphore is released - this is used to wait for all processing to finish
     constructor(count: number) {
         this.maxCount = count; // dosent need to be atomic since the event queue
         this.count = count;
     }
 
-    block = () => new Promise((resolve) => setTimeout(resolve, 100)); // basically just blocks for 100ms - makes a promise for a async function to await on
-
-    public async acquire(): Promise<void> {
-        while (this.count <= 0) {
-            await this.block();
+    public acquire(): Promise<void> {
+        if (this.count > 0) {
+            this.count--;
+            return Promise.resolve();
+        } else {
+            return new Promise((resolve) => { // if theres no slots , make a promise and add to the waiting queue - the calling function will then await this promise
+                this.queue.push(resolve);
+            });
         }
-        this.count--;
     }
 
     public release(): void {
-        this.count++;
+        if (this.queue.length > 0) {
+            const resolve = this.queue.shift();
+            if (resolve) {
+                resolve(); // if theres a waiting promise then resolve it - this will allow the waiting function to continue
+            }
+        } else {
+            if (this.count >= this.maxCount) {
+                throw new Error("Semaphore released more times than acquired");
+            }
+            this.count++;
+            if (this.count === this.maxCount && this.waitPromise) {
+                this.waitPromise();
+                this.waitPromise = null;
+            }
+        }
     }
 
-    public async wait(): Promise<void> {
-        while (this.count < this.maxCount) {
-            await this.block();
+    public wait(): Promise<void> {
+        if (this.count === this.maxCount) {
+            return Promise.resolve();
+        } else { // if theres still some processing going on then wait for all the slots to be released - done by just adding the wait promise to the waiting queue so the final release will resolve it and allow the wait to continue
+            return new Promise((resolve) => {
+                this.waitPromise = resolve;
+            });
         }
     }
 }
