@@ -7,7 +7,7 @@ import {
 } from "../controllers"
 
 import { DomainIdOnlyValidator } from "@services/common/validators";
-import { DeviceValidator } from "../validators/device_validator";
+import { DeviceValidator, AddDeviceValidator } from "../validators/device_validator";
 /**
  * for adding device - POST /device/activate
  * for creating pairing code - POST /device/:domainId/pair
@@ -20,7 +20,7 @@ import { DeviceValidator } from "../validators/device_validator";
 
 const DeviceRouter = Router(); // all under /api/v1/device
 
-DeviceRouter.post("/activate", AddDeviceController) // called by device - dosent need session middleware
+DeviceRouter.post("/activate", AddDeviceValidator, AddDeviceController) // called by device - dosent need session middleware
 DeviceRouter.post("/domain/:domainId/pair", ValidSessionMiddleware, DomainIdOnlyValidator, CreatePairingCodeController)
 DeviceRouter.get("/domain/:domainId", ValidSessionMiddleware, DomainIdOnlyValidator, GetDomainDevicesController)
 DeviceRouter.delete("/:deviceId", ValidSessionMiddleware, DeviceValidator, DeleteDeviceController)
