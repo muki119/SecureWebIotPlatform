@@ -13,8 +13,7 @@ export async function AddDeviceService(pairingCode: string, deviceInfo: AddDevic
         if (!VerifyPairingCode(pairingCode)) {
             throw new Error("Invalid pairing code");
         }
-        const codeInfoString = await RedisClient.get(`${PAIRING_CODE_REDIS_KEY_PREFIX}${pairingCode}`);
-        await RedisClient.del(`${PAIRING_CODE_REDIS_KEY_PREFIX}${pairingCode}`)
+        const codeInfoString = await RedisClient.getDel(`${PAIRING_CODE_REDIS_KEY_PREFIX}${pairingCode}`);
         if (!codeInfoString) {
             return [null, new Error("Pairing code not found")];
         }
