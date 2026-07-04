@@ -202,4 +202,34 @@ describe("TokenBundle Tests", async () => {
         assert.isFalse(isOldXsrfValid, "Old XSRF token should not be valid for the new refresh token");
     })
 
+    test("BlockToken should return an error for already blocked token", async () => {
+        const userId = "test-user";
+        const bundle = await testTokenBundle.CreateBundle(userId);
+        const claims = testTokenBundle.VerifyRefreshToken(bundle.refreshToken);
+        assert.isNotNull(claims, "Claims should not be null");
+        const [_, blockError] = await testTokenBundle.BlockToken(claims!.jti, claims!.exp);
+        assert.isNull(blockError, "Error should be null for a valid block");
+        const [__, secondBlockError] = await testTokenBundle.BlockToken(claims!.jti, claims!.exp);
+        assert.isNotNull(secondBlockError, "Error should not be null for an already blocked token");
+        assert.strictEqual(secondBlockError?.message, "Token is blocked", "Error message should indicate that the token is blocked");
+    })
+
+    test("BlockToken is Atomic", async () => {
+        const userId = "test-user";
+        const bundle = await testTokenBundle.CreateBundle(userId);
+        const claims = testTokenBundle.VerifyRefreshToken(bundle.refreshToken);
+        assert.isNotNull(claims, "Claims should not be null");
+        // attempt to block the same token concurrently
+        const blockPromises = [
+            testTokenBundle.BlockToken(claims!.jti, claims!.exp),
+            testTokenBundle.BlockToken(claims!.jti, claims!.exp)
+        ];
+        const results = await Promise.all(blockPromises);
+        const errors = results.map(([_, err]) => err);
+        const successCount = errors.filter(err => err === null).length;
+        const failureCount = errors.filter(err => err !== null).length;
+        assert.strictEqual(successCount, 1, "Only one block operation should succeed");
+        assert.strictEqual(failureCount, 1, "One block operation should fail due to already blocked token");
+    })
+
 })
