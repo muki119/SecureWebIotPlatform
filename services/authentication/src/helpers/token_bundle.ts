@@ -334,7 +334,7 @@ export class TokenBundle {
             if (ttl <= 0) {
                 return; // token is already expired, no need to blocklist
             }
-            await this.blocklistClient.set(jti, "blocked", { expiration: { type: "EX", value: ttl } }); // set the blocklist key to expire at the same time as the token
+            await this.blocklistClient.set(jti, "blocked", { expiration: { type: "EX", value: ttl }, condition: "NX" }); // set the blocklist key to expire at the same time as the token
         } catch (err) {
             throw new Error(`Error blocking token`, { cause: err });
         }
