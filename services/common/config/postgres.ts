@@ -15,7 +15,7 @@ export async function ConnectToPostgres(config: PoolConfig, logger: any): Promis
             logger.error({ err }, "Failed to connect to Postgres");
         }
     }
-    ping();
+    await ping();
 
     return newConnectionPool
 }
