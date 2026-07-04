@@ -9,12 +9,15 @@ export default async function LogoutController(req: Request, res: Response, next
         const refreshToken = req.cookies[tokenNames.REFRESH_TOKEN_COOKIE_NAME];
         const refreshTokenClaims = refreshToken ? TokenBundleInstance.VerifyRefreshToken(refreshToken) : null; // thing is if its null then its already invald to the system 
         if (refreshTokenClaims) {
-            await TokenBundleInstance.BlockToken(refreshTokenClaims.jti, refreshTokenClaims.exp); // block the token until it expires - this is to prevent reuse of the same refresh token after logout
+            const [_, blockError] = await TokenBundleInstance.BlockToken(refreshTokenClaims.jti, refreshTokenClaims.exp); // block the token until it expires - this is to prevent reuse of the same refresh token after logout
+            // lowkey dosent matter because the errors that are returned here are - already blocked or expired , playing perfectly into the flow
+
             logger.info({ userId: refreshTokenClaims.sub }, "User has logged out");
         }
         ClearCookies(res)
         res.json({ message: 'Logged out successfully' });
         res.end();
+        return;
     } catch (err) {
         next(err)
     }

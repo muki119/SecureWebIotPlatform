@@ -21,11 +21,15 @@ export default async function DeleteUserController(req: Request, res: Response, 
         if (refreshToken) { // if theres a refresh token - blocklist it , otherwise it dosent matter since the user is deleted and all systems will catch up to that
             const claims = TokenBundleInstance.VerifyRefreshToken(refreshToken);
             if (claims) {
-                await TokenBundleInstance.BlockToken(claims.jti, claims.exp)
+                const [_, blockError] = await TokenBundleInstance.BlockToken(claims.jti, claims.exp);
+                if (blockError) {
+                    return res.status(400).json({ message: blockError.message }).end();
+                }
             }
         }
         ClearCookies(res);
         res.status(200).end();
+        return;
     } catch (err) {
         next(err)
     }

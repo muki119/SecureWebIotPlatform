@@ -85,7 +85,10 @@ export class TokenBundle {
             const { token: refreshToken, jti: newJti, expiry } = this.CreateRefreshFromClaims(claims); // create a new refresh token and a new jwt for the XSRF token
             const accessToken = this.CreateAccessToken(claims.sub, issuer);
             const xsrfToken = this.CreateXsrfToken(newJti, expiry, issuer); // xsrf token should expire at the same time as the refresh token
-            await this.BlockToken(claims.jti, oldExpiry); // blocklist the old refresh token - we want to do this before returning the new tokens to prevent
+            const [_, blockError] = await this.BlockToken(claims.jti, oldExpiry); // blocklist the old refresh token - we want to do this before returning the new tokens to prevent
+            if (blockError) {
+                return [null, blockError];
+            }
             return [{
                 accessToken,
                 refreshToken,
@@ -321,7 +324,7 @@ export class TokenBundle {
      * @description adds a token to the blocklist by addiing its jti to the list of blocked tokens
      * @throws Error if theres an error during the blocklisting process
      */
-    public async BlockToken(jti: string, exp: Seconds): Promise<void> { // blocklist a token - used for refresh tokens
+    public async BlockToken(jti: string, exp: Seconds): Promise<Result<null>> { // blocklist a token - used for refresh tokens
         // set the blocklist key to expire at the same time as the token - so we don't have to worry about cleaning up expired blocklist entries
         if (!jti) {
             throw new Error("JTI is required to block token");
@@ -332,9 +335,13 @@ export class TokenBundle {
         try {
             const ttl = exp - Math.floor(Date.now() / 1000)
             if (ttl <= 0) {
-                return; // token is already expired, no need to blocklist
+                return [null, new Error("Token is already expired")]; // token is already expired, no need to blocklist
             }
-            await this.blocklistClient.set(jti, "blocked", { expiration: { type: "EX", value: ttl }, condition: "NX" }); // set the blocklist key to expire at the same time as the token
+            const r = await this.blocklistClient.set(jti, "blocked", { expiration: { type: "EX", value: ttl }, condition: "NX" }); // set the blocklist key to expire at the same time as the token
+            if (r === null) {
+                return [null, new Error("Token is already blocked")]; // token is already blocked
+            }
+            return [null, null];
         } catch (err) {
             throw new Error(`Error blocking token`, { cause: err });
         }

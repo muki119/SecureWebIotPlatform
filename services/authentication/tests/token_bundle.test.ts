@@ -77,7 +77,8 @@ describe("TokenBundle Tests", async () => {
         const bundle = await testTokenBundle.CreateBundle(userId);
         const claims = testTokenBundle.VerifyRefreshToken(bundle.refreshToken);
         assert.isNotNull(claims, "Claims should not be null");
-        await testTokenBundle.BlockToken(claims!.jti, claims!.exp);
+        const [_, blockError] = await testTokenBundle.BlockToken(claims!.jti, claims!.exp);
+        assert.isNull(blockError, "Error should be null for a valid block");
         const [newBundle, err] = await testTokenBundle.RefreshTokens(claims!);
         assert.isNotNull(err, "Error should not be null for blocklisted token");
         assert.strictEqual(err?.message, "Token is blocked", "Error message should indicate that the token is blocked");
