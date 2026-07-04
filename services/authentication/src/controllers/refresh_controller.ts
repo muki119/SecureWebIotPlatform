@@ -46,6 +46,7 @@ export default async function RefreshController(req: Request, res: Response, nex
         if (error) {
             if (error.message === ErrBlockedToken) {
                 res.status(401).json({ message: 'Token is Blocked' }).end();
+                return;
             }
             return res.status(400).json({ message: error.message });
         }

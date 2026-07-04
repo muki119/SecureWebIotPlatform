@@ -15,10 +15,8 @@ export default async function DeleteUserService(userId: string, password: string
         if (!isPasswordValid) {
             return [null, new Error("Invalid password")]
         }
-        await userModel.multiTableTransaction(async (transaction) => {
-            await userModel.delete(userId, transaction);
-            await EventSenderInstance.send(STREAMS.AUTH_SERVICE.USER_DELETED, { userId, timestamp: new Date().toISOString() } as EventMessage);
-        });
+        await userModel.delete(userId);
+        await EventSenderInstance.send(STREAMS.AUTH_SERVICE.USER_DELETED, { userId, timestamp: new Date().toISOString() } as EventMessage);
 
         return [true, null]
     } catch (error) {

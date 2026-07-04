@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import DeleteUserService from "../services/delete_user";
-import { tokenNames } from "../config/cookies";
+import { tokenNames, ClearCookies } from "../config/cookies";
 import { TokenBundleInstance } from "../helpers/token_helpers";
 export default async function DeleteUserController(req: Request, res: Response, next: NextFunction) {
     try {
@@ -24,7 +24,8 @@ export default async function DeleteUserController(req: Request, res: Response, 
                 await TokenBundleInstance.BlockToken(claims.jti, claims.exp)
             }
         }
-        res.status(200).clearCookie(tokenNames.REFRESH_TOKEN_COOKIE_NAME).end();
+        ClearCookies(res);
+        res.status(200).end();
     } catch (err) {
         next(err)
     }

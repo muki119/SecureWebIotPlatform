@@ -12,7 +12,7 @@ export async function CreatePairingCodeService(userId: string, domainId: string)
         if (!userPermissions || !userPermissions.canManageDevices) {
             return [null, new Error("User does not have permission to manage devices in this domain")]
         }
-        const pairingCode = GeneratePairingCode()
+        const pairingCode = await GeneratePairingCode()
         const expiry = new Date(Date.now() + PAIRING_CODE_EXPIRY_SECONDS * 1000); // pairing code expires in 5 minutes
         const result = await RedisClient.set(`${PAIRING_CODE_REDIS_KEY_PREFIX}${pairingCode}`, JSON.stringify({ userId, domainId }), {
             condition: "NX",

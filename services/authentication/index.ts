@@ -29,7 +29,7 @@ app.use(ErrorHandlerMiddleware);
 
 const Port = GetEnvNumber("PORT", 3000);
 var server = app.listen(Port, async (err) => {
-    EventSenderInstance.init();
+    await EventSenderInstance.init();
     if (err) {
         await EventSenderInstance.close()
         logger.error({ error: err }, 'Error starting server:');

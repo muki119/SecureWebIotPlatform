@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken"
-import type { DeviceTokenClaims, IDevice } from "../types"
+import type { DeviceTokenClaims, IDevice, DeviceCapabilities } from "../types"
 import { GetEnvString } from "@services/common/utilities";
 import { logger } from "../config";
 import type { Result } from "@services/common/types";
