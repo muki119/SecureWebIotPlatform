@@ -18,9 +18,12 @@ export default function Login() {
 
 	const handleLogin = async (e) => {
 		e.preventDefault();
-		const [r, err] = await authClientRequest.login(API_ROUTES.AUTH.LOGIN.path, {
-			...userCredentials,
-		});
+		const [r, err] = await authClientRequest.current.login(
+			API_ROUTES.AUTH.LOGIN.path,
+			{
+				...userCredentials,
+			},
+		);
 		if (err !== null) {
 			setLoginError("Invalid email or password");
 			return;

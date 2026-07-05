@@ -1,6 +1,6 @@
 import "./App.css";
 import { BrowserRouter, Route, Routes } from "react-router";
-import { AuthProvider } from "./contexts/auth_context";
+import { AuthContextProvider } from "./contexts/auth_context_provider";
 import { Suspense, lazy } from "react";
 import Loading from "./pages/loading/loading";
 import { Toaster } from "@/components/ui/sonner";
@@ -17,7 +17,7 @@ const ForgotPassword = lazy(
 );
 function App() {
 	return (
-		<AuthProvider>
+		<AuthContextProvider>
 			<Toaster position="top-center" />
 			<BrowserRouter>
 				<Suspense fallback={<Loading />}>
@@ -31,7 +31,7 @@ function App() {
 					</Routes>
 				</Suspense>
 			</BrowserRouter>
-		</AuthProvider>
+		</AuthContextProvider>
 	);
 }
 

@@ -1,3 +1,5 @@
+import type { ROLES } from "@/constants/role_permissions";
+
 export type OpperationType = "CREATE" | "UPDATE" | "DELETE"
 export interface ITransactionModel {
     id: string;
@@ -10,3 +12,29 @@ export interface ITransactionModel {
     opperationTimestamp: Date;
     domainId: string;
 }
+
+export type Domain = {
+    id: string;
+    name: string;
+    ownerId: string;
+    createdAt: string;
+    role: (typeof ROLES)[keyof typeof ROLES];
+    [key: string]: unknown;
+};
+
+export type Domains = Record<string, Domain>;
+
+export type DomainDevices = Record<
+    string,
+    Record<
+        string,
+        {
+            id: string;
+            name: string;
+            domainId: string;
+            currentState: Record<string, { value: unknown; timestamp: number }>;
+            online: boolean;
+            [key: string]: unknown;
+        }
+    >
+>

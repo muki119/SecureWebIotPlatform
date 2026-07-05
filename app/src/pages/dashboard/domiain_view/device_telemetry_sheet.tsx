@@ -224,16 +224,9 @@ export default function DeviceTelemetrySheet({ isOpen, onOpenChange }) {
 									width={36}
 								/>
 								<ChartTooltip content={<ChartTooltipContent />} />
-								<Line
-									dataKey="avg"
-									stroke="var(--color-avg)"
-									dot={false}
-									strokeWidth={2}
-									connectNulls
-								/>
+								<Line dataKey="avg" dot={false} strokeWidth={2} connectNulls />
 								<Line
 									dataKey="min"
-									stroke="var(--color-min)"
 									dot={false}
 									strokeWidth={1.5}
 									strokeDasharray="4 2"
@@ -241,7 +234,6 @@ export default function DeviceTelemetrySheet({ isOpen, onOpenChange }) {
 								/>
 								<Line
 									dataKey="max"
-									stroke="var(--color-max)"
 									dot={false}
 									strokeWidth={1.5}
 									strokeDasharray="4 2"

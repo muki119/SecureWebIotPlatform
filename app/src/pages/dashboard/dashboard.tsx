@@ -13,7 +13,12 @@ import DomainView from "./domiain_view/domain_view";
 import { AuthClientRequest } from "@/helpers/client_request";
 import { toast } from "sonner";
 import { io, type Socket } from "socket.io-client";
-import type { ITransactionModel } from "../../types/models";
+import type {
+	ITransactionModel,
+	Domain,
+	DomainDevices,
+	Domains,
+} from "../../types/models";
 import DeviceView from "./device_view";
 import {
 	SidebarProvider,
@@ -25,9 +30,9 @@ import { DashboardContext } from "../../contexts/dashboard_context";
 import { decodeName } from "@/utilities/decode_name";
 
 export default function Dashboard() {
-	const [domains, setDomains] = useState({}); // going to do a key value where the key is the domain id and the value is the domain data
+	const [domains, setDomains] = useState<Domains>({}); // going to do a key value where the key is the domain id and the value is the domain data
 	const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
-	const [domainDevices, setDomainDevices] = useState({});
+	const [domainDevices, setDomainDevices] = useState<DomainDevices>({});
 	const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
 	const [domainTransactions, setDomainTransactions] = useState<
 		Record<string, ITransactionModel[]>
@@ -79,7 +84,11 @@ export default function Dashboard() {
 
 		socket.on("disconnect", async (reason) => {
 			if (reason === "io server disconnect") {
-				await authClientRequest.refresh();
+				const [, err] = await authClientRequest.current.refresh();
+				if (err) {
+					logout();
+					return;
+				}
 				initSocket();
 				setupSocketListeners();
 			} else {
@@ -198,7 +207,7 @@ export default function Dashboard() {
 		socket.on(
 			SOCKET_EVENTS.SERVER_EMITTED.USER.JOINED_DOMAIN,
 			async ({ domainId }) => {
-				const [r, err] = await authClientRequest.get(
+				const [r, err] = await authClientRequest.current.get(
 					API_ROUTES.DOMAIN.GET_USER_DOMAINS.path,
 					{
 						headers: {
@@ -209,7 +218,7 @@ export default function Dashboard() {
 					},
 				);
 				if (err === null && r?.status === 200) {
-					const joined = r.data.find((d) => d.id === domainId);
+					const joined = r.data.find((d: Domain) => d.id === domainId);
 					if (joined) setDomains((prev) => ({ ...prev, [domainId]: joined }));
 				}
 			},
@@ -269,6 +278,7 @@ export default function Dashboard() {
 	}, [socketRef, initSocket, authClientRequest, domains]);
 
 	useEffect(() => {
+		// this effect initializes the socket connection on mount and cleans up on unmount
 		const newSocket = initSocket();
 		setupSocketListeners();
 		return () => {
@@ -278,7 +288,7 @@ export default function Dashboard() {
 	}, [authState.accessToken, initSocket, setupSocketListeners]);
 
 	const fetchUser = async () => {
-		const [r, err] = await authClientRequest.get(
+		const [r, err] = await authClientRequest.current.get(
 			API_ROUTES.PROFILE.GET_USER_PROFILE.path,
 			{
 				headers: {
@@ -311,7 +321,7 @@ export default function Dashboard() {
 		}
 	};
 	const fetchDomains = async () => {
-		const [r, err] = await authClientRequest.get(
+		const [r, err] = await authClientRequest.current.get(
 			API_ROUTES.DOMAIN.GET_USER_DOMAINS.path,
 			{
 				headers: {
@@ -338,8 +348,8 @@ export default function Dashboard() {
 
 		if (r?.status === 200) {
 			const domainsData = r.data;
-			const domainsMap = {};
-			domainsData.forEach((domain) => {
+			const domainsMap: Domains = {};
+			domainsData.forEach((domain: Domain) => {
 				domainsMap[domain.id] = domain;
 			});
 			setDomains(domainsMap);
