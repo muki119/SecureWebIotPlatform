@@ -12,7 +12,7 @@ export default async function DeleteUserController(req: Request, res: Response, 
         }
         const { password } = req.body; // this is to confirm deletion
 
-        const [result, error] = await DeleteUserService(userid, password);
+        const [_, error] = await DeleteUserService(userid, password);
         if (error) {
             return res.status(400).json({ message: error.message }).end();
         }
@@ -21,10 +21,7 @@ export default async function DeleteUserController(req: Request, res: Response, 
         if (refreshToken) { // if theres a refresh token - blocklist it , otherwise it dosent matter since the user is deleted and all systems will catch up to that
             const claims = TokenBundleInstance.VerifyRefreshToken(refreshToken);
             if (claims) {
-                const [_, blockError] = await TokenBundleInstance.BlockToken(claims.jti, claims.exp);
-                if (blockError) {
-                    return res.status(400).json({ message: blockError.message }).end();
-                }
+                await TokenBundleInstance.BlockToken(claims.jti, claims.exp);
             }
         }
         ClearCookies(res);

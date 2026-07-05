@@ -4,7 +4,7 @@ import { userModel } from "../models/user_model"
 import EventSenderInstance from "../config/event_sender";
 import { STREAMS } from "@services/common/config";
 import type { EventMessage } from "@services/eventbus";
-export default async function DeleteUserService(userId: string, password: string): Promise<Result<boolean>> {
+export default async function DeleteUserService(userId: string, password: string): Promise<Result<null>> {
     try {
         const user = await userModel.findById(userId);
         if (!user) {
@@ -18,7 +18,7 @@ export default async function DeleteUserService(userId: string, password: string
         await userModel.delete(userId);
         await EventSenderInstance.send(STREAMS.AUTH_SERVICE.USER_DELETED, { userId, timestamp: new Date().toISOString() } as EventMessage);
 
-        return [true, null]
+        return [null, null]
     } catch (error) {
         throw new Error("Error in delete user service", { cause: error })
     }
