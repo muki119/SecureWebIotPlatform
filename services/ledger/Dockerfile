@@ -19,7 +19,7 @@ COPY ledger/package*.json ./ledger/
 RUN npm ci
 
 # Copy the code thats actually needed for the build
-COPY domain/ ./ledger/
+COPY ledger/ ./ledger/
 COPY common/ ./common/
 COPY eventbus/ ./eventbus/
 
