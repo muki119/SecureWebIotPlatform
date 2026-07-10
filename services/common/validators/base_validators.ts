@@ -5,7 +5,7 @@ export const DomainConstraints: Schema = {
     domainId: {
         in: "params",
         isString: true,
-        isUUID: { options: 4 },
+        isUUID: { options: 7 },
         notEmpty: true,
         errorMessage: "Domain ID is required"
     }
@@ -13,7 +13,7 @@ export const DomainConstraints: Schema = {
 
 export const UserIdConstraint: ParamSchema = {
     isString: true,
-    isUUID: { options: 4 },
+    isUUID: { options: 7 },
     notEmpty: true,
     errorMessage: "User ID is required"
 }
