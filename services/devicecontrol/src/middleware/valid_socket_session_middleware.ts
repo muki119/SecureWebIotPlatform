@@ -4,13 +4,19 @@ import { logger } from "../config";
 
 
 
+
+export const ErrAuthenticationInvalidToken = "Authentication error: Invalid token";
 export async function ValidSocketSessionMiddleware(socket: Socket, next: (err?: Error) => void) {
     try {
         const token = socket.handshake.auth.token;
         if (!token) {
             return next(new Error("Authentication error: No token provided"));
         }
-        const payload = await VerifyAccessToken(token);
+        const [payload, error] = await VerifyAccessToken(token);
+        if (error) {
+            logger.error({ error: error }, "Error verifying access token in ValidSocketSessionMiddleware:");
+            return next(new Error("Authentication error: Invalid token"));
+        }
         if (!payload) {
             return next(new Error("Authentication error: Invalid token"));
         }
