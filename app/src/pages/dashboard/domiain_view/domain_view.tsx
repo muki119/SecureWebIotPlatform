@@ -56,7 +56,7 @@ export default function DomainView() {
 		const fetchDomainDevices = async () => {
 			if (!current) return;
 			if (current in domainDevices) return; // if theres already device data for the current domain then dont fetch again
-			const [r, err] = await authClientRequest.get(
+			const [r, err] = await authClientRequest.current.get(
 				API_ROUTES.DEVICE.GET_DOMAIN_DEVICES(current).path,
 				{
 					headers: {
@@ -103,10 +103,10 @@ export default function DomainView() {
 		setDomainDevices,
 	]);
 
-	const getPairingCode = useCallback(async () => {
+	const getPairingCode = async () => {
 		if (!current) return null;
 
-		const [r, err] = await authClientRequest.post(
+		const [r, err] = await authClientRequest.current.post(
 			API_ROUTES.DEVICE.CREATE_PAIRING_CODE(current).path,
 			null,
 			{
@@ -137,193 +137,166 @@ export default function DomainView() {
 			const { pairingCode, expiry } = r.data;
 			return [pairingCode, expiry];
 		}
-	}, [authClientRequest, authState.accessToken, current, logout]);
+	};
 
-	const addUser = useCallback(
-		async (id) => {
-			if (!current) return;
-			const [r, err] = await authClientRequest.post(
-				API_ROUTES.DOMAIN.ADD_USER(current).path,
-				{ id },
-				{
-					headers: {
-						Authorization: AuthClientRequest.createAuthHeader(
-							authState.accessToken!,
-						),
-					},
+	const addUser = async (id: string) => {
+		if (!current) return;
+		const [r, err] = await authClientRequest.current.post(
+			API_ROUTES.DOMAIN.ADD_USER(current).path,
+			{ id },
+			{
+				headers: {
+					Authorization: AuthClientRequest.createAuthHeader(
+						authState.accessToken!,
+					),
 				},
-			);
-			if (err) {
-				if (err !== null) {
-					if (
-						err === AuthClientRequest.ErrUnauthorized ||
-						err === AuthClientRequest.ErrInvalidRefreshToken
-					) {
-						logout();
-						return;
-					}
-					if (err === AuthClientRequest.ErrServerError) {
-						toast.error("Server error while adding user to domain", {
-							description: "Please try again later",
-						});
-					}
+			},
+		);
+		if (err) {
+			if (err !== null) {
+				if (
+					err === AuthClientRequest.ErrUnauthorized ||
+					err === AuthClientRequest.ErrInvalidRefreshToken
+				) {
+					logout();
+					return;
 				}
-				return [false, "Failed to add user to domain"];
-			}
-			if (r?.status === 200) {
-				return [true, null];
-			}
-			if (r?.status === 400) {
-				return [false, r.data.message || "Failed to add user to domain"];
+				if (err === AuthClientRequest.ErrServerError) {
+					toast.error("Server error while adding user to domain", {
+						description: "Please try again later",
+					});
+				}
 			}
 			return [false, "Failed to add user to domain"];
-		},
-		[authClientRequest, authState.accessToken, current, logout],
-	);
-
-	const userSearch = useCallback(
-		async (email) => {
-			const [r, err] = await authClientRequest.get(
-				API_ROUTES.PROFILE.SEARCH_USERS.path,
-				{
-					params: { email },
-					headers: {
-						Authorization: AuthClientRequest.createAuthHeader(
-							authState.accessToken!,
-						),
-					},
+		}
+		if (r?.status === 200) {
+			return [true, null];
+		}
+		if (r?.status === 400) {
+			return [false, r.data.message || "Failed to add user to domain"];
+		}
+		return [false, "Failed to add user to domain"];
+	};
+	const userSearch = async (email) => {
+		const [r, err] = await authClientRequest.current.get(
+			API_ROUTES.PROFILE.SEARCH_USERS.path,
+			{
+				params: { email },
+				headers: {
+					Authorization: AuthClientRequest.createAuthHeader(
+						authState.accessToken!,
+					),
 				},
-			);
-			if (err) {
-				if (err !== null) {
-					if (
-						err === AuthClientRequest.ErrUnauthorized ||
-						err === AuthClientRequest.ErrInvalidRefreshToken
-					) {
-						logout();
-						return;
-					}
-					if (err === AuthClientRequest.ErrServerError) {
-						toast.error("Server error while searching for users", {
-							description: "Please try again later",
-						});
-					}
+			},
+		);
+		if (err) {
+			if (err !== null) {
+				if (
+					err === AuthClientRequest.ErrUnauthorized ||
+					err === AuthClientRequest.ErrInvalidRefreshToken
+				) {
+					logout();
+					return;
 				}
-				return [];
-			}
-			if (r?.status === 200) {
-				return r.data;
+				if (err === AuthClientRequest.ErrServerError) {
+					toast.error("Server error while searching for users", {
+						description: "Please try again later",
+					});
+				}
 			}
 			return [];
-		},
-		[authClientRequest, authState.accessToken, logout],
-	);
-
-	const deleteDevice = useCallback(
-		async (deviceId) => {
-			if (!current) return false;
-			const [r, err] = await authClientRequest.delete(
-				API_ROUTES.DEVICE.DELETE_DEVICE(deviceId).path,
-				{
-					headers: {
-						Authorization: AuthClientRequest.createAuthHeader(
-							authState.accessToken!,
-						),
-					},
+		}
+		if (r?.status === 200) {
+			return r.data;
+		}
+		return [];
+	};
+	const deleteDevice = async (deviceId) => {
+		if (!current) return false;
+		const [r, err] = await authClientRequest.current.delete(
+			API_ROUTES.DEVICE.DELETE_DEVICE(deviceId).path,
+			{
+				headers: {
+					Authorization: AuthClientRequest.createAuthHeader(
+						authState.accessToken!,
+					),
 				},
-			);
-			if (err) {
-				if (err !== null) {
-					if (
-						err === AuthClientRequest.ErrUnauthorized ||
-						err === AuthClientRequest.ErrInvalidRefreshToken
-					) {
-						logout();
-						return false;
-					}
-					if (err === AuthClientRequest.ErrServerError) {
-						toast.error("Server error while deleting device", {
-							description: "Please try again later",
-						});
-					}
+			},
+		);
+		if (err) {
+			if (err !== null) {
+				if (
+					err === AuthClientRequest.ErrUnauthorized ||
+					err === AuthClientRequest.ErrInvalidRefreshToken
+				) {
+					logout();
+					return false;
 				}
-				return false;
-			}
-			if (r?.status === 200) {
-				setDomainDevices((prev) => {
-					const updatedDevices = { ...prev[current] };
-					delete updatedDevices[deviceId];
-					return { ...prev, [current]: updatedDevices };
-				});
-				return true;
+				if (err === AuthClientRequest.ErrServerError) {
+					toast.error("Server error while deleting device", {
+						description: "Please try again later",
+					});
+				}
 			}
 			return false;
-		},
-		[
-			authClientRequest,
-			authState.accessToken,
-			current,
-			logout,
-			setDomainDevices,
-		],
-	);
-
-	const editDevice = useCallback(
-		async (deviceId, name) => {
-			if (!current) return false;
-			const [r, err] = await authClientRequest.patch(
-				API_ROUTES.DEVICE.UPDATE_DEVICE(deviceId).path,
-				{ changes: [{ field: "name", value: name }] },
-				{
-					headers: {
-						Authorization: AuthClientRequest.createAuthHeader(
-							authState.accessToken!,
-						),
-					},
+		}
+		if (r?.status === 200) {
+			setDomainDevices((prev) => {
+				const updatedDevices = { ...prev[current] };
+				delete updatedDevices[deviceId];
+				return { ...prev, [current]: updatedDevices };
+			});
+			return true;
+		}
+		return false;
+	};
+	const editDevice = async (deviceId: string, name: string) => {
+		if (!current) return false;
+		const [r, err] = await authClientRequest.current.patch(
+			API_ROUTES.DEVICE.UPDATE_DEVICE(deviceId).path,
+			{ changes: [{ field: "name", value: name }] },
+			{
+				headers: {
+					Authorization: AuthClientRequest.createAuthHeader(
+						authState.accessToken!,
+					),
 				},
-			);
-			if (err) {
-				if (err !== null) {
-					if (
-						err === AuthClientRequest.ErrUnauthorized ||
-						err === AuthClientRequest.ErrInvalidRefreshToken
-					) {
-						logout();
-						return false;
-					}
-					if (err === AuthClientRequest.ErrServerError) {
-						toast.error("Server error while editing device", {
-							description: "Please try again later",
-						});
-					}
+			},
+		);
+		if (err) {
+			if (err !== null) {
+				if (
+					err === AuthClientRequest.ErrUnauthorized ||
+					err === AuthClientRequest.ErrInvalidRefreshToken
+				) {
+					logout();
+					return false;
 				}
-				return false;
-			}
-			if (r?.status === 200) {
-				const updatedDevice = r.data;
-				setDomainDevices((prev) => ({
-					...prev,
-					[current]: {
-						...prev[current],
-						[deviceId]: {
-							...prev[current][deviceId],
-							name: updatedDevice.name,
-							description: updatedDevice.description,
-						},
-					},
-				}));
-				return true;
+				if (err === AuthClientRequest.ErrServerError) {
+					toast.error("Server error while editing device", {
+						description: "Please try again later",
+					});
+				}
 			}
 			return false;
-		},
-		[
-			authClientRequest,
-			authState.accessToken,
-			current,
-			logout,
-			setDomainDevices,
-		],
-	);
+		}
+		if (r?.status === 200) {
+			const updatedDevice = r.data;
+			setDomainDevices((prev) => ({
+				...prev,
+				[current]: {
+					...prev[current],
+					[deviceId]: {
+						...prev[current][deviceId],
+						name: updatedDevice.name,
+						description: updatedDevice.description,
+					},
+				},
+			}));
+			return true;
+		}
+		return false;
+	};
 
 	const renderDevices = useCallback(() => {
 		if (!current || !(current in domainDevices)) {

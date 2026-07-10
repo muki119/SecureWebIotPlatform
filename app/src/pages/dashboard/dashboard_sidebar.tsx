@@ -1,10 +1,11 @@
 import { Sidebar } from "@/components/ui/sidebar";
-import { toast } from "sonner";
 import { API_ROUTES } from "@/constants/api_routes";
 import { AuthContext } from "@/contexts/auth_context";
-import { DashboardContext } from "../../contexts/dashboard_context";
-import { useContext, useState } from "react";
 import { AuthClientRequest } from "@/helpers/client_request";
+import type { Role, User } from "@/types/models";
+import { useContext, useState } from "react";
+import { toast } from "sonner";
+import { DashboardContext } from "../../contexts/dashboard_context";
 
 import DashboardIconSidebar from "./sidebar/dahsboard_icon_sidebar";
 import DashboardSecondMenu from "./sidebar/dashboard_second_menu";
@@ -40,13 +41,13 @@ export default function DashboardSidebar() {
 	const [selectedViewDetailsDomain, setSelectedViewDetailsDomain] =
 		useState(null);
 
-	const createDomain = async (domainName) => {
+	const createDomain = async (domainName: string) => {
 		try {
 			if (!domainName) {
 				setCreateDomainSuccess([false, "Domain name is required"]);
 				return;
 			}
-			const [r, err] = await authClientRequest.post(
+			const [r, err] = await authClientRequest.current.post(
 				API_ROUTES.DOMAIN.CREATE_DOMAIN.path,
 				{ name: domainName },
 				{
@@ -81,18 +82,19 @@ export default function DashboardSidebar() {
 			if (r?.status === 400) {
 				setCreateDomainSuccess([false, r.data]);
 			}
-		} catch {
+		} catch (e) {
+			console.log(e);
 			toast.error("Error creating domain");
 		}
 	};
 
-	const leaveDomain = async (domainId) => {
+	const leaveDomain = async (domainId: string) => {
 		try {
 			if (!domainId) {
 				setLeaveDomainSuccess([false, "Domain id is required"]);
 				return;
 			}
-			const [r, err] = await authClientRequest.post(
+			const [r, err] = await authClientRequest.current.post(
 				API_ROUTES.DOMAIN.LEAVE_DOMAIN(domainId).path,
 				null,
 				{
@@ -139,11 +141,11 @@ export default function DashboardSidebar() {
 		}
 	};
 
-	const updateDomainName = async (domainId, domainName) => {
+	const updateDomainName = async (domainId: string, domainName: string) => {
 		try {
 			if (!domainId || !domainName) return;
 			setUpdateDomainSuccess([false, null]);
-			const [r, err] = await authClientRequest.patch(
+			const [r, err] = await authClientRequest.current.patch(
 				API_ROUTES.DOMAIN.UPDATE_DOMAIN(domainId).path,
 				{ changes: [{ field: "name", value: domainName }] },
 				{
@@ -185,11 +187,11 @@ export default function DashboardSidebar() {
 		}
 	};
 
-	const removeUser = async (domainId, userId) => {
+	const removeUser = async (domainId: string, userId: string) => {
 		try {
 			if (!domainId || !userId) return;
 			if (userId === authState?.user?.userId) return;
-			const [r, err] = await authClientRequest.delete(
+			const [r, err] = await authClientRequest.current.delete(
 				API_ROUTES.DOMAIN.DELETE_USER(domainId, userId).path,
 				{
 					headers: {
@@ -237,7 +239,7 @@ export default function DashboardSidebar() {
 		try {
 			if (!domainId || !userId || !newRole || newRole === "OWNER") return;
 			setUpdateDomainUserSuccess([false, null]);
-			const [r, err] = await authClientRequest.patch(
+			const [r, err] = await authClientRequest.current.patch(
 				API_ROUTES.DOMAIN.UPDATE_USER_ROLE(domainId, userId).path,
 				{ role: newRole.toUpperCase() },
 				{
@@ -276,7 +278,7 @@ export default function DashboardSidebar() {
 							...prev[domainId].users,
 							[userId]: {
 								...prev[domainId].users[userId],
-								role: newRole.toUpperCase(),
+								role: newRole.toUpperCase() as Role,
 							},
 						},
 					},
@@ -287,10 +289,10 @@ export default function DashboardSidebar() {
 		}
 	};
 
-	const fetchDomainUsers = async (domainId) => {
+	const fetchDomainUsers = async (domainId: string) => {
 		try {
 			if (!domainId) return;
-			const [r, err] = await authClientRequest.get(
+			const [r, err] = await authClientRequest.current.get(
 				API_ROUTES.DOMAIN.GET_DOMAIN_USERS(domainId).path,
 				{
 					headers: {
@@ -315,8 +317,8 @@ export default function DashboardSidebar() {
 				}
 			}
 			if (r?.status === 200) {
-				const usersObject = {};
-				r.data.forEach((user) => {
+				const usersObject: Record<string, User> = {};
+				r.data.forEach((user: User) => {
 					usersObject[user.userId] = user;
 				});
 				setDomains((prev) => ({
@@ -329,10 +331,10 @@ export default function DashboardSidebar() {
 		}
 	};
 
-	const deleteDomain = async (domainId) => {
+	const deleteDomain = async (domainId: string) => {
 		try {
 			if (!domainId) return;
-			const [r, err] = await authClientRequest.delete(
+			const [r, err] = await authClientRequest.current.delete(
 				API_ROUTES.DOMAIN.DELETE_DOMAIN(domainId).path,
 				{
 					headers: {

@@ -1,33 +1,26 @@
 import {
-	useContext,
-	useState,
-	useEffect,
-	useCallback,
-	useRef,
-	useMemo,
-} from "react";
-import { useNavigate } from "react-router";
-import DashboardSidebar from "./dashboard_sidebar";
+	SidebarInset,
+	SidebarProvider,
+	SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { API_ROUTES, SOCKET_EVENTS, SOCKET_URL } from "@/constants/api_routes";
-import DomainView from "./domiain_view/domain_view";
+import { AuthContext } from "@/contexts/auth_context";
 import { AuthClientRequest } from "@/helpers/client_request";
-import { toast } from "sonner";
+import { decodeName } from "@/utilities/decode_name";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router";
 import { io, type Socket } from "socket.io-client";
+import { toast } from "sonner";
+import { DashboardContext } from "../../contexts/dashboard_context";
 import type {
-	ITransactionModel,
 	Domain,
 	DomainDevices,
 	Domains,
+	ITransactionModel,
 } from "../../types/models";
+import DashboardSidebar from "./dashboard_sidebar";
 import DeviceView from "./device_view";
-import {
-	SidebarProvider,
-	SidebarTrigger,
-	SidebarInset,
-} from "@/components/ui/sidebar";
-import { AuthContext } from "@/contexts/auth_context";
-import { DashboardContext } from "../../contexts/dashboard_context";
-import { decodeName } from "@/utilities/decode_name";
+import DomainView from "./domiain_view/domain_view";
 
 export default function Dashboard() {
 	const [domains, setDomains] = useState<Domains>({}); // going to do a key value where the key is the domain id and the value is the domain data
@@ -40,15 +33,21 @@ export default function Dashboard() {
 	const navigate = useNavigate();
 	const { authState, dispatch, authClientRequest } = useContext(AuthContext)!;
 	const logout = async () => {
+		await authClientRequest.current.logout(API_ROUTES.AUTH.LOGOUT.path);
 		dispatch({ type: "LOGOUT" });
 		navigate("/login");
 	};
 	const socketRef = useRef<Socket | null>(null);
 	const accessTokenRef = useRef(authState.accessToken);
+	const domainsRef = useRef(domains);
 
 	useEffect(() => {
 		accessTokenRef.current = authState.accessToken;
 	}, [authState.accessToken]);
+
+	useEffect(() => {
+		domainsRef.current = domains;
+	}, [domains]);
 
 	const isAdmin = useMemo(() => {
 		if (!selectedDomain) return false;
@@ -57,42 +56,66 @@ export default function Dashboard() {
 		return domainInfo?.role === "OWNER" || domainInfo?.role === "ADMIN";
 	}, [domains, selectedDomain]);
 
-	const initSocket = useCallback(() => {
-		if (socketRef.current) {
-			socketRef.current.removeAllListeners();
-			socketRef.current.disconnect();
-		}
-		const newSocket = io(SOCKET_URL, {
-			auth: { token: authState.accessToken },
+	useEffect(() => {
+		let cancelled = false;
+
+		const socket = io(SOCKET_URL, {
+			autoConnect: false,
+			auth: (cb) => cb({ token: accessTokenRef.current }),
 		});
-		socketRef.current = newSocket;
-		return newSocket;
-	}, [authState.accessToken]);
+		socketRef.current = socket;
 
-	const setupSocketListeners = useCallback(() => {
-		const socket = socketRef.current;
-		if (!socket) return;
-
-		socket.on("connect", () => {});
+		(async () => {
+			if (accessTokenRef.current) {
+				socket.connect();
+				return;
+			}
+			const [token, err] = await authClientRequest.current.refresh();
+			if (cancelled) return;
+			if (err) {
+				if (err === AuthClientRequest.ErrInvalidRefreshToken) {
+					logout();
+				}
+				return;
+			}
+			accessTokenRef.current = token;
+			socket.connect();
+		})();
 
 		socket.on("connect_error", (err) => {
-			if (err.message === "Authentication error: No token provided") {
-				return; // just ignore since this is just the initial connection attempt before the token is set
-			}
 			toast.error("Socket connection error", { description: err.message });
 		});
 
 		socket.on("disconnect", async (reason) => {
-			if (reason === "io server disconnect") {
-				const [, err] = await authClientRequest.current.refresh();
-				if (err) {
+			if (reason !== "io server disconnect") return;
+
+			const MAX_ATTEMPTS = 5;
+			const MAX_DELAY_MS = 3000;
+
+			for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+				const delay = Math.min(250 * 2 ** attempt, MAX_DELAY_MS);
+				await new Promise((resolve) => setTimeout(resolve, delay));
+				if (cancelled) return;
+
+				const [token, err] = await authClientRequest.current.refresh();
+				if (cancelled) return;
+
+				if (!err) {
+					accessTokenRef.current = token;
+					socket.connect();
+					return;
+				}
+
+				if (err === AuthClientRequest.ErrInvalidRefreshToken) {
 					logout();
 					return;
 				}
-				initSocket();
-				setupSocketListeners();
-			} else {
-				toast.error("Socket disconnected");
+			}
+
+			if (!cancelled) {
+				toast.error("Lost connection to the server", {
+					description: "Please refresh the page to reconnect.",
+				});
 			}
 		});
 
@@ -110,7 +133,8 @@ export default function Dashboard() {
 					};
 				});
 				toast.success(`Device ${device.name} added to domain `, {
-					description: decodeName(domains[domainId]?.name) || domainId,
+					description:
+						decodeName(domainsRef.current[domainId]?.name) || domainId,
 				});
 			},
 		);
@@ -242,7 +266,7 @@ export default function Dashboard() {
 
 		socket.on(SOCKET_EVENTS.SERVER_EMITTED.DOMAIN.DELETED, ({ domainId }) => {
 			toast("Domain has been deleted", {
-				description: decodeName(domains[domainId]?.name) || domainId,
+				description: decodeName(domainsRef.current[domainId]?.name) || domainId,
 			});
 			setDomains((prev) => {
 				const next = { ...prev };
@@ -275,17 +299,13 @@ export default function Dashboard() {
 				});
 			},
 		);
-	}, [socketRef, initSocket, authClientRequest, domains]);
 
-	useEffect(() => {
-		// this effect initializes the socket connection on mount and cleans up on unmount
-		const newSocket = initSocket();
-		setupSocketListeners();
 		return () => {
-			newSocket.removeAllListeners();
-			newSocket.disconnect();
+			cancelled = true;
+			socket.removeAllListeners();
+			socket.disconnect();
 		};
-	}, [authState.accessToken, initSocket, setupSocketListeners]);
+	}, [authClientRequest, logout]);
 
 	const fetchUser = async () => {
 		const [r, err] = await authClientRequest.current.get(
@@ -293,7 +313,7 @@ export default function Dashboard() {
 			{
 				headers: {
 					Authorization: AuthClientRequest.createAuthHeader(
-						authState.accessToken!,
+						accessTokenRef.current!,
 					),
 				},
 			},
@@ -320,13 +340,14 @@ export default function Dashboard() {
 			});
 		}
 	};
+
 	const fetchDomains = async () => {
 		const [r, err] = await authClientRequest.current.get(
 			API_ROUTES.DOMAIN.GET_USER_DOMAINS.path,
 			{
 				headers: {
 					Authorization: AuthClientRequest.createAuthHeader(
-						authState.accessToken!,
+						accessTokenRef.current!,
 					),
 				},
 			},
@@ -357,8 +378,10 @@ export default function Dashboard() {
 	};
 
 	useEffect(() => {
-		fetchDomains();
-		fetchUser();
+		(async () => {
+			await fetchUser();
+			await fetchDomains();
+		})();
 	}, []);
 
 	return (

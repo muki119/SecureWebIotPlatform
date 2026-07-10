@@ -13,12 +13,20 @@ export interface ITransactionModel {
     domainId: string;
 }
 
+export type Role = (typeof ROLES)[keyof typeof ROLES];
+export type User = {
+    userId: string;
+    role: Role;
+    [key: string]: unknown;
+};
+
 export type Domain = {
     id: string;
     name: string;
     ownerId: string;
     createdAt: string;
-    role: (typeof ROLES)[keyof typeof ROLES];
+    role: Role;
+    users: Record<string, User>;
     [key: string]: unknown;
 };
 
