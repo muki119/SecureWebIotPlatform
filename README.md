@@ -12,7 +12,7 @@ To avoid unauthorised access, this application uses secure communication protoco
 
 To prevent typical web vulnerabilities such as SQL injection and cross-site scripting attacks, the application employs safe coding practices such as input validation, output encoding, and parameterized queries to make this application more secure.
 
-To protect against man-in-the-middle attacks, eavesdropping and unauthorised access, the system incorporates security features such as secure sockets layer (SSL/TLS) encryption, two-factor authentication, and secure storage of data inside the database.
+To protect against man-in-the-middle attacks, eavesdropping and unauthorised access, the system incorporates security features such as secure sockets layer (SSL/TLS) encryption and secure storage of data inside the database.
 
 This repository contains the code for the backend and frontend of the applications, as well as the documentation for the system.
 
