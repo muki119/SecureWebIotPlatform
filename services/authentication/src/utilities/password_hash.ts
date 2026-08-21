@@ -39,14 +39,13 @@ function scryptAsync(plaintext: string, salt: Buffer, keylen: number, options: {
  */
 
 export async function HashPassword(plaintext: string): Promise<string> {
-
-    if (plaintext.length < PASSWORD_CONSTRAINTS.minLength) {
-        throw new Error(ErrMinPasswordLength)
-    }
-    if (plaintext.length > PASSWORD_CONSTRAINTS.maxLength) {
-        throw new Error(ErrMaxPasswordLength)
-    }
     try {
+        if (plaintext.length < PASSWORD_CONSTRAINTS.minLength) {
+            throw new Error(ErrMinPasswordLength)
+        }
+        if (plaintext.length > PASSWORD_CONSTRAINTS.maxLength) {
+            throw new Error(ErrMaxPasswordLength)
+        }
         const salt = await GenerateRandomBytes(SALT_LENGTH);
 
         const derivedKey = await scryptAsync(plaintext, salt, SCRYPT_CONFIG.keylen, { N: SCRYPT_CONFIG.N, r: SCRYPT_CONFIG.r, p: SCRYPT_CONFIG.p });
@@ -70,16 +69,16 @@ export async function HashPassword(plaintext: string): Promise<string> {
  */
 
 export async function VerifyPassword(plaintext: string, hash: string): Promise<boolean> {
-    if (plaintext.length < PASSWORD_CONSTRAINTS.minLength) {
-        throw new Error(ErrMinPasswordLength)
-    }
-    if (plaintext.length > PASSWORD_CONSTRAINTS.maxLength) {
-        throw new Error(ErrMaxPasswordLength)
-    }
-    if (!hash) {
-        throw new Error(ErrHashRequired)
-    }
     try {
+        if (plaintext.length < PASSWORD_CONSTRAINTS.minLength) {
+            throw new Error(ErrMinPasswordLength)
+        }
+        if (plaintext.length > PASSWORD_CONSTRAINTS.maxLength) {
+            throw new Error(ErrMaxPasswordLength)
+        }
+        if (!hash) {
+            throw new Error(ErrHashRequired)
+        }
         const splitHash = hash.split("$");
         if (splitHash.length !== 6) {
             throw new Error("Invalid hash format")
