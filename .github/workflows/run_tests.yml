@@ -1,4 +1,4 @@
-name: Run Codebase Tests
+name: Run Codebase Tests (Vitest) 
 on:
   pull_request:
   push:
