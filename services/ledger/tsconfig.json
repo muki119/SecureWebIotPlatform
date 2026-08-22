@@ -1,4 +1,4 @@
 {
 	"extends": "../tsconfig.service.json",
-	"include": ["src", "test"]
+	"include": ["src", "index.ts"]
 }
