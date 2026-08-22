@@ -23,31 +23,21 @@ describe("Testing Password Hashing", () => {
 	});
 	test("Throws error when given no password", async () => {
 		// is now bubbling up the error , because its now caught and rethrown in the HashPassword function
-		try {
-			await HashPassword("");
-		} catch (error) {
-			assert.instanceOf(error, Error);
-			assert.equal(
-				(error.cause as Error).message,
-				ErrNoPlaintextPassword,
-				"Expected error cause to be ErrNoPlaintextPassword",
-			);
-		}
+		await expect(async () => HashPassword("")).rejects.toMatchObject({
+			cause: {
+				message: ErrNoPlaintextPassword,
+			},
+		});
 	});
 	test("Throws error when given a password that is too short", async () => {
 		const shortPassword = generatePassword(
 			randomInt(1, PASSWORD_CONSTRAINTS.minLength - 1),
 		);
-		try {
-			await HashPassword(shortPassword);
-		} catch (error) {
-			assert.instanceOf(error, Error);
-			assert.equal(
-				(error.cause as Error).message,
-				ErrMinPasswordLength,
-				"Expected error cause to be ErrMinPasswordLength",
-			);
-		}
+		await expect(async () => HashPassword(shortPassword)).rejects.toMatchObject({
+			cause: {
+				message: ErrMinPasswordLength,
+			},
+		});
 	});
 	test("Throws error when given a password that is too long", async () => {
 		const longPassword = generatePassword(
@@ -56,16 +46,12 @@ describe("Testing Password Hashing", () => {
 				PASSWORD_CONSTRAINTS.maxLength + 20,
 			),
 		);
-		try {
-			await HashPassword(longPassword);
-		} catch (error) {
-			assert.instanceOf(error, Error);
-			assert.equal(
-				(error.cause as Error).message,
-				ErrMaxPasswordLength,
-				"Expected error cause to be ErrMaxPasswordLength",
-			);
-		}
+
+		await expect(async () => HashPassword(longPassword)).rejects.toMatchObject({
+			cause: {
+				message: ErrMaxPasswordLength,
+			},
+		});
 	});
 });
 
