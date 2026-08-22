@@ -1,35 +1,33 @@
-import type { CookieOptions } from "express"
-import { GetEnvString } from "@services/common/utilities"
-
+import { GetEnvString } from "@services/common/utilities";
+import type { CookieOptions, Response } from "express";
 
 export const tokenNames = {
-    XSRF_TOKEN_COOKIE_NAME: "xsrfToken",
-    XSRF_HEADER_NAME: "x-xsrf-token",
-    REFRESH_TOKEN_COOKIE_NAME: "refreshToken"
-} as const
+	XSRF_TOKEN_COOKIE_NAME: "xsrfToken",
+	XSRF_HEADER_NAME: "x-xsrf-token",
+	REFRESH_TOKEN_COOKIE_NAME: "refreshToken",
+} as const;
 
-const isSecure = GetEnvString("NODE_ENV") === "production"
+const isSecure = GetEnvString("NODE_ENV") === "production";
 
 export const RefreshTokenCookieOptions = (maxAge: number): CookieOptions => {
-    return {
-        httpOnly: true,
-        secure: isSecure, // only send over https - should be dependent on environment - set to true in production
-        sameSite: "lax", // prevent csrf attacks
-        maxAge: maxAge // one week in milliseconds
-    }
-}
+	return {
+		httpOnly: true,
+		secure: isSecure, // only send over https - should be dependent on environment - set to true in production
+		sameSite: "lax", // prevent csrf attacks
+		maxAge: maxAge, // one week in milliseconds
+	};
+};
 
 export const XsrfTokenCookieOptions = (maxAgeMs: number): CookieOptions => {
-    return {
-        httpOnly: false, // to be double sent in header and cookie - also used for auto login so when on login page the user gets moved to the dashboard automatically and then the application can do an optimistic call
-        secure: isSecure, // only send over https - should be dependent on environment - set to true in production
-        sameSite: "lax", // prevent csrf attacks
-        maxAge: maxAgeMs // one week in milliseconds
-    }
-}
+	return {
+		httpOnly: false, // to be double sent in header and cookie - also used for auto login so when on login page the user gets moved to the dashboard automatically and then the application can do an optimistic call
+		secure: isSecure, // only send over https - should be dependent on environment - set to true in production
+		sameSite: "lax", // prevent csrf attacks
+		maxAge: maxAgeMs, // one week in milliseconds
+	};
+};
 
-
-export function ClearCookies(res: any) {
-    res.clearCookie(tokenNames.REFRESH_TOKEN_COOKIE_NAME)
-    res.clearCookie(tokenNames.XSRF_TOKEN_COOKIE_NAME)
+export function ClearCookies(res: Response) {
+	res.clearCookie(tokenNames.REFRESH_TOKEN_COOKIE_NAME);
+	res.clearCookie(tokenNames.XSRF_TOKEN_COOKIE_NAME);
 }
