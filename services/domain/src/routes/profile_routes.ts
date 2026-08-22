@@ -1,10 +1,10 @@
-import {
-    GetUsersProfileController,
-    GetProfileController,
-    UpdateProfileController,
-    SearchUsersController
-} from "../controllers/profile_controllers"
 import { Router } from "express";
+import {
+	GetProfileController,
+	GetUsersProfileController,
+	SearchUsersController,
+	UpdateProfileController,
+} from "../controllers/profile_controllers";
 
 const ProfileRouter = Router();
 /**
@@ -19,7 +19,6 @@ const ProfileRouter = Router();
 ProfileRouter.get("/me", GetUsersProfileController);
 ProfileRouter.get("/search", SearchUsersController);
 ProfileRouter.patch("/me", UpdateProfileController); // updates the users profile - only allows updating of display name for now
-ProfileRouter.get("/:userId", GetProfileController); // frontend should check if requested profile is their own and if so use the /me route instead 
-
+ProfileRouter.get("/:userId", GetProfileController); // frontend should check if requested profile is their own and if so use the /me route instead
 
 export default ProfileRouter;

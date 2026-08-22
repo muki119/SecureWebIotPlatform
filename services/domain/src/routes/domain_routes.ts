@@ -1,47 +1,76 @@
-import {
-    CreateDomainController,
-    DeleteDomainController,
-    UpdateDomainController,
-    GetUserDomainsController,
-    GetDomainUsersController,
-    AddUserController,
-    DeleteUserController,
-    UpdateUserRoleController,
-    LeaveDomainController,
-    UpdateOwnerController
-} from "../controllers/domain_controllers"
-import { Router } from "express";
-import { AddUserValidator, CreateDomainValidator, UpdateOwnerValidator, DeleteUserValidator, UpdateUserRoleValidator } from "../validators/domain_validators";
 import { DomainIdOnlyValidator } from "@services/common/validators";
-
+import { Router } from "express";
+import {
+	AddUserController,
+	CreateDomainController,
+	DeleteDomainController,
+	DeleteUserController,
+	GetDomainUsersController,
+	GetUserDomainsController,
+	LeaveDomainController,
+	UpdateDomainController,
+	UpdateOwnerController,
+	UpdateUserRoleController,
+} from "../controllers/domain_controllers";
+import {
+	AddUserValidator,
+	CreateDomainValidator,
+	DeleteUserValidator,
+	UpdateOwnerValidator,
+	UpdateUserRoleValidator,
+} from "../validators/domain_validators";
 
 /**
  * Domain
  * /domain post - creates domain
  * /domain/:domainId PATCH [{field: string, value: string}] - updates domain
- * /domain/:domainId DELETE -- uses userid to check user has permission to delete domain - checks if owner role - deletes domain 
+ * /domain/:domainId DELETE -- uses userid to check user has permission to delete domain - checks if owner role - deletes domain
  * /domain/:domainId/user POST - body {userId: string, role: string} -- uses userid to check user has permission to add user to domain - adds user
  * /domain/:domainId/user/:userid DELETE - body -- uses userid to check user has permission to remove user from domain - removes user
  * /domain/:domainId/user/:userid/role Patch - changes user role - admin+ only
- * /domain/:domainId/users/ GET -- might need pagination if there are a lot of users - will return max 100 at a time , sorted by date joined by default 
+ * /domain/:domainId/users/ GET -- might need pagination if there are a lot of users - will return max 100 at a time , sorted by date joined by default
  * /domain?offset=&limit= <100 GET - uses access token to get user id - gets all the users domains - paginated - will 100% be compressed
-* could potentially have a undo domain deletion  - requires getting all join table entries where the deleted_at time is at or after the time in the domain table entry 
-*/
+ * could potentially have a undo domain deletion  - requires getting all join table entries where the deleted_at time is at or after the time in the domain table entry
+ */
 
 const DomainRouter = Router();
 //the parent route is domain
 DomainRouter.post("/", CreateDomainValidator, CreateDomainController); // Creates a domain
 DomainRouter.patch("/:domainId", DomainIdOnlyValidator, UpdateDomainController); // Updates a domain - owner only
-DomainRouter.delete("/:domainId", DomainIdOnlyValidator, DeleteDomainController); // Deletes a domain - owner only
+DomainRouter.delete(
+	"/:domainId",
+	DomainIdOnlyValidator,
+	DeleteDomainController,
+); // Deletes a domain - owner only
 
-DomainRouter.post("/:domainId/leave", DomainIdOnlyValidator, LeaveDomainController); // leave a domain
+DomainRouter.post(
+	"/:domainId/leave",
+	DomainIdOnlyValidator,
+	LeaveDomainController,
+); // leave a domain
 DomainRouter.post("/:domainId/user", AddUserValidator, AddUserController); // Adds a user to a domain - admin+ only
-DomainRouter.patch("/:domainId/transfer-ownership", UpdateOwnerValidator, UpdateOwnerController); // changes domain owner but sets old owner to admin - owner only
+DomainRouter.patch(
+	"/:domainId/transfer-ownership",
+	UpdateOwnerValidator,
+	UpdateOwnerController,
+); // changes domain owner but sets old owner to admin - owner only
 
-DomainRouter.delete("/:domainId/user/:userToDelete", DeleteUserValidator, DeleteUserController); // Removes a user from domain - admin+ only
-DomainRouter.patch("/:domainId/user/:userToUpdate/role", UpdateUserRoleValidator, UpdateUserRoleController); // Updates a users role in a domain - admin+ only
+DomainRouter.delete(
+	"/:domainId/user/:userToDelete",
+	DeleteUserValidator,
+	DeleteUserController,
+); // Removes a user from domain - admin+ only
+DomainRouter.patch(
+	"/:domainId/user/:userToUpdate/role",
+	UpdateUserRoleValidator,
+	UpdateUserRoleController,
+); // Updates a users role in a domain - admin+ only
 
-DomainRouter.get("/:domainId/users", DomainIdOnlyValidator, GetDomainUsersController); // Gets all users in a domain
+DomainRouter.get(
+	"/:domainId/users",
+	DomainIdOnlyValidator,
+	GetDomainUsersController,
+); // Gets all users in a domain
 DomainRouter.get("/", GetUserDomainsController); // Gets all domains for a user - paginated with ?limit= & offset=
 
 export default DomainRouter;

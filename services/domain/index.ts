@@ -1,63 +1,62 @@
-import express from 'express';
-import { rateLimit } from 'express-rate-limit';
-import { GetEnvNumber } from '@services/common/utilities';
-import cookieParser from 'cookie-parser';
-import DomainProfileRouter from './src/routes';
-import EventBusInstance from './src/config/event_bus';
-import logger from './src/config/logger';
-import { ErrorHandlerMiddleware } from './src/middleware';
+import { GetEnvNumber } from "@services/common/utilities";
+import cookieParser from "cookie-parser";
+import express from "express";
+import { rateLimit } from "express-rate-limit";
+import EventBusInstance from "./src/config/event_bus";
+import logger from "./src/config/logger";
+import { ErrorHandlerMiddleware } from "./src/middleware";
+import DomainProfileRouter from "./src/routes";
+
 const app = express();
 
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, limit: 100, validate: {
-        trustProxy: true
-    }
+	windowMs: 15 * 60 * 1000,
+	limit: 100,
+	validate: {
+		trustProxy: true,
+	},
 });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.disable('x-powered-by')
+app.disable("x-powered-by");
 app.use(limiter);
 
-
-app.use('/api/v1', DomainProfileRouter);
+app.use("/api/v1", DomainProfileRouter);
 app.use(ErrorHandlerMiddleware);
-const port = GetEnvNumber('PORT', 3000);
+const port = GetEnvNumber("PORT", 3000);
 
 const server = app.listen(port, async (err) => {
-    if (err) {
-        logger.error({ error: err }, 'Error starting server:');
-        process.exit(1);
-    }
-    await EventBusInstance.init();
-    await EventBusInstance.start();
-    logger.info('Event bus started');
-    logger.info(`Listening on port ${port}`)
+	if (err) {
+		logger.error({ error: err }, "Error starting server:");
+		process.exit(1);
+	}
+	await EventBusInstance.init();
+	await EventBusInstance.start();
+	logger.info("Event bus started");
+	logger.info(`Listening on port ${port}`);
 });
 
-
-
 const shutdown = () => {
-    logger.info("Shutting down")
-    server.close(async (err) => {
-        if (err) {
-            logger.error({ error: err }, 'Error closing server:');
-            process.exit(1);
-        }
-        await EventBusInstance.stop();
-        logger.info("Server closed")
-        process.exit(0);
-    });
-}
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
-
+	logger.info("Shutting down");
+	server.close(async (err) => {
+		if (err) {
+			logger.error({ error: err }, "Error closing server:");
+			process.exit(1);
+		}
+		await EventBusInstance.stop();
+		logger.info("Server closed");
+		process.exit(0);
+	});
+};
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
 /**
  * Profile creation - event bus service
  * Domain and user management stuff will all be api routes
- * 
+ *
  * Domain management:
  * - Create domain
  * - Update domain name
@@ -66,26 +65,26 @@ process.on('SIGTERM', shutdown);
  * - Remove user from domain
  * - List users in domain
  * - List domains for user
- * 
+ *
  * User Role management:
- * - Create role - by default , if not user then role is member 
+ * - Create role - by default , if not user then role is member
  * - Update user role - can only change role
  * - Get role - happens in services that need to check permissions - like domain mangement
- * - Role deletion comes when user is removed from domain 
+ * - Role deletion comes when user is removed from domain
  */
 
 /**
  * Domain
  * /domain post - creates domain
  * /domain/:domainId PATCH [{field: string, value: string}] - updates domain
- * /domain/:domainId DELETE -- uses userid to check user has permission to delete domain - checks if owner role - deletes domain 
+ * /domain/:domainId DELETE -- uses userid to check user has permission to delete domain - checks if owner role - deletes domain
  * /domain/:domainId/user POST - body {userId: string, role: string} -- uses userid to check user has permission to add user to domain - adds user
  * /domain/:domainId/user/:userid DELETE - body -- uses userid to check user has permission to remove user from domain - removes user
  * /domain/:domainId/user/:userid/role Patch - changes user role - admin+ only
- * /domain/:domainId/users/ GET -- might need pagination if there are a lot of users - will return max 100 at a time , sorted by date joined by default 
+ * /domain/:domainId/users/ GET -- might need pagination if there are a lot of users - will return max 100 at a time , sorted by date joined by default
  * /domain?offset=&limit= <100 GET - uses access token to get user id - gets all the users domains - paginated - will 100% be compressed
-* could potentially have a undo domain deletion  - requires getting all join table entries where the deleted_at time is at or after the time in the domain table entry 
-*/
+ * could potentially have a undo domain deletion  - requires getting all join table entries where the deleted_at time is at or after the time in the domain table entry
+ */
 
 /**
  * Profile
