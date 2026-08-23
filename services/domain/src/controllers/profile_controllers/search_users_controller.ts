@@ -19,7 +19,21 @@ export default async function SearchUsersController(
 				.json({ error: "Email query parameter is required" })
 				.end();
 		}
-
+		if (typeof email !== "string") {
+			return res
+				.status(400)
+				.json({ error: "Email query parameter must be a string" })
+				.end();
+		}
+		if (
+			typeof limit !== "string" ||
+			(limit && Number.isNaN(parseInt(limit, 10)))
+		) {
+			return res
+				.status(400)
+				.json({ error: "Limit query parameter must be a number" })
+				.end();
+		}
 		const [profiles, err] = await SearchUsersService(
 			email,
 			limit ? parseInt(limit, 10) : 50,
