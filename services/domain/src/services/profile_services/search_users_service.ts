@@ -9,6 +9,9 @@ export default async function SearchUsersService(
 		if (!email) {
 			return [null, new Error("Email is required to search for users")];
 		}
+		if (typeof email !== "string") {
+			return [null, new Error("Email must be a string")];
+		}
 		if (email.length < 3) {
 			return [
 				null,
