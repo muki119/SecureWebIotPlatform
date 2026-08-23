@@ -51,6 +51,20 @@ export type DeviceTelemetry = {
 	value: string | number | boolean;
 };
 
+export type NumericAggregatedTelemetry = {
+	avg: number;
+	min: number;
+	max: number;
+};
+
+export type CategoricalAggregatedTelemetry = {
+	last: string | number | boolean;
+};
+
+export type AggregatedTelemetry =
+	| NumericAggregatedTelemetry
+	| CategoricalAggregatedTelemetry;
+
 export enum Intervals {
 	DAY = "DAY",
 	WEEK = "WEEK",

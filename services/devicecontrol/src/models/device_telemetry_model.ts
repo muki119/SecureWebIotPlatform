@@ -11,6 +11,7 @@ import { type Connection, type Model, type Schema, Types } from "mongoose";
 import { MongoConnection } from "../config";
 import DeviceTelemetrySchema from "../db/device_telemetry_schema";
 import {
+	type AggregatedTelemetry,
 	CapabilityTypes,
 	type DeviceTelemetry,
 	Intervals,
@@ -92,7 +93,7 @@ export class DeviceTelemetryModel {
 		capabilityType: CapabilityTypes,
 		queryDate: Date | null = null,
 		interval = Intervals.WEEK,
-	): Promise<Result<DeviceTelemetry[]>> {
+	): Promise<Result<AggregatedTelemetry[]>> {
 		// will be paginated by week or day
 		try {
 			const [lowerBound, upperBound] = this.getIntervalBounds(
@@ -137,7 +138,7 @@ export class DeviceTelemetryModel {
 
 			console.log("Telemetry query results:", results);
 
-			return [results as DeviceTelemetry[], null];
+			return [results as AggregatedTelemetry[], null];
 		} catch (error) {
 			throw new Error("Failed to find device telemetry", {
 				cause: error,

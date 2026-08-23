@@ -7,11 +7,8 @@ import {
 
 describe("Generate Pairing Code", () => {
 	test("Generated code should be valid", async () => {
-		for (let i = 0; i < 1; i++) {
-			// test 1000 codes , should be enough change
-			const code = await GeneratePairingCode();
-			expect(VerifyPairingCode(code)).toBe(true);
-		}
+		const code = await GeneratePairingCode();
+		expect(VerifyPairingCode(code)).toBe(true);
 	});
 });
 

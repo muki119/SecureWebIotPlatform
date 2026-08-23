@@ -5,7 +5,7 @@ export function VerifyPairingCode(
 	code: string,
 	CodeLength: number = CODE_LENGTH,
 ): boolean {
-	// check code dosent have the same number repeated more than twice in 3 charachters - sliding window leetcode medium lol
+	// check code doesn't have the same number repeated more than twice in 3 characters - sliding window leetcode medium lol
 
 	if (!code || typeof code !== "string" || code.length !== CodeLength) {
 		return false;

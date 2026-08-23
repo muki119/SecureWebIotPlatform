@@ -47,7 +47,7 @@ export class UserRoleModel extends MongoAssociationModel<IUserRole> {
 			const userRoles = await this.model
 				.find({ userId, deletedAt: null }, "domainId")
 				.exec();
-			return userRoles.map((role) => role.domainId as string);
+			return userRoles.map((role) => role.domainId.toString());
 		} catch (error) {
 			throw new Error("Error finding user roles by user id", {
 				cause: error,

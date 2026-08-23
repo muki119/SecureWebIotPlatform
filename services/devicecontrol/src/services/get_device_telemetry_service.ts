@@ -4,7 +4,11 @@ import {
 	DeviceTelemetryModelInstance,
 	UserRoleModelInstance,
 } from "../models";
-import type { DeviceCapabilities, DeviceTelemetry, Intervals } from "../types";
+import type {
+	AggregatedTelemetry,
+	DeviceCapabilities,
+	Intervals,
+} from "../types";
 
 export async function GetDeviceTelemetryService(
 	userId: string,
@@ -12,7 +16,7 @@ export async function GetDeviceTelemetryService(
 	capability: string,
 	interval: Intervals,
 	from: Date,
-): Promise<ServiceResult<DeviceTelemetry[]>> {
+): Promise<ServiceResult<AggregatedTelemetry[]>> {
 	try {
 		// Implementation for fetching device telemetry
 		const device = await DeviceModelInstance.findById(deviceId); // find device by id
