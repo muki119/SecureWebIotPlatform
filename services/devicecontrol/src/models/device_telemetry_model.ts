@@ -120,10 +120,10 @@ export class DeviceTelemetryModel {
 
 			const accumulator = isNumeric
 				? {
-					avg: { $avg: "$value" },
-					min: { $min: "$value" },
-					max: { $max: "$value" },
-				} // if its a numeric type then get the regular stats for each interval
+						avg: { $avg: "$value" },
+						min: { $min: "$value" },
+						max: { $max: "$value" },
+					} // if its a numeric type then get the regular stats for each interval
 				: { last: { $last: "$value" } }; // if its non numeric (categorical) then get the last value in the interval
 
 			const results = await this.model
