@@ -1,4 +1,4 @@
-import { type rolePermissions } from "@services/common/types"
+import type { Role, rolePermissions } from "@services/common/types"
 
 /**
  *  Owner
@@ -17,7 +17,7 @@ export const ROLES = {
     GUEST: "GUEST",
 } as const
 
-export const ROLE_PERMISSIONS: { [key: string]: rolePermissions } = {
+export const ROLE_PERMISSIONS: { [key in Role]: rolePermissions } = {
     /**
      * Owner has all permissions ... since its the owner
      */
