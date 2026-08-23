@@ -49,7 +49,7 @@ export class DeviceTelemetryModel {
 			) {
 				throw new Error("Invalid input type for value");
 			}
-			this.model.create({
+			await this.model.create({
 				// not transactional because need telemetry to be quickly written
 				metadata: {
 					deviceId,
@@ -120,10 +120,10 @@ export class DeviceTelemetryModel {
 
 			const accumulator = isNumeric
 				? {
-						avg: { $avg: "$value" },
-						min: { $min: "$value" },
-						max: { $max: "$value" },
-					} // if its a numeric type then get the regular stats for each interval
+					avg: { $avg: "$value" },
+					min: { $min: "$value" },
+					max: { $max: "$value" },
+				} // if its a numeric type then get the regular stats for each interval
 				: { last: { $last: "$value" } }; // if its non numeric (categorical) then get the last value in the interval
 
 			const results = await this.model
@@ -135,8 +135,6 @@ export class DeviceTelemetryModel {
 					{ $sort: { _id: 1 } }, // sort by the interval time in ascending order
 				])
 				.exec();
-
-			console.log("Telemetry query results:", results);
 
 			return [results as AggregatedTelemetry[], null];
 		} catch (error) {
