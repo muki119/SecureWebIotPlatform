@@ -1,62 +1,65 @@
-import express from 'express';
-import { rateLimit } from 'express-rate-limit';
-import { ErrorHandlerMiddleware, RequestMetricsMiddleware } from './src/middleware';
-import { authRoutes } from './src/routes/auth_routes';
-import logger from './src/config/logger';
-import cookieParser from 'cookie-parser';
-import { RedisClient } from './src/config/redis';
-import { PostgresPool } from './src/config/postgres';
-import { GetEnvNumber } from "@services/common/utilities"
-import EventSenderInstance from './src/config/event_sender';
+import { GetEnvNumber } from "@services/common/utilities";
+import cookieParser from "cookie-parser";
+import express from "express";
+import { rateLimit } from "express-rate-limit";
+import EventSenderInstance from "./src/config/event_sender";
+import logger from "./src/config/logger";
+import { PostgresPool } from "./src/config/postgres";
+import { RedisClient } from "./src/config/redis";
+import {
+	ErrorHandlerMiddleware,
+	RequestMetricsMiddleware,
+} from "./src/middleware";
+import { authRoutes } from "./src/routes/auth_routes";
+
 const app = express();
 
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, limit: 100, validate: {
-        trustProxy: true
-    }
+	windowMs: 15 * 60 * 1000,
+	limit: 100,
+	validate: {
+		trustProxy: true,
+	},
 });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.disable('x-powered-by')
+app.disable("x-powered-by");
 app.use(limiter);
 app.use(RequestMetricsMiddleware);
 
-app.use('/api/v1/auth', authRoutes);
+app.use("/api/v1/auth", authRoutes);
 
 app.use(ErrorHandlerMiddleware);
 
 const Port = GetEnvNumber("PORT", 3000);
 var server = app.listen(Port, async (err) => {
-    await EventSenderInstance.init();
-    if (err) {
-        await EventSenderInstance.close()
-        logger.error({ error: err }, 'Error starting server:');
-        process.exit(1);
-    }
-    logger.info(`Authentication Service is running on port ${Port}`);
+	await EventSenderInstance.init();
+	if (err) {
+		await EventSenderInstance.close();
+		logger.error({ error: err }, "Error starting server:");
+		process.exit(1);
+	}
+	logger.info(`Authentication Service is running on port ${Port}`);
 });
 process.on("SIGINT", () => {
-    if (server) {
-        server.close(async () => {
-            logger.info("Authentication Service has been stopped.");
+	if (server) {
+		server.close(async () => {
+			logger.info("Authentication Service has been stopped.");
 
-            await EventSenderInstance.close();
-            if (RedisClient && RedisClient.isOpen) {
-                await RedisClient.close();
-            }
-            await PostgresPool.end();
-        });
-    }
-    logger.info(`Shutting down , with grace...`);
+			await EventSenderInstance.close();
+			if (RedisClient?.isOpen) {
+				await RedisClient.close();
+			}
+			await PostgresPool.end();
+		});
+	}
+	logger.info(`Shutting down , with grace...`);
 });
 
-
-
 // for functions that require the return values to be difinitive like a hash validity check , they will return their specified values and only log the errors
-// otherwise all other functions will throw errors with the original error as the cause and the caller functions will log the errors and handle them accordingly 
-
+// otherwise all other functions will throw errors with the original error as the cause and the caller functions will log the errors and handle them accordingly
 
 /**
  * Naming conventions
