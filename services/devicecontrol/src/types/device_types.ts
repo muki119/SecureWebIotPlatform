@@ -61,9 +61,9 @@ export type CategoricalAggregatedTelemetry = {
 	last: string | number | boolean;
 };
 
-export type AggregatedTelemetry =
-	| NumericAggregatedTelemetry
-	| CategoricalAggregatedTelemetry;
+export type AggregatedTelemetry = {
+	_id?: Date;
+} & (NumericAggregatedTelemetry | CategoricalAggregatedTelemetry);
 
 export enum Intervals {
 	DAY = "DAY",
