@@ -1,1 +1,1 @@
-export * from "./device_control_update_handler"
+export * from "./device_control_update_handler";
