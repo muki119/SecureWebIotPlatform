@@ -1,24 +1,20 @@
-import { createClient } from "redis";
+import { GetEnvNumber, GetEnvString } from "@services/common/utilities";
 import { createAdapter } from "@socket.io/redis-adapter";
-import { GetEnvString, GetEnvNumber } from "@services/common/utilities";
+import { createClient } from "redis";
 
 export async function CreateRedisAdapter() {
+	const pubClient = createClient({
+		socket: {
+			host: GetEnvString("SOCKET_REDIS_HOST", "localhost"),
+			port: GetEnvNumber("SOCKET_REDIS_PORT", 6379),
+		},
+		password: GetEnvString("SOCKET_REDIS_PASSWORD", ""), // add password if needed
+		database: GetEnvNumber("SOCKET_REDIS_DB", 0),
+	});
 
-    const pubClient = createClient({
-        socket: {
-            host: GetEnvString("SOCKET_REDIS_HOST", "localhost"),
-            port: GetEnvNumber("SOCKET_REDIS_PORT", 6379)
-        },
-        password: GetEnvString("SOCKET_REDIS_PASSWORD", ""), // add password if needed
-        database: GetEnvNumber("SOCKET_REDIS_DB", 0),
-    });
+	const subClient = pubClient.duplicate();
 
-    const subClient = pubClient.duplicate();
+	await Promise.all([pubClient.connect(), subClient.connect()]);
 
-    await Promise.all([
-        pubClient.connect(),
-        subClient.connect()
-    ]);
-
-    return createAdapter(pubClient, subClient); // for server only - event bust worker cannot use this so it has to use emitter
+	return createAdapter(pubClient, subClient); // for server only - event bust worker cannot use this so it has to use emitter
 }
