@@ -1,9 +1,7 @@
-import DomainRouter from "./domain_routes";
-import ProfileRouter from "./profile_routes"
+import express from "express";
 import { ValidSessionMiddleware } from "../middleware";
-import express from 'express';
-
-
+import DomainRouter from "./domain_routes";
+import ProfileRouter from "./profile_routes";
 
 const DomainProfileRouter = express.Router();
 

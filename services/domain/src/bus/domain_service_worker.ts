@@ -1,18 +1,24 @@
-import { BaseWorker } from "@services/eventbus";
-import { RecursiveError } from "@services/common/utilities";
 import { STREAMS } from "@services/common/config";
-import { UserCreatedHandler, UserDeletedHandler, UserUpdatedHandler } from "./handlers";
+import { RecursiveError } from "@services/common/utilities";
+import { BaseWorker } from "@services/eventbus";
 import logger from "../config/logger";
+import {
+	UserCreatedHandler,
+	UserDeletedHandler,
+	UserUpdatedHandler,
+} from "./handlers";
 export class DomainServiceWorker extends BaseWorker {
-    onCreate() {
-        this.handler(STREAMS.AUTH_SERVICE.USER_CREATED, UserCreatedHandler) // should create a profile with the information 
-        this.handler(STREAMS.AUTH_SERVICE.USER_DELETED, UserDeletedHandler) // should delete the profile and all associated data (devices, etc)
-        this.handler(STREAMS.AUTH_SERVICE.USER_UPDATED, UserUpdatedHandler) // should update the profile with the new information (if email is updated, should update email in profile, etc) -- mostly just an email update since display names are sep
-        this.errorHandler((error, payload) => {
-            logger.error({ ...RecursiveError(error), payload }, "Error in DomainServiceWorker:");
-        })
-    }
-
+	onCreate() {
+		this.handler(STREAMS.AUTH_SERVICE.USER_CREATED, UserCreatedHandler); // should create a profile with the information
+		this.handler(STREAMS.AUTH_SERVICE.USER_DELETED, UserDeletedHandler); // should delete the profile and all associated data (devices, etc)
+		this.handler(STREAMS.AUTH_SERVICE.USER_UPDATED, UserUpdatedHandler); // should update the profile with the new information (if email is updated, should update email in profile, etc) -- mostly just an email update since display names are sep
+		this.errorHandler((error, payload) => {
+			logger.error(
+				{ ...RecursiveError(error), payload },
+				"Error in DomainServiceWorker:",
+			);
+		});
+	}
 }
 
 const worker = new DomainServiceWorker();
