@@ -7,12 +7,12 @@
  */
 
 import process from "node:process";
-import { EventListener } from "@services/eventbus";
 import type {
 	EventBusConfig,
-	EventBusHandler,
 	EventBusErrorHandler,
+	EventBusHandler,
 } from "@services/eventbus";
+import { EventListener } from "@services/eventbus";
 
 export const MessageFlags = {
 	CREATE: "CREATE",
@@ -60,23 +60,24 @@ export abstract class BaseWorker {
 	private async stop() {
 		console.log("worker process shutting down");
 		if (!this.listenerInstance) {
-			process.send!({
+			process.send?.({
 				flag: MessageFlags.PROC_ERROR,
 				value: "EventListener instance must be created before stopping",
 			});
-			process.exit(0)
+			process.exit(0);
 		}
-		await this.listenerInstance!.close()
+		await this.listenerInstance
+			?.close()
 			.then(() => {
-				process.send!({ flag: MessageFlags.STOPPED });
+				process.send?.({ flag: MessageFlags.STOPPED });
 				process.exit(0);
 			})
 			.catch((error) => {
-				process.send!({
+				process.send?.({
 					flag: MessageFlags.PROC_ERROR,
 					value: error.message,
 				});
-				process.send!({ flag: MessageFlags.STOPPED });
+				process.send?.({ flag: MessageFlags.STOPPED });
 				process.exit(1); // since the intention is to stop the process if there is an error during shutdown  exit with code 1 to show an error
 			});
 	}
@@ -88,59 +89,74 @@ export abstract class BaseWorker {
 	public start() {
 		// begins listening for proc messages
 		process.title = "EventBus Worker Process";
-		process.on("message", async (message: { flag: string; value?: any }) => {
-			if (process.send === undefined) {
-				throw new Error("Process does not have ipc channel");
-			}
-			switch (message.flag) {
-				case MessageFlags.CREATE:
-					if (!message.value) {
+		process.on(
+			"message",
+			async (message: { flag: string; value?: unknown }) => {
+				if (process.send === undefined) {
+					throw new Error("Process does not have ipc channel");
+				}
+				switch (message.flag) {
+					case MessageFlags.CREATE: {
+						if (!message.value) {
+							process.send({
+								flag: MessageFlags.PROC_ERROR,
+								value: "Config must be provided for CREATE flag",
+							});
+							return;
+						}
+						if (this.listenerInstance) {
+							process.send({
+								flag: MessageFlags.PROC_ERROR,
+								value: "EventListener instance already exists",
+							});
+							return;
+						}
+						if (
+							typeof message.value !== "object" ||
+							!message.value
+						) {
+							process.send({
+								flag: MessageFlags.PROC_ERROR,
+								value: "Config must be an object for CREATE flag",
+							});
+							return;
+						}
+						const config: EventBusConfig =
+							message.value as EventBusConfig;
+						this.listenerInstance = new EventListener(config);
+						await this.onCreate();
+						break;
+					}
+					case MessageFlags.START:
+						if (!this.listenerInstance) {
+							process.send({
+								flag: MessageFlags.PROC_ERROR,
+								value: "EventListener instance must be created before starting",
+							});
+							return;
+						}
+						this.listenerInstance.listen().catch((error) => {
+							process.send?.({
+								flag: MessageFlags.ERROR,
+								value: error.message,
+							});
+						});
+						break;
+					case MessageFlags.STOP:
+						this.stop();
+						break;
+					case MessageFlags.PING:
+						process.send({ flag: MessageFlags.PONG });
+						break;
+					default:
 						process.send({
 							flag: MessageFlags.PROC_ERROR,
-							value: "Config must be provided for CREATE flag",
+							value: "Invalid flag received",
 						});
-						return;
-					}
-					if (this.listenerInstance) {
-						process.send({
-							flag: MessageFlags.PROC_ERROR,
-							value: "EventListener instance already exists",
-						});
-						return;
-					}
-					const config: EventBusConfig = message.value;
-					this.listenerInstance = new EventListener(config);
-					await this.onCreate();
-					break;
-				case MessageFlags.START:
-					if (!this.listenerInstance) {
-						process.send({
-							flag: MessageFlags.PROC_ERROR,
-							value: "EventListener instance must be created before starting",
-						});
-						return;
-					}
-					this.listenerInstance.listen().catch((error) => {
-						process.send!({
-							flag: MessageFlags.ERROR,
-							value: error.message,
-						});
-					});
-					break;
-				case MessageFlags.STOP:
-					this.stop();
-					break;
-				case MessageFlags.PING:
-					process.send({ flag: MessageFlags.PONG });
-					break;
-				default:
-					process.send({
-						flag: MessageFlags.PROC_ERROR,
-						value: "Invalid flag received",
-					});
-					break;
-			}
-		});
+						break;
+				}
+			},
+		);
 		process.on("SIGINT", () => {
 			this.stop();
 		});
@@ -158,9 +174,9 @@ export abstract class BaseWorker {
 	 *
 	 * i kinda modeled this function after like Class based react components lol
 	 */
-	protected abstract onCreate(value?: any): Promise<void> | void;
+	protected abstract onCreate(value?: unknown): Promise<void> | void;
 
-	protected sendDebugMessage(message: { [k: string]: any }): void {
-		process.send!({ flag: MessageFlags.DEBUG, value: message });
+	protected sendDebugMessage(message: { [k: string]: unknown }): void {
+		process.send?.({ flag: MessageFlags.DEBUG, value: message });
 	}
 }

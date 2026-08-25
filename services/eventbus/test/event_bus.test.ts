@@ -1,8 +1,13 @@
-import type { EventBusConfig, EventMessage } from "@services/eventbus";
-import { EventBus } from "@services/eventbus";
-import { GetEnvString, GetEnvNumber } from "@services/common/utilities";
-import { describe, test, expect, afterAll, assert } from "vitest";
 import { randomBytes } from "node:crypto";
+import { GetEnvNumber, GetEnvString } from "@services/common/utilities";
+import type {
+	EventBusConfig,
+	EventMessage,
+	EventPayload,
+} from "@services/eventbus";
+import { EventBus } from "@services/eventbus";
+import type { Logger } from "pino";
+import { afterAll, assert, describe, expect, test } from "vitest";
 
 const eventBusConfig: EventBusConfig = {
 	connectionOptions: {
@@ -19,13 +24,19 @@ const eventBusConfig: EventBusConfig = {
 
 const EventBusInstance = new EventBus(
 	eventBusConfig,
-	console,
+	console as unknown as Logger,
 	"./test/test_worker.ts",
 );
 await EventBusInstance.init();
-var returntestMessage: any = null;
-EventBusInstance.handleDebugMessage = (message: any) => {
-	returntestMessage = message.message;
+var returntestMessage: EventMessage;
+EventBusInstance.handleDebugMessage = (message) => {
+	if (message === null || message === undefined) {
+		throw new Error(
+			"Received null or undefined message in handleDebugMessage",
+		);
+	}
+	const payload = (message as EventPayload)?.message as EventMessage;
+	returntestMessage = payload;
 };
 await EventBusInstance.start();
 
