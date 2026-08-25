@@ -1,1 +1,1 @@
-export * from "./get_domain_transactions_controller"
+export * from "./get_domain_transactions_controller";

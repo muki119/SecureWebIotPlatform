@@ -1,7 +1,7 @@
-import { GetDomainTransactionsController } from "../controllers"
-import { ValidSessionMiddleware } from "../middleware"
-import { Router } from "express"
+import { Router } from "express";
+import { GetDomainTransactionsController } from "../controllers";
+import { ValidSessionMiddleware } from "../middleware";
 
-export const LedgerRouter = Router()
-LedgerRouter.use(ValidSessionMiddleware)
-LedgerRouter.get("/transactions/:domainId", GetDomainTransactionsController)
+export const LedgerRouter = Router();
+LedgerRouter.use(ValidSessionMiddleware);
+LedgerRouter.get("/transactions/:domainId", GetDomainTransactionsController);

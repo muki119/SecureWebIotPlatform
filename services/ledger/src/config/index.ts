@@ -1,3 +1,3 @@
-export * from "./postgres"
-export * from "./logger"
-export { default as EventBusInstance } from "./event_bus"
+export { default as EventBusInstance } from "./event_bus";
+export * from "./logger";
+export * from "./postgres";
