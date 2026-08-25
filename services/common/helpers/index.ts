@@ -1,1 +1,1 @@
-export { CreateVerifyAccessTokenInstance } from "./access_token.ts"
+export { CreateVerifyAccessTokenInstance } from "./access_token.ts";
