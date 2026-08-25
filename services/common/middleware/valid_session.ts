@@ -1,4 +1,4 @@
-import type { NextFunction, Request, Response } from "express";
+import type { NextFunction, Request, RequestHandler, Response } from "express";
 import type { Logger } from "pino";
 import { CreateVerifyAccessTokenInstance } from "../helpers/access_token";
 import MiddlewareBaseClass from "./middleware_base_class";
@@ -16,7 +16,7 @@ export default class SessionMiddleware extends MiddlewareBaseClass {
 		super(logger);
 		this.middleware = this.createMiddleware();
 	}
-	private createMiddleware() {
+	private createMiddleware(): RequestHandler {
 		const VerifyAccessTokenInstance = CreateVerifyAccessTokenInstance(
 			this.logger,
 		);
