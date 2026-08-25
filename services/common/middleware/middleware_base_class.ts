@@ -1,3 +1,4 @@
+import type { ErrorRequestHandler, RequestHandler } from "express";
 import type { Logger } from "pino";
 export default abstract class MiddlewareBaseClass {
 	protected logger: Logger;
@@ -5,5 +6,5 @@ export default abstract class MiddlewareBaseClass {
 		this.logger = logger;
 	}
 	// middleware should only modify the request and response objects at most , not return any value
-	public abstract middleware: Promise<void> | void;
+	public abstract middleware: RequestHandler | ErrorRequestHandler;
 }

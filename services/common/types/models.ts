@@ -116,8 +116,8 @@ export abstract class BasePostgresModel<T extends ModelSchema> {
 	}
 
 	public async multiTableTransaction<U>(
-		operations: DbOperation<unknown>,
-	): Promise<U | unknown> {
+		operations: DbOperation<U>,
+	): Promise<U> {
 		return this.transactionWrap(operations);
 	}
 

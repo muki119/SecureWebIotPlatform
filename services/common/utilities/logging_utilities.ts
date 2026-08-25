@@ -12,7 +12,7 @@ export const LogWarningDefault = (req: Request) => {
 };
 
 export function GetRoutePath(req: Request): string {
-	// o(n) but its extremley small n to the extent that its basically constant
+	// o(n) but its extremely small n to the extent that its basically constant
 
 	const routePath = req.route?.path || req.url;
 	for (const [regex, replacement] of dynamicRoutesRegexMap) {

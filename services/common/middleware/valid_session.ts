@@ -1,4 +1,4 @@
-import type { NextFunction, Request, RequestHandler, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import type { Logger } from "pino";
 import { CreateVerifyAccessTokenInstance } from "../helpers/access_token";
 import MiddlewareBaseClass from "./middleware_base_class";
@@ -7,11 +7,11 @@ import MiddlewareBaseClass from "./middleware_base_class";
  * @description Middleware for Session validation
  * Is in class form so that its dependencies can be injected so multiple services can use it
  *
- *  For any service that needs this - need to create an instance passing a pino logger (or whatever loggs with warnings) and pass the middleware function as a middleware
+ *  For any service that needs this - need to create an instance passing a pino logger (or whatever logs with warnings) and pass the middleware function as a middleware
  */
 
 export default class SessionMiddleware extends MiddlewareBaseClass {
-	public middleware: RequestHandler;
+	public middleware;
 	constructor(logger: Logger) {
 		super(logger);
 		this.middleware = this.createMiddleware();
@@ -21,7 +21,7 @@ export default class SessionMiddleware extends MiddlewareBaseClass {
 			this.logger,
 		);
 		return (req: Request, res: Response, next: NextFunction) => {
-			// basically will check access token -- passed in header beaerer token
+			// basically will check access token -- passed in header bearer token
 			const unauthorisedResponse = () =>
 				res.status(401).json({ message: "Unauthorised" }).end();
 			try {

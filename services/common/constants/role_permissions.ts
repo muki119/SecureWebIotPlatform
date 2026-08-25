@@ -39,7 +39,7 @@ export const ROLE_PERMISSIONS: { [key in Role]: rolePermissions } = {
 		canControlDevices: true,
 	},
 	/**
-	 * Mmember can only control devices - adding of devices should be left to the admins+
+	 * member can only control devices - adding of devices should be left to the admins+
 	 */
 	MEMBER: {
 		isOwner: false,
