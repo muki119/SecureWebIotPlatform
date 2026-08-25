@@ -1,13 +1,13 @@
-import {
-	EventSender,
-	MessageFlags,
-	type EventBusConfig,
-	type EventMessage,
-} from "@services/eventbus";
-import { ChildProcess, fork } from "node:child_process";
+import { type ChildProcess, fork } from "node:child_process";
 import fs from "node:fs";
 import path, { resolve } from "node:path";
 import url from "node:url";
+import {
+	type EventBusConfig,
+	type EventMessage,
+	EventSender,
+	MessageFlags,
+} from "@services/eventbus";
 import type { Logger } from "pino";
 
 /**
@@ -28,15 +28,18 @@ export class EventBus {
 	private listenerProcess: ChildProcess | null = null; // the listener process spawned
 	private sender: EventSender;
 	private workerFile: string;
-	public handleDebugMessage: ((message: any) => void) | null = null; // handler for debug messages from worker process
-
-
+	public handleDebugMessage: ((message: unknown) => void) | null = null; // handler for debug messages from worker process
 
 	private static resolveWorkerFilePath(workerDir: string): string {
-		const entryFileArg = process.argv[1]!; // get the entry file of the process
+		const entryFileArg = process.argv[1]; // get the entry file of the process
+		if (!entryFileArg) {
+			throw new Error("Entry file argument not found");
+		}
 		const extension = path.extname(entryFileArg); // get the extension of the entry file
 		const entryDir = path.dirname(entryFileArg) + path.sep; // get the dir of the entry file - using path.sep for dos/unix/unix-like compatibility
-		const entryFile = new URL(workerDir, url.pathToFileURL(entryDir)).pathname + extension; // make a url for the worker file relative to the entry file 
+		const entryFile =
+			new URL(workerDir, url.pathToFileURL(entryDir)).pathname +
+			extension; // make a url for the worker file relative to the entry file
 		return fs.existsSync(entryFile) ? entryFile : resolve(workerDir); // if a file exists at the entry files dir then use that , otherwise look for it , from the current working directory
 	}
 
@@ -47,7 +50,6 @@ export class EventBus {
 		this.workerFile = EventBus.resolveWorkerFilePath(workerDir);
 		this.sender = new EventSender(this.config);
 	}
-
 
 	/**
 	 *
@@ -82,19 +84,19 @@ export class EventBus {
 		});
 		this.listenerProcess.on(
 			"message",
-			(message: { flag: string; value?: any }) => {
+			(message: { flag: string; value?: unknown }) => {
 				// find if error
 				switch (
-				message.flag // this just creates some listner handlers - once this is set up then you dont have to add additional listeners
+					message.flag // this just creates some listner handlers - once this is set up then you dont have to add additional listeners
 				) {
 					case MessageFlags.PROC_ERROR:
 						this.logger.error(
-							"Error in listener process: " + message.value,
+							`Error in listener process: ${message.value}`,
 						);
 						break;
 					case MessageFlags.ERROR:
 						this.logger.error(
-							"Error handling message: " + message.value,
+							`Error handling message: ${message.value}`,
 						);
 						break;
 					case MessageFlags.PONG:
@@ -106,7 +108,7 @@ export class EventBus {
 						} else {
 							this.logger.debug(
 								"Received debug message from listener process: " +
-								JSON.stringify(message.value),
+									JSON.stringify(message.value),
 							);
 						}
 						break;
@@ -118,7 +120,7 @@ export class EventBus {
 					default:
 						this.logger.warn(
 							"Unknown message flag received from listener process: " +
-							message.flag,
+								message.flag,
 						);
 				}
 			},
