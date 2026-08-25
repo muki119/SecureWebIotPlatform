@@ -1,32 +1,50 @@
-import type { EventPayload } from "@services/eventbus";
-import { UserRoleModelInstance, TransactionModelInstance, type ITransactionModel } from "../../models"
 import type { ModelDTO, Role } from "@services/common/types";
+import type { EventPayload } from "@services/eventbus";
+import {
+	type ITransactionModel,
+	TransactionModelInstance,
+	UserRoleModelInstance,
+} from "../../models";
 export async function DomainUserRoleUpdatedHandler(message: EventPayload) {
-    try {
-        // get role info from payload
-        const userRoleUpdate = message?.message;
-        if (!userRoleUpdate || typeof userRoleUpdate === "string" || !userRoleUpdate.userId || !userRoleUpdate.domainId || !userRoleUpdate.role) {
-            throw new Error("No user role update information in payload");
-        }
-        // find the existing role in the database and update it with the new information
-        // this is a bit redundant since the domain service already updates the role, but it ensures that the device control service has the most up-to-date information and can react to it if needed (for example, if a user is demoted from admin to user, we might want to immediately revoke their access to certain devices or features)
-        userRoleUpdate.role = userRoleUpdate.role.toUpperCase();
-        await UserRoleModelInstance.updateRole(userRoleUpdate.userId, userRoleUpdate.domainId, userRoleUpdate.role as Role);
-        const transactionObj: ModelDTO<ITransactionModel> = {
-            domainId: userRoleUpdate.domainId,
-            initiatorId: userRoleUpdate.userId,
-            opperationTarget: "DOMAIN_USER_ROLE"
-            , opperationType: "UPDATE",
-            targetId: userRoleUpdate.userId,
-            value: { role: userRoleUpdate.role },
-            opperationTimestamp: message.message.timestamp ? new Date(message.message.timestamp) : new Date()
-        }
-        const [_, err] = await TransactionModelInstance.create(transactionObj)
-        if (err) {
-            throw err
-        }
-        return;
-    } catch (error) {
-        throw new Error("Failed to process domain user role updated event", { cause: error });
-    }
+	try {
+		// get role info from payload
+		const userRoleUpdate = message?.message;
+		if (
+			!userRoleUpdate ||
+			typeof userRoleUpdate === "string" ||
+			!userRoleUpdate.userId ||
+			!userRoleUpdate.domainId ||
+			!userRoleUpdate.role
+		) {
+			throw new Error("No user role update information in payload");
+		}
+		// find the existing role in the database and update it with the new information
+		// this is a bit redundant since the domain service already updates the role, but it ensures that the device control service has the most up-to-date information and can react to it if needed (for example, if a user is demoted from admin to user, we might want to immediately revoke their access to certain devices or features)
+		userRoleUpdate.role = userRoleUpdate.role.toUpperCase();
+		await UserRoleModelInstance.updateRole(
+			userRoleUpdate.userId,
+			userRoleUpdate.domainId,
+			userRoleUpdate.role as Role,
+		);
+		const transactionObj: ModelDTO<ITransactionModel> = {
+			domainId: userRoleUpdate.domainId,
+			initiatorId: userRoleUpdate.userId,
+			opperationTarget: "DOMAIN_USER_ROLE",
+			opperationType: "UPDATE",
+			targetId: userRoleUpdate.userId,
+			value: { role: userRoleUpdate.role },
+			opperationTimestamp: message.message.timestamp
+				? new Date(message.message.timestamp)
+				: new Date(),
+		};
+		const [_, err] = await TransactionModelInstance.create(transactionObj);
+		if (err) {
+			throw err;
+		}
+		return;
+	} catch (error) {
+		throw new Error("Failed to process domain user role updated event", {
+			cause: error,
+		});
+	}
 }

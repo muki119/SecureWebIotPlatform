@@ -1,1 +1,1 @@
-export * from "./get_domain_transactions_service"
+export * from "./get_domain_transactions_service";
