@@ -1,24 +1,25 @@
 {
-  "name": "services",
-  "version": "1.0.0",
-  "description": "The serivces package . Contains all service and their shared code",
-  "keywords": [],
-  "license": "ISC",
-  "author": "Mugagga Kimera",
-  "type": "module",
-  "main": "index.js",
-  "workspaces": [
-    "eventbus",
-    "authentication",
-    "common",
-    "devicecontrol",
-    "domain",
-    "ledger"
-  ],
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "devDependencies": {
-    "vitest": "^4.0.18"
-  }
+	"name": "services",
+	"version": "1.0.0",
+	"description": "The serivces package . Contains all service and their shared code",
+	"keywords": [],
+	"license": "ISC",
+	"author": "Mugagga Kimera",
+	"type": "module",
+	"main": "index.js",
+	"workspaces": [
+		"eventbus",
+		"authentication",
+		"common",
+		"devicecontrol",
+		"domain",
+		"ledger"
+	],
+	"scripts": {
+		"lint": "npx biome check .",
+		"lint:fix": "npx biome format ."
+	},
+	"devDependencies": {
+		"vitest": "^4.0.18"
+	}
 }

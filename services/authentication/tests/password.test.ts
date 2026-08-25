@@ -33,7 +33,9 @@ describe("Testing Password Hashing", () => {
 		const shortPassword = generatePassword(
 			randomInt(1, PASSWORD_CONSTRAINTS.minLength - 1),
 		);
-		await expect(async () => HashPassword(shortPassword)).rejects.toMatchObject({
+		await expect(async () =>
+			HashPassword(shortPassword),
+		).rejects.toMatchObject({
 			cause: {
 				message: ErrMinPasswordLength,
 			},
@@ -47,7 +49,9 @@ describe("Testing Password Hashing", () => {
 			),
 		);
 
-		await expect(async () => HashPassword(longPassword)).rejects.toMatchObject({
+		await expect(async () =>
+			HashPassword(longPassword),
+		).rejects.toMatchObject({
 			cause: {
 				message: ErrMaxPasswordLength,
 			},
