@@ -1,10 +1,11 @@
 import { hostname } from "node:os";
 import pino from "pino";
+import { GetEnvString } from "../utilities/get_env";
 
 export interface ILoggerOptions {
 	host: string;
 	serviceName: string;
-	labels?: Record<string, string>; // optional labels other than the default service and hostname
+	labels?: Record<string, string> | undefined; // optional labels other than the default service and hostname
 	logLevel: string; // optional log level, defaults to info
 }
 /**
@@ -33,4 +34,21 @@ export function CreateLogger(options: ILoggerOptions) {
 	);
 
 	return logger;
+}
+
+/**
+ * Builds the shared logger for a service, reading the common Loki host and log
+ * level from the environment. Use this instead of calling {@link CreateLogger}
+ * directly so every service resolves `LOKI_HOST` / `LOG_LEVEL` the same way.
+ */
+export function CreateServiceLogger(
+	serviceName: string,
+	labels?: Record<string, string>,
+) {
+	return CreateLogger({
+		host: GetEnvString("LOKI_HOST", "http://localhost:3100"),
+		serviceName,
+		logLevel: GetEnvString("LOG_LEVEL", "info"),
+		labels,
+	});
 }

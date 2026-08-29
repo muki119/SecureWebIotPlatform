@@ -1,5 +1,18 @@
-export { CONSUMER_GROUPS, STREAMS } from "./event_bus";
-export { CreateLogger, type ILoggerOptions } from "./logger";
-export { ConnectToMongoDB } from "./mongodb";
-export { ConnectToPostgres } from "./postgres";
-export { ConnectToRedis, type RedisConfig } from "./redis";
+export {
+	BuildEventBusConfig,
+	CONSUMER_GROUPS,
+	STREAMS,
+} from "./event_bus";
+export {
+	CreateLogger,
+	CreateServiceLogger,
+	type ILoggerOptions,
+} from "./logger";
+export { ConnectToMongoDB, ConnectToServiceMongoDB } from "./mongodb";
+export { ConnectToPostgres, ConnectToServicePostgres } from "./postgres";
+export {
+	ConnectToRedis,
+	ConnectToServiceRedis,
+	ReadRedisConfigFromEnv,
+	type RedisConfig,
+} from "./redis";

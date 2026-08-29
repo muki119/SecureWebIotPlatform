@@ -1,5 +1,8 @@
 //streams > actions
 
+import { hostname } from "node:os";
+import { GetEnvNumber, GetEnvString } from "../utilities/get_env";
+
 export const CONSUMER_GROUPS = {
 	AUTH_SERVICE: "AUTH_SERVICE",
 	DOMAIN_SERVICE: "DOMAIN_SERVICE",
@@ -32,6 +35,29 @@ export const STREAMS = {
 		ENTRY_CREATED: "LEDGER_SERVICE.ENTRY_CREATED",
 	},
 } as const;
+
+/**
+ * Builds the shared EventBus configuration for a service from the
+ * `EVENT_BUS_REDIS_*` environment variables. The caller still constructs the
+ * `EventBus` itself (with its worker path) so this module stays free of a
+ * dependency on `@services/eventbus`.
+ */
+export function BuildEventBusConfig(
+	consumerGroup: (typeof CONSUMER_GROUPS)[keyof typeof CONSUMER_GROUPS],
+) {
+	return {
+		connectionOptions: {
+			host: GetEnvString("EVENT_BUS_REDIS_HOST", "localhost"),
+			port: GetEnvNumber("EVENT_BUS_REDIS_PORT", 6379),
+			password: GetEnvString("EVENT_BUS_REDIS_PASSWORD", ""),
+			db: GetEnvNumber("EVENT_BUS_REDIS_DB", 0),
+		},
+		consumerGroup,
+		consumerName: `${consumerGroup}:${hostname()}`,
+		maxCount: 10,
+		maxConcurrent: 100,
+	};
+}
 
 //Auth - nothing to listen to
 // domain - listen for auth service
