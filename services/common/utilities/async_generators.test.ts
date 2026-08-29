@@ -1,7 +1,7 @@
 import { GenerateRandomBytes } from "@services/common/utilities";
 import { describe, expect, it } from "vitest";
 
-describe("GenerateRandomBytes", async () => {
+describe("GenerateRandomBytes", () => {
 	it("should generate a random byte array of the specified length", async () => {
 		const length = 16;
 		const randomBytes = await GenerateRandomBytes(length);

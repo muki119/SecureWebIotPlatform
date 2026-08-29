@@ -126,6 +126,7 @@ vi.mock("node:fs", () => ({
 
 describe("GetPemKey", () => {
 	afterEach(() => {
+		process.env = ORIGINAL_ENV;
 		vi.clearAllMocks();
 	});
 	beforeEach(() => {
