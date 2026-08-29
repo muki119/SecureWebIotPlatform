@@ -1,4 +1,6 @@
 import type { Logger } from "pino";
+import { GetEnvString } from "../utilities/get_env";
+
 export async function ConnectToMongoDB(uri: string, logger: Logger) {
 	try {
 		const { createConnection } = await import("mongoose");
@@ -10,4 +12,12 @@ export async function ConnectToMongoDB(uri: string, logger: Logger) {
 			cause: error,
 		});
 	}
+}
+
+/**
+ * Connects to the service's MongoDB instance using the `MONGODB_URI`
+ * environment variable.
+ */
+export async function ConnectToServiceMongoDB(logger: Logger) {
+	return ConnectToMongoDB(GetEnvString("MONGODB_URI"), logger);
 }

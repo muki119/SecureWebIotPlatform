@@ -1,4 +1,5 @@
 import type { Logger } from "pino";
+import { GetEnvNumber, GetEnvString } from "../utilities/get_env";
 
 export interface RedisConfig {
 	host: string;
@@ -6,6 +7,27 @@ export interface RedisConfig {
 	password: string;
 	db: number;
 	maxRetries?: number;
+}
+
+/**
+ * Reads a {@link RedisConfig} from the environment. `prefix` selects the
+ * variable family, e.g. `REDIS` -> `REDIS_HOST`, `REDIS_PORT`, ...
+ */
+export function ReadRedisConfigFromEnv(prefix = "REDIS"): RedisConfig {
+	return {
+		host: GetEnvString(`${prefix}_HOST`, "localhost"),
+		port: GetEnvNumber(`${prefix}_PORT`, 6379),
+		password: GetEnvString(`${prefix}_PASSWORD`, ""),
+		db: GetEnvNumber(`${prefix}_DB`, 0),
+	};
+}
+
+/**
+ * Connects to the service's Redis instance using the `${prefix}_*` environment
+ * variables (defaults to the `REDIS_*` family).
+ */
+export async function ConnectToServiceRedis(logger: Logger, prefix = "REDIS") {
+	return ConnectToRedis(ReadRedisConfigFromEnv(prefix), logger);
 }
 
 export async function ConnectToRedis(config: RedisConfig, logger: Logger) {
