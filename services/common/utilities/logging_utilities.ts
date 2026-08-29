@@ -25,7 +25,7 @@ export function GetRoutePath(req: Request): string {
 
 export const RecursiveError = (err: Error): LogError => {
 	// just finds the name of the error and message
-	if (err.cause) {
+	if (err.cause instanceof Error && err.cause) {
 		return {
 			name: err.name,
 			message: err.message,

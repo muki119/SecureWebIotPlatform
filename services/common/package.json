@@ -4,7 +4,10 @@
 	"description": "The common code shared between services like types ,middleware and utilities. Intended to stadardise a fair ammount of the codebase and reduce compatibility issues",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "vitest run",
+		"test:watch": "vitest watch",
+		"lint:fix": "npx biome check --fix",
+		"lint": "npx biome check"
 	},
 	"keywords": [],
 	"author": "",
@@ -24,12 +27,15 @@
 		"@types/jsonwebtoken": "^9.0.10",
 		"@types/pg": "^8.16.0",
 		"@types/pg-pool": "^2.0.7",
-		"jsonwebtoken": "^9.0.3",
 		"express-validator": "^7.3.1",
+		"jsonwebtoken": "^9.0.3",
 		"mongoose": "^9.3.3",
 		"pg": "^8.18.0",
 		"pg-pool": "^3.11.0",
 		"pino": "^10.3.1",
 		"redis": "^5.11.0"
+	},
+	"devDependencies": {
+		"vitest": "^4.1.11"
 	}
 }
