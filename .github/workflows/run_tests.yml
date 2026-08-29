@@ -11,7 +11,7 @@ jobs:
     
     strategy:
       matrix:
-        testableDirs: ["services/authentication", "services/eventbus","services/devicecontrol"] # basically go into these dirs and npm install and run tests 
+        testableDirs: ["services/authentication", "services/eventbus","services/devicecontrol","services/common"] # basically go into these dirs and npm install and run tests 
     
 
     services:

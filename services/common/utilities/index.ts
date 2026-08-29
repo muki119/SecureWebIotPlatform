@@ -1,5 +1,11 @@
 export * from "./async_generators.ts";
-export { GetEnvNumber, GetEnvString, GetPemKey } from "./get_env.ts";
+export {
+	ErrNoEnv,
+	GetEnvNumber,
+	GetEnvString,
+	GetPemKey,
+	PemKeyLoadError,
+} from "./get_env.ts";
 export {
 	GetRoutePath,
 	LogWarningDefault,

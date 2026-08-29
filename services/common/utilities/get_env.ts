@@ -1,5 +1,23 @@
 import { readFileSync } from "node:fs";
 
+export class ErrNoEnv extends Error {
+	constructor(envKey: string) {
+		super(
+			`Environment variable ${envKey} is required but not set or empty`,
+		);
+		this.name = "ErrNoEnv";
+	}
+}
+
+export class PemKeyLoadError extends Error {
+	constructor(envKey: string, cause?: Error) {
+		super(`Error loading PEM key from environment variable ${envKey}`, {
+			cause,
+		});
+		this.name = "PemKeyLoadError";
+	}
+}
+
 /**
  *
  * @param key - the environment variable key that has the path to the pem key file
@@ -14,12 +32,17 @@ export function GetPemKey(key: string): string {
 		const keyPath = GetEnvString(key);
 		const keyData = readFileSync(keyPath, "utf-8");
 		if (!keyData) {
-			throw new Error(
-				`PEM key file at path ${keyPath} is empty or could not be read`,
+			throw new PemKeyLoadError(
+				key,
+				new Error(`PEM key is empty after reading from the file`),
 			);
 		}
 		return keyData;
 	} catch (err) {
+		if (err instanceof ErrNoEnv || err instanceof PemKeyLoadError) {
+			throw err;
+		}
+
 		throw new Error(`Error loading PEM key`, { cause: err });
 	}
 }
@@ -33,9 +56,7 @@ export function GetEnvString(key: string, defaultValue?: string): string {
 		if (defaultValue !== undefined) {
 			return defaultValue;
 		}
-		throw new Error(
-			`Environment variable ${key} is required but not set or empty`,
-		);
+		throw new ErrNoEnv(key);
 	}
 	return value;
 }
