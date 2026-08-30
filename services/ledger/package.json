@@ -15,8 +15,11 @@
 	"type": "module",
 	"main": "index.js",
 	"scripts": {
-		"test": "vitest",
+		"test": "vitest run",
+		"test:watch": "vitest watch",
 		"benchmark": "vitest bench",
+		"lint": "npx biome check",
+		"lint:fix": "npx biome check --fix",
 		"dev": "npx tsx  --env-file ./.env index.ts",
 		"watch": "npx tsx --env-file ./.env --watch-path ./ index.ts",
 		"build": "node build.mjs",
