@@ -21,6 +21,14 @@ export default function LoginForm({
 	handleInputChange,
 	handleLogin,
 	loginError,
+}: {
+	userCredentials: {
+		email: string;
+		password: string;
+	};
+	handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+	handleLogin: (e: React.SubmitEvent<HTMLFormElement>) => void;
+	loginError: string | null;
 }) {
 	const loginFormSchema = {
 		email: {

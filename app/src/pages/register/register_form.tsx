@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -7,14 +8,13 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
 	Field,
 	FieldError,
 	FieldGroup,
 	FieldLabel,
 } from "@/components/ui/field";
-import { useState } from "react";
+import { Input } from "@/components/ui/input";
 import useDebounce from "@/hooks/use-debounce";
 
 export default function RegisterForm({
@@ -38,14 +38,16 @@ export default function RegisterForm({
 		password: "",
 	});
 
-	const handleChange = (e) => {
+	const handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void = (
+		e,
+	) => {
 		const { name, value } = e.target;
 		setForm((prev) => ({ ...prev, [name]: value }));
 	};
 
 	const debouncedRegister = useDebounce(onRegister, 500);
 
-	const handleSubmit = (e) => {
+	const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		debouncedRegister(
 			form.forename.trim(),

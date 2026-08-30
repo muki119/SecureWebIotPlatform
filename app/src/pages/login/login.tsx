@@ -1,22 +1,26 @@
-import { useState, useContext, useEffect } from "react";
-import LoginForm from "./login_form";
-import { API_ROUTES } from "@/constants/api_routes";
-import { CheckXSRFToken } from "@/utilities/check_xsrf";
-import { AuthContext } from "@/contexts/auth_context";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { API_ROUTES } from "@/constants/api_routes";
+import { AuthContext } from "@/contexts/auth_context";
+import { CheckXSRFToken } from "@/utilities/check_xsrf";
+import LoginForm from "./login_form";
 export default function Login() {
 	// should do a faithful redirect if theres an xsrf token in the cookies or the user is already logged in
 
 	const isAuthenticated = CheckXSRFToken();
 	const navigate = useNavigate();
-	const { dispatch, authClientRequest } = useContext(AuthContext)!;
+	const authContext = useContext(AuthContext);
+	if (!authContext) {
+		throw new Error("AuthContext is not available");
+	}
+	const { dispatch, authClientRequest } = authContext;
 	const [userCredentials, setUserCredentials] = useState({
 		email: "",
 		password: "",
 	});
 	const [loginError, setLoginError] = useState<string | null>(null);
 
-	const handleLogin = async (e) => {
+	const handleLogin = async (e: React.SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		const [r, err] = await authClientRequest.current.login(
 			API_ROUTES.AUTH.LOGIN.path,
@@ -28,17 +32,17 @@ export default function Login() {
 			setLoginError("Invalid email or password");
 			return;
 		}
-		if (r.status === 200) {
+		if (r?.status === 200) {
 			dispatch({ type: "LOGIN", payload: r.data });
 			navigate("/dashboard");
 		}
 
-		if (r.status === 401) {
+		if (r?.status === 401) {
 			setLoginError("Invalid email or password");
 		}
 	};
 
-	const handleInputChange = (e) => {
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
 		setUserCredentials((prev) => ({
 			...prev,

@@ -1,17 +1,21 @@
-import ForgotPasswordForm from "./forgot_password_form";
-import ForgotPasswordConfirmCard from "./forgot_password_confirm_card";
-import { useState, useContext } from "react";
+import { useContext, useState } from "react";
 import { API_ROUTES } from "@/constants/api_routes";
 import { AuthContext } from "@/contexts/auth_context";
+import ForgotPasswordConfirmCard from "./forgot_password_confirm_card";
+import ForgotPasswordForm from "./forgot_password_form";
 
 export default function ForgotPassword() {
-	const { authClientRequest } = useContext(AuthContext)!;
+	const authContext = useContext(AuthContext);
+	if (!authContext) {
+		throw new Error("AuthContext is not available");
+	}
+	const { authClientRequest } = authContext;
 	const [isSubmitted, setIsSubmitted] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	const handleSubmit = async (email: string) => {
 		setError(null);
-		const [r, err] = await authClientRequest.post(
+		const [r, err] = await authClientRequest.current.post(
 			API_ROUTES.AUTH.FORGOT_PASSWORD.path,
 			{ email },
 		);
