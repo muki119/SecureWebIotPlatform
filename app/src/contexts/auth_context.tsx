@@ -1,5 +1,5 @@
-import { AuthClientRequest } from "@/helpers/client_request";
 import { createContext } from "react";
+import type { AuthClientRequest } from "@/helpers/client_request";
 
 /**
  * This is going to hold the authentication state of the user

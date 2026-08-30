@@ -1,10 +1,10 @@
+import { useContext, useState } from "react";
+import { toast } from "sonner";
 import { Sidebar } from "@/components/ui/sidebar";
 import { API_ROUTES } from "@/constants/api_routes";
 import { AuthContext } from "@/contexts/auth_context";
 import { AuthClientRequest } from "@/helpers/client_request";
 import type { Role, User } from "@/types/models";
-import { useContext, useState } from "react";
-import { toast } from "sonner";
 import { DashboardContext } from "../../contexts/dashboard_context";
 
 import DashboardIconSidebar from "./sidebar/dahsboard_icon_sidebar";
@@ -14,7 +14,15 @@ import LeaveDomainAlertDialog from "./sidebar/leave_domain_alert_dialog";
 import UpdateDomainDialog from "./sidebar/update_domain_dialog";
 
 export default function DashboardSidebar() {
-	const { authState, authClientRequest } = useContext(AuthContext)!;
+	const authContext = useContext(AuthContext);
+	if (!authContext) {
+		throw new Error("AuthContext is not available");
+	}
+	const { authState, authClientRequest } = authContext;
+	const dashboardContext = useContext(DashboardContext);
+	if (!dashboardContext) {
+		throw new Error("DashboardContext is not available");
+	}
 	const {
 		domains,
 		setDomains,
@@ -23,7 +31,7 @@ export default function DashboardSidebar() {
 		logout,
 		isAdmin,
 		setSelectedDevice,
-	} = useContext(DashboardContext)!;
+	} = dashboardContext;
 	const [createDomainSuccess, setCreateDomainSuccess] = useState<
 		[boolean, string | null]
 	>([false, null]);
@@ -53,7 +61,7 @@ export default function DashboardSidebar() {
 				{
 					headers: {
 						Authorization: AuthClientRequest.createAuthHeader(
-							authState.accessToken!,
+							authState.accessToken,
 						),
 					},
 				},
@@ -100,7 +108,7 @@ export default function DashboardSidebar() {
 				{
 					headers: {
 						Authorization: AuthClientRequest.createAuthHeader(
-							authState.accessToken!,
+							authState.accessToken,
 						),
 					},
 				},
@@ -151,7 +159,7 @@ export default function DashboardSidebar() {
 				{
 					headers: {
 						Authorization: AuthClientRequest.createAuthHeader(
-							authState.accessToken!,
+							authState.accessToken,
 						),
 					},
 				},
@@ -196,7 +204,7 @@ export default function DashboardSidebar() {
 				{
 					headers: {
 						Authorization: AuthClientRequest.createAuthHeader(
-							authState.accessToken!,
+							authState.accessToken,
 						),
 					},
 				},
@@ -245,7 +253,7 @@ export default function DashboardSidebar() {
 				{
 					headers: {
 						Authorization: AuthClientRequest.createAuthHeader(
-							authState.accessToken!,
+							authState.accessToken,
 						),
 					},
 				},
@@ -297,7 +305,7 @@ export default function DashboardSidebar() {
 				{
 					headers: {
 						Authorization: AuthClientRequest.createAuthHeader(
-							authState.accessToken!,
+							authState.accessToken,
 						),
 					},
 				},
@@ -339,7 +347,7 @@ export default function DashboardSidebar() {
 				{
 					headers: {
 						Authorization: AuthClientRequest.createAuthHeader(
-							authState.accessToken!,
+							authState.accessToken,
 						),
 					},
 				},

@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -7,7 +8,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { useNavigate } from "react-router";
 
 export default function SuccessCard() {
 	const navigate = useNavigate();
@@ -18,7 +18,8 @@ export default function SuccessCard() {
 			</CardHeader>
 			<CardContent>
 				<CardDescription>
-					Your account has been successfully created. You can now log in.
+					Your account has been successfully created. You can now log
+					in.
 				</CardDescription>
 			</CardContent>
 			<CardFooter>

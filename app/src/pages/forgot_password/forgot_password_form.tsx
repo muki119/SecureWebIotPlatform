@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -7,11 +8,18 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+	Field,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
 
-export default function ForgotPasswordForm({ onSubmit, error }: {
+export default function ForgotPasswordForm({
+	onSubmit,
+	error,
+}: {
 	onSubmit: (email: string) => void;
 	error: string | null;
 }) {
