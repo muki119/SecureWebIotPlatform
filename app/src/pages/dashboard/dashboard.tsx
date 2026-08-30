@@ -1,4 +1,15 @@
 import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
+import { useNavigate } from "react-router";
+import { io, type Socket } from "socket.io-client";
+import { toast } from "sonner";
+import {
 	SidebarInset,
 	SidebarProvider,
 	SidebarTrigger,
@@ -7,10 +18,6 @@ import { API_ROUTES, SOCKET_EVENTS, SOCKET_URL } from "@/constants/api_routes";
 import { AuthContext } from "@/contexts/auth_context";
 import { AuthClientRequest } from "@/helpers/client_request";
 import { decodeName } from "@/utilities/decode_name";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router";
-import { io, type Socket } from "socket.io-client";
-import { toast } from "sonner";
 import { DashboardContext } from "../../contexts/dashboard_context";
 import type {
 	Domain,
@@ -31,12 +38,15 @@ export default function Dashboard() {
 		Record<string, ITransactionModel[]>
 	>({});
 	const navigate = useNavigate();
-	const { authState, dispatch, authClientRequest } = useContext(AuthContext)!;
-	const logout = async () => {
+	const authContext = useContext(AuthContext);
+	if (!authContext) throw new Error("AuthContext is not available");
+	const { authState, dispatch, authClientRequest } = authContext;
+
+	const logout = useCallback(async () => {
 		await authClientRequest.current.logout(API_ROUTES.AUTH.LOGOUT.path);
 		dispatch({ type: "LOGOUT" });
 		navigate("/login");
-	};
+	}, [authClientRequest, dispatch, navigate]);
 	const socketRef = useRef<Socket | null>(null);
 	const accessTokenRef = useRef(authState.accessToken);
 	const domainsRef = useRef(domains);
@@ -83,7 +93,9 @@ export default function Dashboard() {
 		})();
 
 		socket.on("connect_error", (err) => {
-			toast.error("Socket connection error", { description: err.message });
+			toast.error("Socket connection error", {
+				description: err.message,
+			});
 		});
 
 		socket.on("disconnect", async (reason) => {
@@ -160,7 +172,10 @@ export default function Dashboard() {
 						...prev,
 						[domainId]: {
 							...prev[domainId],
-							[deviceId]: { ...prev[domainId][deviceId], ...changes },
+							[deviceId]: {
+								...prev[domainId][deviceId],
+								...changes,
+							},
 						},
 					};
 				});
@@ -203,7 +218,10 @@ export default function Dashboard() {
 								online: true,
 								currentState: {
 									...prev[domainId][deviceId].currentState,
-									[capability]: { value, timestamp: Date.now() },
+									[capability]: {
+										value,
+										timestamp: Date.now(),
+									},
 								},
 							},
 						},
@@ -236,7 +254,7 @@ export default function Dashboard() {
 					{
 						headers: {
 							Authorization: AuthClientRequest.createAuthHeader(
-								accessTokenRef.current!,
+								accessTokenRef.current,
 							),
 						},
 					},
@@ -250,7 +268,9 @@ export default function Dashboard() {
 
 		socket.on(SOCKET_EVENTS.SERVER_EMITTED.USER.LEFT_DOMAIN, ({ domainId }) => {
 			// got removed :(
-			toast("You have been removed from a domain", { description: ":(" });
+			toast("You have been removed from a domain", {
+				description: ":(",
+			});
 			setDomains((prev) => {
 				const next = { ...prev };
 				delete next[domainId];
@@ -307,13 +327,13 @@ export default function Dashboard() {
 		};
 	}, [authClientRequest, logout]);
 
-	const fetchUser = async () => {
+	const fetchUser = useCallback(async () => {
 		const [r, err] = await authClientRequest.current.get(
 			API_ROUTES.PROFILE.GET_USER_PROFILE.path,
 			{
 				headers: {
 					Authorization: AuthClientRequest.createAuthHeader(
-						accessTokenRef.current!,
+						accessTokenRef.current,
 					),
 				},
 			},
@@ -339,15 +359,15 @@ export default function Dashboard() {
 				payload: { accessToken: authState.accessToken, user: userData },
 			});
 		}
-	};
+	}, [authClientRequest, logout, authState.accessToken, dispatch]);
 
-	const fetchDomains = async () => {
+	const fetchDomains = useCallback(async () => {
 		const [r, err] = await authClientRequest.current.get(
 			API_ROUTES.DOMAIN.GET_USER_DOMAINS.path,
 			{
 				headers: {
 					Authorization: AuthClientRequest.createAuthHeader(
-						accessTokenRef.current!,
+						accessTokenRef.current,
 					),
 				},
 			},
@@ -375,14 +395,14 @@ export default function Dashboard() {
 			});
 			setDomains(domainsMap);
 		}
-	};
+	}, [authClientRequest, logout]);
 
 	useEffect(() => {
 		(async () => {
 			await fetchUser();
 			await fetchDomains();
 		})();
-	}, []);
+	}, [fetchUser, fetchDomains]);
 
 	return (
 		<DashboardContext.Provider
