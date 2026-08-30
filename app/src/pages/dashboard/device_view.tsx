@@ -1,14 +1,25 @@
+import { formatDistanceToNow } from "date-fns";
+import { ArrowLeftIcon, EllipsisVerticalIcon, WifiIcon } from "lucide-react";
+import { useContext, useEffect, useState } from "react";
+import { HexColorPicker } from "react-colorful";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
 	CardAction,
 	CardContent,
+	CardFooter,
 	CardHeader,
 	CardTitle,
-	CardFooter,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { EllipsisVerticalIcon, ArrowLeftIcon, WifiIcon } from "lucide-react";
+import { Field, FieldLabel } from "@/components/ui/field";
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupInput,
+} from "@/components/ui/input-group";
+import { Progress } from "@/components/ui/progress";
 import {
 	Select,
 	SelectContent,
@@ -17,31 +28,34 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import {
-	InputGroup,
-	InputGroupAddon,
-	InputGroupInput,
-} from "@/components/ui/input-group";
 import { Slider } from "@/components/ui/slider";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
-import { DashboardContext } from "../../contexts/dashboard_context";
-import { useContext, useState, useEffect } from "react";
-import { formatDistanceToNow } from "date-fns";
-import { HexColorPicker } from "react-colorful";
 import { SOCKET_EVENTS } from "@/constants/api_routes";
-import { toast } from "sonner";
+import { CapabilityTypes } from "@/constants/capability_types";
+import type {
+	CapabilityType,
+	CurrentDeviceState,
+	DeviceCapabilities,
+} from "@/types/models";
+import { DashboardContext } from "../../contexts/dashboard_context";
 
-const CAPABILITY_TYPES = {
-	BINARY: "BINARY",
-	RANGE: "RANGE",
-	ENUM: "ENUM",
-	GAUGE: "GAUGE",
-	COLOR: "COLOR",
+export type CapabilityCardProps<T extends CapabilityType = CapabilityType> = {
+	capability: DeviceCapabilities<T>;
+	currentState?: CurrentDeviceState<T>;
 };
 
+export type MutableCapabilityCardProps<
+	T extends CapabilityType = CapabilityType,
+> = CapabilityCardProps<T> & {
+	capabilityKey: string;
+	handleCapabilityChange: (
+		capability: string,
+		value: number | string | boolean,
+	) => void;
+};
 export default function DeviceView() {
+	const dashboardContext = useContext(DashboardContext);
+	if (!dashboardContext) return null;
 	const {
 		selectedDevice,
 		setSelectedDevice,
@@ -49,7 +63,7 @@ export default function DeviceView() {
 		setDomainDevices,
 		selectedDomain,
 		socketRef,
-	} = useContext(DashboardContext)!;
+	} = dashboardContext;
 
 	if (!selectedDomain || !selectedDevice) return null;
 
@@ -73,7 +87,15 @@ export default function DeviceView() {
 		socketRef.current?.emit(
 			SOCKET_EVENTS.CLIENT_EMITTED.DEVICE_CONTROL.UPDATE,
 			dataObject,
-			({ code, error, message }) => {
+			({
+				code,
+				error,
+				message,
+			}: {
+				code: number;
+				error?: string;
+				message?: string;
+			}) => {
 				switch (code) {
 					case 400:
 						toast.error("Bad request", { description: error });
@@ -82,7 +104,9 @@ export default function DeviceView() {
 						toast.error("Unauthorized", { description: error });
 						break;
 					case 200:
-						toast.success("Device updated", { description: message });
+						toast.success("Device updated", {
+							description: message,
+						});
 						break;
 					case 500:
 						toast.error("Server error", { description: error });
@@ -94,15 +118,22 @@ export default function DeviceView() {
 			},
 		);
 		setDomainDevices((prev) => {
+			const prevDevice = prev[selectedDomain][selectedDevice];
+			// type is carried over from the capability definition since it never changes at runtime
+			const capabilityType = prevDevice.capabilities[capability]?.type;
 			return {
 				...prev,
 				[selectedDomain]: {
 					...prev[selectedDomain],
 					[selectedDevice]: {
-						...prev[selectedDomain][selectedDevice],
+						...prevDevice,
 						currentState: {
-							...prev[selectedDomain][selectedDevice].currentState,
-							[capability]: { value, timestamp: Date.now() },
+							...prevDevice.currentState,
+							[capability]: {
+								type: capabilityType,
+								value,
+								timestamp: Date.now(),
+							} as CurrentDeviceState,
 						},
 						online: true,
 					},
@@ -123,13 +154,11 @@ export default function DeviceView() {
 				</Button>
 				<div>
 					<h2 className="text-lg font-semibold">{device.name}</h2>
-					{device.description && (
-						<p className="text-sm text-muted-foreground">
-							{device.description}
-						</p>
-					)}
 				</div>
-				<Badge variant="outline" className="ml-auto flex items-center gap-1">
+				<Badge
+					variant="outline"
+					className="ml-auto flex items-center gap-1"
+				>
 					<WifiIcon className="h-3 w-3" />
 					{device.online ? "Online" : "Offline"}
 				</Badge>
@@ -154,62 +183,73 @@ const CapabilityCard = ({
 	currentState,
 	capabilityKey,
 	handleCapabilityChange,
-}: {
-	capability: any;
-	currentState: any;
-	capabilityKey: string;
-	handleCapabilityChange: (
-		capability: string,
-		value: number | string | boolean,
-	) => void;
-}) => {
+}: MutableCapabilityCardProps & { capabilityKey: string }) => {
 	if (!capability) return null;
-	let content;
+	let content: React.ReactNode;
 	switch (capability.type) {
-		case CAPABILITY_TYPES.BINARY:
+		case CapabilityTypes.BINARY:
 			content = (
 				<BinaryCapabilityCard
 					capability={capability}
-					currentState={currentState}
+					currentState={
+						currentState as CurrentDeviceState<
+							typeof CapabilityTypes.BINARY
+						>
+					}
 					capabilityKey={capabilityKey}
 					handleCapabilityChange={handleCapabilityChange}
 				/>
 			);
 			break;
-		case CAPABILITY_TYPES.RANGE:
+		case CapabilityTypes.RANGE:
 			content = (
 				<RangeCapabilityCard
 					capability={capability}
-					currentState={currentState}
+					currentState={
+						currentState as CurrentDeviceState<
+							typeof CapabilityTypes.RANGE
+						>
+					}
 					handleCapabilityChange={handleCapabilityChange}
 					capabilityKey={capabilityKey}
 				/>
 			);
 			break;
-		case CAPABILITY_TYPES.ENUM:
+		case CapabilityTypes.ENUM:
 			content = (
 				<EnumCapabilityCard
 					capability={capability}
-					currentState={currentState}
+					currentState={
+						currentState as CurrentDeviceState<
+							typeof CapabilityTypes.ENUM
+						>
+					}
 					handleCapabilityChange={handleCapabilityChange}
 					capabilityKey={capabilityKey}
 				/>
 			);
 			break;
-		case CAPABILITY_TYPES.GAUGE:
+		case CapabilityTypes.GAUGE:
 			content = (
 				<GaugeCapabilityCard
 					capability={capability}
-					currentState={currentState}
-					handleCapabilityChange={handleCapabilityChange}
+					currentState={
+						currentState as CurrentDeviceState<
+							typeof CapabilityTypes.GAUGE
+						>
+					}
 				/>
 			);
 			break;
-		case CAPABILITY_TYPES.COLOR:
+		case CapabilityTypes.COLOR:
 			content = (
 				<ColorCapabilityCard
 					capability={capability}
-					currentState={currentState}
+					currentState={
+						currentState as CurrentDeviceState<
+							typeof CapabilityTypes.COLOR
+						>
+					}
 					handleCapabilityChange={handleCapabilityChange}
 					capabilityKey={capabilityKey}
 				/>
@@ -224,9 +264,12 @@ const CapabilityCard = ({
 			<CardFooter>
 				<p className="text-xs text-muted-foreground">
 					Last updated{" "}
-					{formatDistanceToNow(currentState?.timestamp ?? Date.now(), {
-						addSuffix: true,
-					})}
+					{formatDistanceToNow(
+						currentState?.timestamp ?? Date.now(),
+						{
+							addSuffix: true,
+						},
+					)}
 				</p>
 			</CardFooter>
 		</Card>
@@ -238,9 +281,9 @@ const BinaryCapabilityCard = ({
 	currentState,
 	handleCapabilityChange,
 	capabilityKey,
-}) => {
+}: MutableCapabilityCardProps<typeof CapabilityTypes.BINARY>) => {
 	const raw = currentState?.value ?? currentState;
-	const isOn = raw === true || raw === 1 || raw === "true";
+	const isOn = raw === true || raw === 1;
 	return (
 		<CardHeader>
 			<div className="flex flex-col gap-1">
@@ -273,7 +316,7 @@ const RangeCapabilityCard = ({
 	currentState,
 	handleCapabilityChange,
 	capabilityKey,
-}) => {
+}: MutableCapabilityCardProps<typeof CapabilityTypes.RANGE>) => {
 	const [sliderConfig] = useState({
 		min: capability.min ?? 0,
 		max: capability.max ?? 100,
@@ -283,7 +326,8 @@ const RangeCapabilityCard = ({
 		currentState?.value ?? sliderConfig.min,
 	);
 	useEffect(() => {
-		if (currentState?.value !== undefined) setSliderValue(currentState.value);
+		if (currentState?.value !== undefined)
+			setSliderValue(currentState.value as number);
 	}, [currentState?.value]);
 	return (
 		<>
@@ -328,11 +372,14 @@ const EnumCapabilityCard = ({
 	currentState,
 	handleCapabilityChange,
 	capabilityKey,
-}) => {
+}: MutableCapabilityCardProps<typeof CapabilityTypes.ENUM>) => {
 	const options: string[] = capability.enumValues ?? [];
-	const [currentOption, setCurrentOption] = useState(currentState?.value ?? "");
+	const [currentOption, setCurrentOption] = useState(
+		currentState?.value ?? "",
+	);
 	useEffect(() => {
-		if (currentState?.value !== undefined) setCurrentOption(currentState.value);
+		if (currentState?.value !== undefined)
+			setCurrentOption(currentState.value);
 	}, [currentState?.value]);
 	return (
 		<>
@@ -353,11 +400,14 @@ const EnumCapabilityCard = ({
 			</CardHeader>
 			<CardContent className="pt-0 pb-4">
 				<Select
-					value={currentOption}
+					value={String(currentOption)}
 					onValueChange={setCurrentOption}
 					onOpenChange={(open) => {
 						if (!open) {
-							handleCapabilityChange(capabilityKey, currentOption);
+							handleCapabilityChange(
+								capabilityKey,
+								currentOption,
+							);
 						}
 					}}
 				>
@@ -378,11 +428,13 @@ const EnumCapabilityCard = ({
 		</>
 	);
 };
-
-const GaugeCapabilityCard = ({ capability, currentState }) => {
+const GaugeCapabilityCard = ({
+	capability,
+	currentState,
+}: CapabilityCardProps<typeof CapabilityTypes.GAUGE>) => {
 	const min = capability.min ?? 0;
 	const max = capability.max ?? 100;
-	const value = currentState?.value ?? min;
+	const value = currentState?.value ?? min; // for gauge types , it will only ever be a number
 	const percent = ((value - min) / (max - min)) * 100; // find percentage between the min and max
 	return (
 		<>
@@ -429,12 +481,13 @@ const ColorCapabilityCard = ({
 	currentState,
 	handleCapabilityChange,
 	capabilityKey,
-}) => {
+}: MutableCapabilityCardProps<typeof CapabilityTypes.COLOR>) => {
 	const [currentColor, setCurrentColor] = useState(
-		currentState?.value ?? "#ffffff",
+		(currentState?.value as string) ?? "#ffffff",
 	);
 	useEffect(() => {
-		if (currentState?.value !== undefined) setCurrentColor(currentState.value);
+		if (currentState?.value !== undefined)
+			setCurrentColor(currentState.value as string);
 	}, [currentState?.value]);
 	return (
 		<>
@@ -454,14 +507,18 @@ const ColorCapabilityCard = ({
 				<HexColorPicker
 					color={currentColor}
 					onChange={setCurrentColor}
-					onChangeEnd={(color) => handleCapabilityChange(capabilityKey, color)}
+					onChangeEnd={(color) =>
+						handleCapabilityChange(capabilityKey, color)
+					}
 				/>
 				<InputGroup className="w-32 ml-4">
 					<InputGroupAddon>Hex</InputGroupAddon>
 					<InputGroupInput
 						value={currentColor}
 						onChange={(e) => setCurrentColor(e.target.value)}
-						onBlur={() => handleCapabilityChange(capabilityKey, currentColor)}
+						onBlur={() =>
+							handleCapabilityChange(capabilityKey, currentColor)
+						}
 					/>
 				</InputGroup>
 			</CardContent>

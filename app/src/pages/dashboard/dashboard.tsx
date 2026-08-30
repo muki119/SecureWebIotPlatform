@@ -146,7 +146,8 @@ export default function Dashboard() {
 				});
 				toast.success(`Device ${device.name} added to domain `, {
 					description:
-						decodeName(domainsRef.current[domainId]?.name) || domainId,
+						decodeName(domainsRef.current[domainId]?.name) ||
+						domainId,
 				});
 			},
 		);
@@ -167,7 +168,8 @@ export default function Dashboard() {
 			SOCKET_EVENTS.SERVER_EMITTED.DEVICE.DEVICE_INFO_UPDATED,
 			({ domainId, deviceId, changes }) => {
 				setDomainDevices((prev) => {
-					if (!(domainId in prev) || !(deviceId in prev[domainId])) return prev;
+					if (!(domainId in prev) || !(deviceId in prev[domainId]))
+						return prev;
 					return {
 						...prev,
 						[domainId]: {
@@ -186,7 +188,8 @@ export default function Dashboard() {
 			SOCKET_EVENTS.SERVER_EMITTED.DEVICE.UPDATED,
 			({ domainId, deviceId, changes }) => {
 				setDomainDevices((prev) => {
-					if (!(domainId in prev) || !(deviceId in prev[domainId])) return prev;
+					if (!(domainId in prev) || !(deviceId in prev[domainId]))
+						return prev;
 					return {
 						...prev,
 						[domainId]: {
@@ -208,7 +211,8 @@ export default function Dashboard() {
 			SOCKET_EVENTS.SERVER_EMITTED.DEVICE.TELEMETRY,
 			({ domainId, deviceId, capability, value }) => {
 				setDomainDevices((prev) => {
-					if (!(domainId in prev) || !(deviceId in prev[domainId])) return prev;
+					if (!(domainId in prev) || !(deviceId in prev[domainId]))
+						return prev;
 					return {
 						...prev,
 						[domainId]: {
@@ -234,7 +238,8 @@ export default function Dashboard() {
 			SOCKET_EVENTS.SERVER_EMITTED.DEVICE.STATUS,
 			({ domainId, deviceId, online }) => {
 				setDomainDevices((prev) => {
-					if (!(domainId in prev) || !(deviceId in prev[domainId])) return prev;
+					if (!(domainId in prev) || !(deviceId in prev[domainId]))
+						return prev;
 					return {
 						...prev,
 						[domainId]: {
@@ -260,52 +265,63 @@ export default function Dashboard() {
 					},
 				);
 				if (err === null && r?.status === 200) {
-					const joined = r.data.find((d: Domain) => d.id === domainId);
-					if (joined) setDomains((prev) => ({ ...prev, [domainId]: joined }));
+					const joined = r.data.find(
+						(d: Domain) => d.id === domainId,
+					);
+					if (joined)
+						setDomains((prev) => ({ ...prev, [domainId]: joined }));
 				}
 			},
 		);
 
-		socket.on(SOCKET_EVENTS.SERVER_EMITTED.USER.LEFT_DOMAIN, ({ domainId }) => {
-			// got removed :(
-			toast("You have been removed from a domain", {
-				description: ":(",
-			});
-			setDomains((prev) => {
-				const next = { ...prev };
-				delete next[domainId];
-				return next;
-			});
-			setDomainDevices((prev) => {
-				const next = { ...prev };
-				delete next[domainId];
-				return next;
-			});
-			setSelectedDomain((prev) => (prev === domainId ? null : prev));
-		});
+		socket.on(
+			SOCKET_EVENTS.SERVER_EMITTED.USER.LEFT_DOMAIN,
+			({ domainId }) => {
+				// got removed :(
+				toast("You have been removed from a domain", {
+					description: ":(",
+				});
+				setDomains((prev) => {
+					const next = { ...prev };
+					delete next[domainId];
+					return next;
+				});
+				setDomainDevices((prev) => {
+					const next = { ...prev };
+					delete next[domainId];
+					return next;
+				});
+				setSelectedDomain((prev) => (prev === domainId ? null : prev));
+			},
+		);
 
-		socket.on(SOCKET_EVENTS.SERVER_EMITTED.DOMAIN.DELETED, ({ domainId }) => {
-			toast("Domain has been deleted", {
-				description: decodeName(domainsRef.current[domainId]?.name) || domainId,
-			});
-			setDomains((prev) => {
-				const next = { ...prev };
-				delete next[domainId];
-				return next;
-			});
-			setDomainDevices((prev) => {
-				const next = { ...prev };
-				delete next[domainId];
-				return next;
-			});
-			setDomainTransactions((prev) => {
-				const next = { ...prev };
-				delete next[domainId];
-				return next;
-			});
-			setSelectedDomain((prev) => (prev === domainId ? null : prev));
-			setSelectedDevice(null);
-		});
+		socket.on(
+			SOCKET_EVENTS.SERVER_EMITTED.DOMAIN.DELETED,
+			({ domainId }) => {
+				toast("Domain has been deleted", {
+					description:
+						decodeName(domainsRef.current[domainId]?.name) ||
+						domainId,
+				});
+				setDomains((prev) => {
+					const next = { ...prev };
+					delete next[domainId];
+					return next;
+				});
+				setDomainDevices((prev) => {
+					const next = { ...prev };
+					delete next[domainId];
+					return next;
+				});
+				setDomainTransactions((prev) => {
+					const next = { ...prev };
+					delete next[domainId];
+					return next;
+				});
+				setSelectedDomain((prev) => (prev === domainId ? null : prev));
+				setSelectedDevice(null);
+			},
+		);
 
 		socket.on(
 			SOCKET_EVENTS.SERVER_EMITTED.USER.ROLE_UPDATED,
