@@ -4,7 +4,9 @@
 		"module": "esnext",
 		"moduleResolution": "bundler",
 		"lib": ["esnext"],
-
+		"paths": {
+			"@services/common/*": ["./services/common/*"]
+		},
 		"noEmit": true,
 		"isolatedModules": true,
 		"verbatimModuleSyntax": true,
@@ -12,7 +14,6 @@
 		"skipLibCheck": true,
 		"noUncheckedSideEffectImports": true,
 		"allowImportingTsExtensions": true,
-
 		"strict": true,
 		"noUncheckedIndexedAccess": true,
 		"exactOptionalPropertyTypes": true

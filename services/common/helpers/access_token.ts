@@ -44,7 +44,7 @@ export function CreateVerifyAccessTokenInstance(
 				// if theres any token invalidity like signature is different or the token is malformed
 				return [
 					null,
-					new Error(`Invalid Access token: ${error.message}`),
+					new Error(`Invalid Access token`, { cause: error }),
 				];
 			}
 			throw new Error(`Error verifying access token`, { cause: error });
