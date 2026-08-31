@@ -11,7 +11,6 @@ export type TAuthState = {
 	accessToken: string | null;
 };
 
-
 export type UserInfo = {
 	userId: string;
 	email: string;

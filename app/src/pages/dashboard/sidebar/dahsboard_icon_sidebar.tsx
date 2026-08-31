@@ -84,7 +84,11 @@ export default function DashboardIconSidebar({
 					<SidebarGroupContent>
 						<SidebarMenu>
 							<SidebarMenuItem>
-								<SidebarMenuButton isActive size="default" asChild>
+								<SidebarMenuButton
+									isActive
+									size="default"
+									asChild
+								>
 									{/**This should be the default active button , this is the domains button that shows a list of the users domains */}
 									<Group />
 								</SidebarMenuButton>
@@ -118,7 +122,10 @@ const UserMenuItem = ({
 				<SidebarMenuButton asChild>
 					<Avatar>
 						<AvatarFallback>
-							{(authState.user?.name.charAt(0) ?? "").replaceAll(" ", "")}
+							{(authState.user?.name.charAt(0) ?? "").replaceAll(
+								" ",
+								"",
+							)}
 						</AvatarFallback>
 					</Avatar>
 				</SidebarMenuButton>
@@ -174,7 +181,9 @@ const CreateDomainDialog = ({
 
 					<FieldGroup>
 						<Field>
-							<FieldLabel htmlFor="domainName">Domain Name</FieldLabel>
+							<FieldLabel htmlFor="domainName">
+								Domain Name
+							</FieldLabel>
 							<Input
 								id="domainName"
 								placeholder="My New Domain"
