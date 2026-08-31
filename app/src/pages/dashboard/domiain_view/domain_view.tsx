@@ -1,3 +1,6 @@
+import { EllipsisVerticalIcon, WifiIcon } from "lucide-react";
+import { Suspense, useCallback, useContext, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,9 +20,7 @@ import {
 import { API_ROUTES } from "@/constants/api_routes";
 import { AuthContext } from "@/contexts/auth_context";
 import { AuthClientRequest } from "@/helpers/client_request";
-import { EllipsisVerticalIcon, WifiIcon } from "lucide-react";
-import { Suspense, useCallback, useContext, useEffect, useState } from "react";
-import { toast } from "sonner";
+import type { DeviceManagementInfo, IDevice } from "@/types/models";
 import { DashboardContext } from "../../../contexts/dashboard_context";
 import AddDeviceDialog from "./add_device_dialog";
 import AddUserDialog from "./add_user_dialog";
@@ -31,7 +32,15 @@ import EditDeviceDialog from "./edit_device_dialog";
 import ViewDeviceInfoDialog from "./view_device_info_dialog";
 
 export default function DomainView() {
-	const { authState, authClientRequest } = useContext(AuthContext)!;
+	const authContext = useContext(AuthContext);
+	if (!authContext) {
+		throw new Error("AuthContext is not available");
+	}
+	const { authState, authClientRequest } = authContext;
+	const dashboardContext = useContext(DashboardContext);
+	if (!dashboardContext) {
+		throw new Error("DashboardContext is not available");
+	}
 	const {
 		selectedDomain: current,
 		domainDevices,
@@ -39,7 +48,7 @@ export default function DomainView() {
 		logout,
 		isAdmin,
 		setSelectedDevice,
-	} = useContext(DashboardContext)!;
+	} = dashboardContext;
 
 	const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
 	const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false);
@@ -48,9 +57,12 @@ export default function DomainView() {
 
 	const [isDomainTransactionsDialogOpen, setIsDomainTransactionsDialogOpen] =
 		useState(false);
-	const [editingDevice, setEditingDevice] = useState(null);
-	const [deletingDevice, setDeletingDevice] = useState(null);
-	const [viewingDevice, setViewingDevice] = useState(null);
+	const [editingDevice, setEditingDevice] =
+		useState<DeviceManagementInfo | null>(null);
+	const [deletingDevice, setDeletingDevice] =
+		useState<DeviceManagementInfo | null>(null);
+	const [viewingDevice, setViewingDevice] =
+		useState<DeviceManagementInfo | null>(null);
 
 	useEffect(() => {
 		const fetchDomainDevices = async () => {
@@ -61,7 +73,7 @@ export default function DomainView() {
 				{
 					headers: {
 						Authorization: AuthClientRequest.createAuthHeader(
-							authState.accessToken!,
+							authState.accessToken,
 						),
 					},
 				},
@@ -82,12 +94,15 @@ export default function DomainView() {
 			}
 
 			if (r?.status === 200) {
-				const devicesData = r.data;
-				const devicesMap = {};
+				const devicesData = r.data as IDevice[];
+				const devicesMap: Record<string, IDevice> = {};
 				devicesData.forEach((device) => {
 					devicesMap[device.id] = device;
 				});
-				setDomainDevices((prev) => ({ ...prev, [current]: devicesMap }));
+				setDomainDevices((prev) => ({
+					...prev,
+					[current]: devicesMap,
+				}));
 			}
 		};
 
@@ -103,7 +118,7 @@ export default function DomainView() {
 		setDomainDevices,
 	]);
 
-	const getPairingCode = async () => {
+	const getPairingCode: () => Promise<[string, string] | null> = async () => {
 		if (!current) return null;
 
 		const [r, err] = await authClientRequest.current.post(
@@ -112,7 +127,7 @@ export default function DomainView() {
 			{
 				headers: {
 					Authorization: AuthClientRequest.createAuthHeader(
-						authState.accessToken!,
+						authState.accessToken,
 					),
 				},
 			},
@@ -124,7 +139,7 @@ export default function DomainView() {
 					err === AuthClientRequest.ErrInvalidRefreshToken
 				) {
 					logout();
-					return;
+					return null;
 				}
 				if (err === AuthClientRequest.ErrServerError) {
 					toast.error("Server error while fetching domains", {
@@ -134,9 +149,13 @@ export default function DomainView() {
 			}
 		}
 		if (r?.status === 201) {
-			const { pairingCode, expiry } = r.data;
+			const {
+				pairingCode,
+				expiry,
+			}: { pairingCode: string; expiry: string } = r.data;
 			return [pairingCode, expiry];
 		}
+		return null;
 	};
 
 	const addUser = async (id: string) => {
@@ -147,7 +166,7 @@ export default function DomainView() {
 			{
 				headers: {
 					Authorization: AuthClientRequest.createAuthHeader(
-						authState.accessToken!,
+						authState.accessToken,
 					),
 				},
 			},
@@ -177,14 +196,14 @@ export default function DomainView() {
 		}
 		return [false, "Failed to add user to domain"];
 	};
-	const userSearch = async (email) => {
+	const userSearch = async (email: string) => {
 		const [r, err] = await authClientRequest.current.get(
 			API_ROUTES.PROFILE.SEARCH_USERS.path,
 			{
 				params: { email },
 				headers: {
 					Authorization: AuthClientRequest.createAuthHeader(
-						authState.accessToken!,
+						authState.accessToken,
 					),
 				},
 			},
@@ -211,14 +230,14 @@ export default function DomainView() {
 		}
 		return [];
 	};
-	const deleteDevice = async (deviceId) => {
+	const deleteDevice = async (deviceId: string) => {
 		if (!current) return false;
 		const [r, err] = await authClientRequest.current.delete(
 			API_ROUTES.DEVICE.DELETE_DEVICE(deviceId).path,
 			{
 				headers: {
 					Authorization: AuthClientRequest.createAuthHeader(
-						authState.accessToken!,
+						authState.accessToken,
 					),
 				},
 			},
@@ -250,7 +269,10 @@ export default function DomainView() {
 		}
 		return false;
 	};
-	const editDevice = async (deviceId: string, name: string) => {
+	const editDevice = async (
+		deviceId: string,
+		name: string,
+	): Promise<boolean> => {
 		if (!current) return false;
 		const [r, err] = await authClientRequest.current.patch(
 			API_ROUTES.DEVICE.UPDATE_DEVICE(deviceId).path,
@@ -258,7 +280,7 @@ export default function DomainView() {
 			{
 				headers: {
 					Authorization: AuthClientRequest.createAuthHeader(
-						authState.accessToken!,
+						authState.accessToken,
 					),
 				},
 			},
@@ -300,13 +322,15 @@ export default function DomainView() {
 
 	const renderDevices = useCallback(() => {
 		if (!current || !(current in domainDevices)) {
-			return <></>;
+			return;
 		}
 		const devices = domainDevices[current];
 		if (Object.keys(devices).length === 0) {
 			return (
 				<div className="flex flex-col items-center justify-center col-span-full">
-					<p className="text-center">No devices found for this domain</p>
+					<p className="text-center">
+						No devices found for this domain
+					</p>
 				</div>
 			);
 		}
@@ -316,15 +340,20 @@ export default function DomainView() {
 					<DomainDeviceCard
 						key={device.id}
 						name={device.name}
-						description={device.description}
 						onViewControls={() => setSelectedDevice(device.id)}
 						isOnline={device.online}
 						isAdmin={isAdmin}
 						onEdit={() =>
-							setEditingDevice({ id: device.id, name: device.name })
+							setEditingDevice({
+								id: device.id,
+								name: device.name,
+							})
 						}
 						onDelete={() =>
-							setDeletingDevice({ id: device.id, name: device.name })
+							setDeletingDevice({
+								id: device.id,
+								name: device.name,
+							})
 						}
 						onViewInfo={() =>
 							setViewingDevice({
@@ -398,65 +427,79 @@ export default function DomainView() {
 			</div>
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
 				<Suspense fallback={<p>Loading devices...</p>}>
-					<>{renderDevices()}</>
+					{renderDevices()}
 				</Suspense>
 			</div>
 		</>
 	);
 }
 
+type DomainDeviceCardProps = {
+	name: string;
+	onViewControls: () => void;
+	isOnline?: boolean;
+	isAdmin: boolean;
+	onEdit: () => void;
+	onDelete: () => void;
+	onViewInfo: () => void;
+};
+
 const DomainDeviceCard = ({
 	name,
-	description,
 	onViewControls,
 	isOnline,
 	isAdmin,
 	onEdit,
 	onDelete,
 	onViewInfo,
-}) => {
+}: DomainDeviceCardProps) => {
 	return (
-		<>
-			<DropdownMenu>
-				<Card>
-					<CardHeader>
-						<CardTitle>{name}</CardTitle>
-						<CardDescription>{description}</CardDescription>
-						<CardAction>
-							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" size="icon">
-									<EllipsisVerticalIcon />
-								</Button>
-							</DropdownMenuTrigger>
-						</CardAction>
-					</CardHeader>
-					<CardFooter>
-						<Button variant="outline" onClick={onViewControls}>
-							View Controls
-						</Button>
-						<Badge
-							variant="outline"
-							className="ml-auto flex items-center gap-1"
+		<DropdownMenu>
+			<Card>
+				<CardHeader>
+					<CardTitle>{name}</CardTitle>
+					<CardDescription>
+						{isOnline ? "Online" : "Offline"}
+					</CardDescription>
+					<CardAction>
+						<DropdownMenuTrigger asChild>
+							<Button variant="ghost" size="icon">
+								<EllipsisVerticalIcon />
+							</Button>
+						</DropdownMenuTrigger>
+					</CardAction>
+				</CardHeader>
+				<CardFooter>
+					<Button variant="outline" onClick={onViewControls}>
+						View Controls
+					</Button>
+					<Badge
+						variant="outline"
+						className="ml-auto flex items-center gap-1"
+					>
+						<WifiIcon className="h-3 w-3" />
+						{isOnline ? "Online" : "Offline"}
+					</Badge>
+				</CardFooter>
+			</Card>
+			<DropdownMenuContent>
+				<DropdownMenuItem onClick={onViewInfo}>
+					View Device Info
+				</DropdownMenuItem>
+				{isAdmin && (
+					<>
+						<DropdownMenuItem onClick={onEdit}>
+							Edit Device
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							onClick={onDelete}
+							className="text-destructive"
 						>
-							<WifiIcon className="h-3 w-3" />
-							{isOnline ? "Online" : "Offline"}
-						</Badge>
-					</CardFooter>
-				</Card>
-				<DropdownMenuContent>
-					<DropdownMenuItem onClick={onViewInfo}>
-						View Device Info
-					</DropdownMenuItem>
-					{isAdmin && (
-						<>
-							<DropdownMenuItem onClick={onEdit}>Edit Device</DropdownMenuItem>
-							<DropdownMenuItem onClick={onDelete} className="text-destructive">
-								Delete Device
-							</DropdownMenuItem>
-						</>
-					)}
-				</DropdownMenuContent>
-			</DropdownMenu>
-		</>
+							Delete Device
+						</DropdownMenuItem>
+					</>
+				)}
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 };

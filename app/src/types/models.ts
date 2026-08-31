@@ -38,10 +38,6 @@ export type Domains = Record<string, Domain>;
 
 export type DomainDevices = Record<string, Record<string, IDevice>>;
 
-export type Device = {
-	id: string;
-};
-
 export type CapabilityType =
 	(typeof CapabilityTypes)[keyof typeof CapabilityTypes];
 
@@ -72,6 +68,7 @@ export interface IDevice {
 	createdBy: string; // the person who added the device to the domain
 	currentState: Record<string, CurrentDeviceState>;
 	capabilities: Record<string, DeviceCapabilities>;
+	createdAt: string;
 	online?: boolean;
 }
 
@@ -128,3 +125,21 @@ export type ColorCurrentCapabilityState = BaseCurrentCapabilityState & {
 	type: typeof CapabilityTypes.COLOR;
 	value: string; // hex color code
 };
+
+export type DeviceManagementInfo = Pick<IDevice, "id" | "name"> & {
+	createdAt?: string;
+};
+
+export type NumericAggregatedTelemetry = {
+	avg: number;
+	min: number;
+	max: number;
+};
+
+export type CategoricalAggregatedTelemetry = {
+	last: string | number | boolean;
+};
+
+export type AggregatedTelemetry = {
+	_id: string;
+} & (NumericAggregatedTelemetry | CategoricalAggregatedTelemetry);
