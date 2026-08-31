@@ -57,13 +57,17 @@ export default function LoginForm({
 						<div id="inputs" className="flex flex-col gap-4">
 							<div className="grid gap-4 mb-4">
 								<Field>
-									<FieldLabel htmlFor="email">Email</FieldLabel>
+									<FieldLabel htmlFor="email">
+										Email
+									</FieldLabel>
 									<Input
 										id="email"
 										type="email"
 										name="email"
 										placeholder="you@anywhere.com"
-										required={loginFormSchema.email.required}
+										required={
+											loginFormSchema.email.required
+										}
 										value={userCredentials.email}
 										onChange={handleInputChange}
 									/>
@@ -72,7 +76,9 @@ export default function LoginForm({
 							<div className="grid gap-4">
 								<Field>
 									<div className="flex items-center">
-										<FieldLabel htmlFor="password">Password</FieldLabel>
+										<FieldLabel htmlFor="password">
+											Password
+										</FieldLabel>
 										<a
 											href="/forgot-password"
 											className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
@@ -82,11 +88,15 @@ export default function LoginForm({
 									</div>
 									<Input
 										id="password"
-										minLength={loginFormSchema.password.minLength}
+										minLength={
+											loginFormSchema.password.minLength
+										}
 										type="password"
 										name="password"
 										placeholder="********"
-										required={loginFormSchema.password.required}
+										required={
+											loginFormSchema.password.required
+										}
 										value={userCredentials.password}
 										onChange={handleInputChange}
 									/>

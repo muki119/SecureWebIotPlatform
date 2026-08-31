@@ -39,7 +39,9 @@ export default function DashboardSidebar() {
 		[boolean, string | null]
 	>([false, null]);
 	const [leaveDomainId, setLeaveDomainId] = useState(null);
-	const [selectedInfoDomain, setSelectedInfoDomain] = useState(null);
+	const [selectedInfoDomain, setSelectedInfoDomain] = useState<string | null>(
+		null,
+	);
 	const [updateDomainSuccess, setUpdateDomainSuccess] = useState<
 		[boolean, string | null]
 	>([false, null]);
@@ -400,7 +402,6 @@ export default function DashboardSidebar() {
 				authState={authState}
 				updateDomainSuccess={updateDomainSuccess}
 				updateDomainName={updateDomainName}
-				isAdmin={isAdmin}
 			/>
 			<DomaindDetailsDialog
 				deleteDomain={deleteDomain}

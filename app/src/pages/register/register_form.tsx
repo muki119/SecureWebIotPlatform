@@ -71,7 +71,9 @@ export default function RegisterForm({
 						<FieldError>{error}</FieldError>
 						<div className="flex flex-col gap-4">
 							<Field>
-								<FieldLabel htmlFor="forename">Forename</FieldLabel>
+								<FieldLabel htmlFor="forename">
+									Forename
+								</FieldLabel>
 								<Input
 									id="forename"
 									name="forename"
@@ -84,7 +86,9 @@ export default function RegisterForm({
 								/>
 							</Field>
 							<Field>
-								<FieldLabel htmlFor="surname">Surname</FieldLabel>
+								<FieldLabel htmlFor="surname">
+									Surname
+								</FieldLabel>
 								<Input
 									id="surname"
 									name="surname"
@@ -109,7 +113,9 @@ export default function RegisterForm({
 								/>
 							</Field>
 							<Field>
-								<FieldLabel htmlFor="password">Password</FieldLabel>
+								<FieldLabel htmlFor="password">
+									Password
+								</FieldLabel>
 								<Input
 									id="password"
 									name="password"
@@ -121,7 +127,11 @@ export default function RegisterForm({
 									onChange={handleChange}
 								/>
 							</Field>
-							<Button className="w-full" type="submit" disabled={loading}>
+							<Button
+								className="w-full"
+								type="submit"
+								disabled={loading}
+							>
 								{loading ? "Registering..." : "Register"}
 							</Button>
 						</div>
