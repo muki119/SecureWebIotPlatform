@@ -1,9 +1,10 @@
 import "./App.css";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router";
-import { AuthContextProvider } from "./contexts/auth_context_provider";
-import { Suspense, lazy } from "react";
-import Loading from "./pages/loading/loading";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthContextProvider } from "./contexts/auth_context_provider";
+import Loading from "./pages/loading/loading";
+
 const Home = lazy(() => import("./pages/home/home"));
 const Dashboard = lazy(() => import("./pages/dashboard/dashboard"));
 const Login = lazy(() => import("./pages/login/login"));
@@ -26,8 +27,14 @@ function App() {
 						<Route path="/dashboard" element={<Dashboard />} />
 						<Route path="/login" element={<Login />} />
 						<Route path="/register" element={<Register />} />
-						<Route path="/reset-password" element={<ResetPassword />} />
-						<Route path="/forgot-password" element={<ForgotPassword />} />
+						<Route
+							path="/reset-password"
+							element={<ResetPassword />}
+						/>
+						<Route
+							path="/forgot-password"
+							element={<ForgotPassword />}
+						/>
 					</Routes>
 				</Suspense>
 			</BrowserRouter>

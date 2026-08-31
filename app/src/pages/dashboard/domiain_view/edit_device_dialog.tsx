@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -6,12 +9,21 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import type { DeviceManagementInfo } from "@/types/models";
 
-export default function EditDeviceDialog({ isOpen, onOpenChange, device, onEdit }) {
+type EditDeviceDialogProps = {
+	isOpen: boolean;
+	onOpenChange: (open: boolean) => void;
+	device: DeviceManagementInfo | null;
+	onEdit: (deviceId: string, newName: string) => Promise<boolean>;
+};
+export default function EditDeviceDialog({
+	isOpen,
+	onOpenChange,
+	device,
+	onEdit,
+}: EditDeviceDialogProps) {
 	const [name, setName] = useState(device?.name ?? "");
 	const [loading, setLoading] = useState(false);
 
@@ -19,6 +31,7 @@ export default function EditDeviceDialog({ isOpen, onOpenChange, device, onEdit 
 		if (isOpen) setName(device?.name ?? "");
 	}, [isOpen, device?.name]);
 
+	if (!device) return null;
 	const handleSubmit = async () => {
 		if (!name.trim()) return;
 		setLoading(true);
@@ -49,10 +62,16 @@ export default function EditDeviceDialog({ isOpen, onOpenChange, device, onEdit 
 					/>
 				</div>
 				<DialogFooter>
-					<Button variant="outline" onClick={() => onOpenChange(false)}>
+					<Button
+						variant="outline"
+						onClick={() => onOpenChange(false)}
+					>
 						Cancel
 					</Button>
-					<Button onClick={handleSubmit} disabled={loading || !name.trim()}>
+					<Button
+						onClick={handleSubmit}
+						disabled={loading || !name.trim()}
+					>
 						{loading ? "Saving..." : "Save"}
 					</Button>
 				</DialogFooter>

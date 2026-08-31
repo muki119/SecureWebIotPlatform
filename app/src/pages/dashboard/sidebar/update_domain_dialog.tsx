@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -11,8 +13,17 @@ import {
 	FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useEffect, useMemo, useState } from "react";
+import type { TAuthState } from "@/types/auth_state";
+import type { Domains } from "@/types/models";
+
+type UpdateDomainDialogProps = {
+	domains: Domains;
+	selectedInfoDomain: string | null;
+	setSelectedInfoDomain: React.Dispatch<React.SetStateAction<string | null>>;
+	authState: TAuthState;
+	updateDomainSuccess: [boolean, string | null];
+	updateDomainName: (domainId: string, name: string) => Promise<void>;
+};
 
 export default function UpdateDomainDialog({
 	domains,
@@ -21,17 +32,18 @@ export default function UpdateDomainDialog({
 	setSelectedInfoDomain,
 	updateDomainSuccess,
 	updateDomainName,
-	isAdmin,
-}) {
+}: UpdateDomainDialogProps) {
 	const [domainDetails, setDomainDetails] = useState(
-		domains[selectedInfoDomain],
+		selectedInfoDomain ? domains[selectedInfoDomain] : null,
 	);
 
-	const handleChange = (e) => {
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (!domainDetails) return;
 		setDomainDetails({ ...domainDetails, name: e.target.value });
 	};
 
 	useEffect(() => {
+		if (!selectedInfoDomain) return;
 		setDomainDetails(domains[selectedInfoDomain]);
 	}, [selectedInfoDomain, domains]);
 
@@ -68,17 +80,26 @@ export default function UpdateDomainDialog({
 						<Button
 							variant="outline"
 							disabled={
-								!isOwner ||
-								domainDetails?.name === "" ||
-								domainDetails?.name === domains[selectedInfoDomain]?.name
+								!!selectedInfoDomain &&
+								(!isOwner ||
+									domainDetails?.name === "" ||
+									domainDetails?.name ===
+										domains[selectedInfoDomain]?.name)
 							}
-							onClick={() =>
-								updateDomainName(selectedInfoDomain, domainDetails?.name)
-							}
+							onClick={() => () => {
+								if (!selectedInfoDomain || !domainDetails)
+									return;
+								updateDomainName(
+									selectedInfoDomain,
+									domainDetails?.name,
+								);
+							}}
 						>
 							Save
 						</Button>
-						<FieldError>{!successfulUpdate && updateMessage}</FieldError>
+						<FieldError>
+							{!successfulUpdate && updateMessage}
+						</FieldError>
 					</Field>
 				</FieldGroup>
 			</DialogContent>

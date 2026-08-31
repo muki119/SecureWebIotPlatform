@@ -1,9 +1,26 @@
+import { format } from "date-fns";
+import { useContext, useEffect, useState } from "react";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import {
+	type ChartConfig,
+	ChartContainer,
+	ChartTooltip,
+	ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import {
 	Sheet,
 	SheetContent,
+	SheetDescription,
 	SheetHeader,
 	SheetTitle,
-	SheetDescription,
 } from "@/components/ui/sheet";
 import {
 	Table,
@@ -13,27 +30,11 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import {
-	Select,
-	SelectContent,
-	SelectGroup,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { Line, LineChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import {
-	ChartContainer,
-	ChartTooltip,
-	ChartTooltipContent,
-	type ChartConfig,
-} from "@/components/ui/chart";
-import { useContext, useState, useEffect } from "react";
-import { DashboardContext } from "../../../contexts/dashboard_context";
-import { AuthContext } from "@/contexts/auth_context";
 import { API_ROUTES } from "@/constants/api_routes";
+import { AuthContext } from "@/contexts/auth_context";
 import { AuthClientRequest } from "@/helpers/client_request";
-import { format } from "date-fns";
+import type { AggregatedTelemetry } from "@/types/models";
+import { DashboardContext } from "../../../contexts/dashboard_context";
 
 const telemetryChartConfig: ChartConfig = {
 	avg: { label: "Avg", color: "hsl(var(--chart-1))" },
@@ -41,36 +42,53 @@ const telemetryChartConfig: ChartConfig = {
 	max: { label: "Max", color: "hsl(var(--chart-3))" },
 };
 
-export default function DeviceTelemetrySheet({ isOpen, onOpenChange }) {
-	const { domainDevices, selectedDomain } = useContext(DashboardContext)!;
-	const { authState, authClientRequest } = useContext(AuthContext)!;
+type DeviceTelemetrySheetProps = {
+	isOpen: boolean;
+	onOpenChange: (open: boolean) => void;
+};
+export default function DeviceTelemetrySheet({
+	isOpen,
+	onOpenChange,
+}: DeviceTelemetrySheetProps) {
+	const dashboardContext = useContext(DashboardContext);
+	if (!dashboardContext) throw new Error("DashboardContext is undefined");
+	const { domainDevices, selectedDomain } = dashboardContext;
+	const authContext = useContext(AuthContext);
+	if (!authContext) throw new Error("AuthContext is undefined");
+	const { authState, authClientRequest } = authContext;
 
-	const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
+	const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(
+		null,
+	);
 	const [selectedCapability, setSelectedCapability] = useState<string | null>(
 		null,
 	);
 	const [interval, setInterval] = useState("WEEK");
-	const [data, setData] = useState<any[]>([]);
+	const [data, setData] = useState<AggregatedTelemetry[]>([]);
 	const [loading, setLoading] = useState(false);
 
 	const devices = selectedDomain
 		? Object.values(domainDevices[selectedDomain] ?? {})
 		: [];
-	const selectedDevice = selectedDeviceId
-		? domainDevices[selectedDomain!]?.[selectedDeviceId]
-		: null;
+	const selectedDevice =
+		selectedDeviceId && selectedDomain
+			? domainDevices[selectedDomain]?.[selectedDeviceId]
+			: null;
 	const capabilities = selectedDevice?.capabilities
 		? Object.entries(selectedDevice.capabilities)
 		: [];
 	const capabilityType =
-		selectedDevice?.capabilities?.[selectedCapability!]?.type;
+		selectedDevice &&
+		selectedCapability &&
+		selectedDevice?.capabilities?.[selectedCapability]?.type;
+
 	const isNumeric = capabilityType === "RANGE" || capabilityType === "GAUGE";
 
 	useEffect(() => {
 		if (!selectedDeviceId || !selectedCapability) return;
 		const fetchTelemetry = async () => {
 			setLoading(true);
-			const [r] = await authClientRequest.get(
+			const [r] = await authClientRequest.current.get(
 				API_ROUTES.DEVICE.GET_DEVICE_TELEMETRY(selectedDeviceId).path,
 				{
 					params: {
@@ -80,7 +98,7 @@ export default function DeviceTelemetrySheet({ isOpen, onOpenChange }) {
 					},
 					headers: {
 						Authorization: AuthClientRequest.createAuthHeader(
-							authState.accessToken!,
+							authState.accessToken,
 						),
 					},
 				},
@@ -120,16 +138,24 @@ export default function DeviceTelemetrySheet({ isOpen, onOpenChange }) {
 		setData([]);
 	};
 
-	const chartData = data.map((row) => ({
-		period: formatPeriod(row._id),
-		avg: row.avg != null ? parseFloat(row.avg.toFixed(2)) : null,
-		min: row.min != null ? parseFloat(row.min.toFixed(2)) : null,
-		max: row.max != null ? parseFloat(row.max.toFixed(2)) : null,
-	}));
+	const chartData = data
+		.filter(
+			(row): row is Extract<AggregatedTelemetry, { avg: number }> =>
+				"avg" in row,
+		)
+		.map((row) => ({
+			period: formatPeriod(row._id),
+			avg: row.avg != null ? parseFloat(row.avg.toFixed(2)) : null,
+			min: row.min != null ? parseFloat(row.min.toFixed(2)) : null,
+			max: row.max != null ? parseFloat(row.max.toFixed(2)) : null,
+		}));
 
 	return (
 		<Sheet open={isOpen} onOpenChange={onOpenChange}>
-			<SheetContent side="right" className="w-full sm:max-w-2xl flex flex-col">
+			<SheetContent
+				side="right"
+				className="w-full sm:max-w-2xl flex flex-col"
+			>
 				<SheetHeader>
 					<SheetTitle>Telemetry History</SheetTitle>
 					<SheetDescription>
@@ -148,7 +174,7 @@ export default function DeviceTelemetrySheet({ isOpen, onOpenChange }) {
 							</SelectTrigger>
 							<SelectContent>
 								<SelectGroup>
-									{devices.map((d: any) => (
+									{devices.map((d) => (
 										<SelectItem key={d.id} value={d.id}>
 											{d.name}
 										</SelectItem>
@@ -167,7 +193,7 @@ export default function DeviceTelemetrySheet({ isOpen, onOpenChange }) {
 							</SelectTrigger>
 							<SelectContent>
 								<SelectGroup>
-									{capabilities.map(([key, cap]: [string, any]) => (
+									{capabilities.map(([key, cap]) => (
 										<SelectItem key={key} value={key}>
 											{cap.label ?? key}
 										</SelectItem>
@@ -183,13 +209,17 @@ export default function DeviceTelemetrySheet({ isOpen, onOpenChange }) {
 							<SelectContent>
 								<SelectItem value="DAY">Today</SelectItem>
 								<SelectItem value="WEEK">This Week</SelectItem>
-								<SelectItem value="MONTH">This Month</SelectItem>
+								<SelectItem value="MONTH">
+									This Month
+								</SelectItem>
 							</SelectContent>
 						</Select>
 					</div>
 
 					{loading && (
-						<p className="text-sm text-muted-foreground">Loading...</p>
+						<p className="text-sm text-muted-foreground">
+							Loading...
+						</p>
 					)}
 
 					{!loading && !selectedCapability && (
@@ -209,7 +239,10 @@ export default function DeviceTelemetrySheet({ isOpen, onOpenChange }) {
 							config={telemetryChartConfig}
 							className="aspect-auto h-64 w-full"
 						>
-							<LineChart data={chartData} margin={{ left: 8, right: 8 }}>
+							<LineChart
+								data={chartData}
+								margin={{ left: 8, right: 8 }}
+							>
 								<CartesianGrid vertical={false} />
 								<XAxis
 									dataKey="period"
@@ -223,8 +256,15 @@ export default function DeviceTelemetrySheet({ isOpen, onOpenChange }) {
 									axisLine={false}
 									width={36}
 								/>
-								<ChartTooltip content={<ChartTooltipContent />} />
-								<Line dataKey="avg" dot={false} strokeWidth={2} connectNulls />
+								<ChartTooltip
+									content={<ChartTooltipContent />}
+								/>
+								<Line
+									dataKey="avg"
+									dot={false}
+									strokeWidth={2}
+									connectNulls
+								/>
 								<Line
 									dataKey="min"
 									dot={false}
@@ -252,14 +292,18 @@ export default function DeviceTelemetrySheet({ isOpen, onOpenChange }) {
 								</TableRow>
 							</TableHeader>
 							<TableBody>
-								{data.map((row, i) => (
-									<TableRow key={i}>
-										<TableCell className="text-xs text-muted-foreground">
-											{formatPeriod(row._id)}
-										</TableCell>
-										<TableCell>{String(row.last)}</TableCell>
-									</TableRow>
-								))}
+								{data
+									.filter((row) => "last" in row)
+									.map((row) => (
+										<TableRow key={row._id?.toString()}>
+											<TableCell className="text-xs text-muted-foreground">
+												{formatPeriod(row._id)}
+											</TableCell>
+											<TableCell>
+												{String(row.last)}
+											</TableCell>
+										</TableRow>
+									))}
 							</TableBody>
 						</Table>
 					)}

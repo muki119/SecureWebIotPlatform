@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -7,11 +8,18 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import {
+	Field,
+	FieldError,
+	FieldGroup,
+	FieldLabel,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
 
-export default function ResetForm({ onReset, error }: {
+export default function ResetForm({
+	onReset,
+	error,
+}: {
 	onReset: (password: string) => void;
 	error: string | null;
 }) {
@@ -33,7 +41,9 @@ export default function ResetForm({ onReset, error }: {
 		<Card className="w-full max-w-sm mx-auto">
 			<CardHeader>
 				<CardTitle>Reset Password</CardTitle>
-				<CardDescription>Enter a new password for your account.</CardDescription>
+				<CardDescription>
+					Enter a new password for your account.
+				</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<form onSubmit={handleSubmit}>
@@ -41,7 +51,9 @@ export default function ResetForm({ onReset, error }: {
 						<FieldError>{localError ?? error}</FieldError>
 						<div className="flex flex-col gap-4">
 							<Field>
-								<FieldLabel htmlFor="password">New Password</FieldLabel>
+								<FieldLabel htmlFor="password">
+									New Password
+								</FieldLabel>
 								<Input
 									id="password"
 									type="password"
@@ -49,11 +61,15 @@ export default function ResetForm({ onReset, error }: {
 									required
 									minLength={8}
 									value={password}
-									onChange={(e) => setPassword(e.target.value)}
+									onChange={(e) =>
+										setPassword(e.target.value)
+									}
 								/>
 							</Field>
 							<Field>
-								<FieldLabel htmlFor="confirm">Confirm Password</FieldLabel>
+								<FieldLabel htmlFor="confirm">
+									Confirm Password
+								</FieldLabel>
 								<Input
 									id="confirm"
 									type="password"

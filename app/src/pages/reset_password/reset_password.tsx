@@ -1,12 +1,16 @@
-import ResetForm from "./reset_form";
-import SuccessfulResetCard from "./successful_reset_card";
-import { useSearchParams, useNavigate } from "react-router";
-import { useState, useContext } from "react";
+import { useContext, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { API_ROUTES } from "@/constants/api_routes";
 import { AuthContext } from "@/contexts/auth_context";
+import ResetForm from "./reset_form";
+import SuccessfulResetCard from "./successful_reset_card";
 
 export default function ResetPassword() {
-	const { authClientRequest } = useContext(AuthContext)!;
+	const authContext = useContext(AuthContext);
+	if (!authContext) {
+		throw new Error("AuthContext is not available");
+	}
+	const { authClientRequest } = authContext;
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const resetToken = searchParams.get("token");
@@ -20,7 +24,7 @@ export default function ResetPassword() {
 
 	const handleReset = async (password: string) => {
 		setError(null);
-		const [r, err] = await authClientRequest.post(
+		const [r, err] = await authClientRequest.current.post(
 			API_ROUTES.AUTH.RESET_PASSWORD.path,
 			{ password },
 			{

@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -6,10 +8,15 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { useEffect, useMemo, useState } from "react";
-
-import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import {
+	Popover,
+	PopoverContent,
+	PopoverDescription,
+	PopoverHeader,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import {
 	Select,
 	SelectContent,
@@ -26,17 +33,31 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { ROLES } from "@/constants/role_permissions";
-
-import { Input } from "@/components/ui/input";
+import type { TAuthState } from "@/types/auth_state";
+import type { Domains } from "@/types/models";
 import { decodeName } from "@/utilities/decode_name";
-import {
-	Popover,
-	PopoverContent,
-	PopoverDescription,
-	PopoverHeader,
-	PopoverTrigger,
-} from "@/components/ui/popover";
 
+type DomainDetailsDialogProps = {
+	authState: TAuthState;
+	selectedViewDetailsDomain: string | null;
+	fetchDomainUsers: (domainId: string) => Promise<void>;
+	setSelectedViewDetailsDomain: React.Dispatch<
+		React.SetStateAction<string | null>
+	>;
+	domains: Domains;
+	removeUser: (domainId: string, userId: string) => Promise<void>;
+	updateUserRole: (
+		domainId: string,
+		userId: string,
+		newRole: string,
+	) => Promise<void>;
+	updateDomainUserSuccess: [boolean, string | null];
+	setUpdateDomainUserSuccess: React.Dispatch<
+		React.SetStateAction<[boolean, string | null]>
+	>;
+	deleteDomain: (domainId: string) => Promise<void>;
+	isAdmin: boolean;
+};
 export default function DomaindDetailsDialog({
 	authState,
 	selectedViewDetailsDomain, // the domainId of the selected domain
@@ -49,7 +70,7 @@ export default function DomaindDetailsDialog({
 	setUpdateDomainUserSuccess,
 	deleteDomain,
 	isAdmin,
-}) {
+}: DomainDetailsDialogProps) {
 	// get the domains object , the selected domain id and the set selected
 	// going to display the domain basic info and all the users(paginated)
 	// going to dynamically load the users of the domain
@@ -57,7 +78,11 @@ export default function DomaindDetailsDialog({
 	const [userSearch, setUserSearch] = useState("");
 
 	const filteredUsers = useMemo(() => {
-		if (!domains[selectedViewDetailsDomain]?.users) return [];
+		if (
+			!selectedViewDetailsDomain ||
+			!domains[selectedViewDetailsDomain]?.users
+		)
+			return [];
 		return Object.values(domains[selectedViewDetailsDomain].users).filter(
 			(user) =>
 				user.name
@@ -69,7 +94,7 @@ export default function DomaindDetailsDialog({
 		);
 	}, [userSearch, domains, selectedViewDetailsDomain]);
 
-	const handleChange = (e) => {
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		// purpose is to debounce at some point
 		setUserSearch(e.target.value);
 	};
@@ -82,7 +107,7 @@ export default function DomaindDetailsDialog({
 		) {
 			fetchDomainUsers(selectedViewDetailsDomain);
 		}
-	}, [selectedViewDetailsDomain]);
+	}, [selectedViewDetailsDomain, fetchDomainUsers, domains]);
 
 	return (
 		// a dialog - at the top is the domain name and when it was created , then a paginated or infinite scroll list of users ,each user can be chosen to remove or change role - optional display probably needs getting roles of the user
@@ -97,16 +122,24 @@ export default function DomaindDetailsDialog({
 				<DialogHeader>
 					<DialogTitle>Domain Info</DialogTitle>
 					<DialogDescription>
-						Domain Name: {decodeName(domains[selectedViewDetailsDomain]?.name)}
+						Domain Name:{" "}
+						{selectedViewDetailsDomain &&
+							decodeName(
+								domains[selectedViewDetailsDomain]?.name,
+							)}
 					</DialogDescription>
 				</DialogHeader>
 				<div>
 					{updateDomainUserSuccess[0] && (
-						<span className="text-green-500">{updateDomainUserSuccess[1]}</span>
+						<span className="text-green-500">
+							{updateDomainUserSuccess[1]}
+						</span>
 					)}
 					{updateDomainUserSuccess[0] === false &&
 						updateDomainUserSuccess[1] && (
-							<span className="text-red-500">{updateDomainUserSuccess[1]}</span>
+							<span className="text-red-500">
+								{updateDomainUserSuccess[1]}
+							</span>
 						)}
 				</div>
 				<Table>
@@ -139,6 +172,7 @@ export default function DomaindDetailsDialog({
 										currentRole={user.role}
 										isAdmin={isAdmin}
 										onChange={(newRole) =>
+											selectedViewDetailsDomain &&
 											updateUserRole(
 												selectedViewDetailsDomain,
 												user.userId,
@@ -150,60 +184,82 @@ export default function DomaindDetailsDialog({
 								<TableCell>
 									<ConfirmationPopover
 										onConfirm={() =>
-											removeUser(selectedViewDetailsDomain, user.userId)
+											selectedViewDetailsDomain &&
+											removeUser(
+												selectedViewDetailsDomain,
+												user.userId,
+											)
 										}
 										description="Are you sure you want to remove this user?"
 										disabled={user.role === "OWNER"}
 									>
 										<Button
 											variant="destructive"
-											disabled={user.role === "OWNER" || !isAdmin}
+											disabled={
+												user.role === "OWNER" ||
+												!isAdmin
+											}
 										>
 											Remove
 										</Button>
 									</ConfirmationPopover>
 								</TableCell>
 								<TableCell>
-									{new Date(user.dateJoined).toLocaleDateString()}
+									{new Date(
+										user.dateJoined,
+									).toLocaleDateString()}
 								</TableCell>
 							</TableRow>
 						))}
 					</TableBody>
 				</Table>
 				<DialogFooter>
-					<Field>
-						<FieldLabel className="leading-7 not-first:mt-6 flex items-center justify-between">
-							Created:{" "}
-							{new Date(
-								domains[selectedViewDetailsDomain]?.createdAt,
-							).toLocaleDateString()}
-							<ConfirmationPopover
-								onConfirm={() => deleteDomain(selectedViewDetailsDomain)}
-								description="Are you sure you want to delete this domain? This action cannot be undone."
-								disabled={
-									domains[selectedViewDetailsDomain]?.ownerId !==
-									authState?.user?.userId
-								}
-							>
-								<Button
-									variant="destructive"
+					{selectedViewDetailsDomain && (
+						<Field>
+							<FieldLabel className="leading-7 not-first:mt-6 flex items-center justify-between">
+								Created:{" "}
+								{new Date(
+									domains[selectedViewDetailsDomain]
+										?.createdAt,
+								).toLocaleDateString()}
+								<ConfirmationPopover
+									onConfirm={() =>
+										deleteDomain(selectedViewDetailsDomain)
+									}
+									description="Are you sure you want to delete this domain? This action cannot be undone."
 									disabled={
-										domains[selectedViewDetailsDomain]?.ownerId !==
+										domains[selectedViewDetailsDomain]
+											?.ownerId !==
 										authState?.user?.userId
 									}
 								>
-									Delete Domain
-								</Button>
-							</ConfirmationPopover>
-						</FieldLabel>
-					</Field>
+									<Button
+										variant="destructive"
+										disabled={
+											domains[selectedViewDetailsDomain]
+												?.ownerId !==
+											authState?.user?.userId
+										}
+									>
+										Delete Domain
+									</Button>
+								</ConfirmationPopover>
+							</FieldLabel>
+						</Field>
+					)}
 				</DialogFooter>
 			</DialogContent>
 		</Dialog>
 	);
 }
 
-const RoleSwitch = ({ currentRole, onChange, isAdmin }) => {
+type RoleSwitchProps = {
+	currentRole: string;
+	onChange: (newRole: string) => void;
+	isAdmin: boolean;
+};
+
+const RoleSwitch = ({ currentRole, onChange, isAdmin }: RoleSwitchProps) => {
 	return (
 		<Select
 			value={currentRole}
@@ -215,8 +271,10 @@ const RoleSwitch = ({ currentRole, onChange, isAdmin }) => {
 			</SelectTrigger>
 			<SelectContent>
 				{Object.values(ROLES).map((role) => {
-					if (currentRole === "OWNER" && role !== "OWNER") return null;
-					if (currentRole !== "OWNER" && role === "OWNER") return null;
+					if (currentRole === "OWNER" && role !== "OWNER")
+						return null;
+					if (currentRole !== "OWNER" && role === "OWNER")
+						return null;
 					return (
 						<SelectItem key={role} value={role}>
 							{role}
@@ -228,15 +286,23 @@ const RoleSwitch = ({ currentRole, onChange, isAdmin }) => {
 	);
 };
 
+type ConfirmationPopoverProps = {
+	onConfirm: () => void;
+	children: React.ReactNode;
+	description: string;
+	disabled?: boolean;
+};
 const ConfirmationPopover = ({
 	onConfirm,
 	children,
 	description,
 	...props
-}) => {
+}: ConfirmationPopoverProps) => {
 	return (
 		<Popover {...props}>
-			<PopoverTrigger disabled={props.disabled}>{children}</PopoverTrigger>
+			<PopoverTrigger disabled={props.disabled}>
+				{children}
+			</PopoverTrigger>
 			<PopoverContent>
 				<PopoverHeader>Confirm Action</PopoverHeader>
 				<PopoverDescription>{description}</PopoverDescription>

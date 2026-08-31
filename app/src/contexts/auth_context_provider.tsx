@@ -1,8 +1,8 @@
-import { useReducer, useRef, useCallback } from "react";
+import type { AxiosResponse } from "axios";
+import { useCallback, useReducer, useRef } from "react";
+import { API_ROUTES } from "@/constants/api_routes";
 import { AuthClientRequest } from "@/helpers/client_request";
 import { AuthContext, AuthUserState } from "./auth_context";
-import { API_ROUTES } from "@/constants/api_routes";
-import type { AxiosResponse } from "axios";
 
 export function AuthContextProvider({
 	children,

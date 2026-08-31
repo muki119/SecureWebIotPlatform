@@ -1,3 +1,6 @@
+import { Search } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
 	Dialog,
 	DialogContent,
@@ -17,11 +20,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-
 import useDebounce from "@/hooks/use-debounce";
-import { Search } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 export default function AddUserDialog({
 	isOpen,
 	onOpenChange,

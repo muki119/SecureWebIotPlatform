@@ -1,11 +1,15 @@
-import { useState, useContext } from "react";
-import RegisterForm from "./register_form";
-import SuccessCard from "./success_card";
+import { useContext, useState } from "react";
 import { API_ROUTES } from "@/constants/api_routes";
 import { AuthContext } from "@/contexts/auth_context";
+import RegisterForm from "./register_form";
+import SuccessCard from "./success_card";
 
 export default function Register() {
-	const { authClientRequest } = useContext(AuthContext)!;
+	const authContext = useContext(AuthContext);
+	if (!authContext) {
+		throw new Error("AuthContext is not available");
+	}
+	const { authClientRequest } = authContext;
 	const [isRegistered, setIsRegistered] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
@@ -18,7 +22,7 @@ export default function Register() {
 	) => {
 		setError(null);
 		setLoading(true);
-		const [r, err] = await authClientRequest.post(
+		const [r, err] = await authClientRequest.current.post(
 			API_ROUTES.AUTH.REGISTER.path,
 			{
 				forename,

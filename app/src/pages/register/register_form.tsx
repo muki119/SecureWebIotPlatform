@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -7,14 +8,13 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
 	Field,
 	FieldError,
 	FieldGroup,
 	FieldLabel,
 } from "@/components/ui/field";
-import { useState } from "react";
+import { Input } from "@/components/ui/input";
 import useDebounce from "@/hooks/use-debounce";
 
 export default function RegisterForm({
@@ -38,14 +38,16 @@ export default function RegisterForm({
 		password: "",
 	});
 
-	const handleChange = (e) => {
+	const handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void = (
+		e,
+	) => {
 		const { name, value } = e.target;
 		setForm((prev) => ({ ...prev, [name]: value }));
 	};
 
 	const debouncedRegister = useDebounce(onRegister, 500);
 
-	const handleSubmit = (e) => {
+	const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		debouncedRegister(
 			form.forename.trim(),
@@ -69,7 +71,9 @@ export default function RegisterForm({
 						<FieldError>{error}</FieldError>
 						<div className="flex flex-col gap-4">
 							<Field>
-								<FieldLabel htmlFor="forename">Forename</FieldLabel>
+								<FieldLabel htmlFor="forename">
+									Forename
+								</FieldLabel>
 								<Input
 									id="forename"
 									name="forename"
@@ -82,7 +86,9 @@ export default function RegisterForm({
 								/>
 							</Field>
 							<Field>
-								<FieldLabel htmlFor="surname">Surname</FieldLabel>
+								<FieldLabel htmlFor="surname">
+									Surname
+								</FieldLabel>
 								<Input
 									id="surname"
 									name="surname"
@@ -107,7 +113,9 @@ export default function RegisterForm({
 								/>
 							</Field>
 							<Field>
-								<FieldLabel htmlFor="password">Password</FieldLabel>
+								<FieldLabel htmlFor="password">
+									Password
+								</FieldLabel>
 								<Input
 									id="password"
 									name="password"
@@ -119,7 +127,11 @@ export default function RegisterForm({
 									onChange={handleChange}
 								/>
 							</Field>
-							<Button className="w-full" type="submit" disabled={loading}>
+							<Button
+								className="w-full"
+								type="submit"
+								disabled={loading}
+							>
 								{loading ? "Registering..." : "Register"}
 							</Button>
 						</div>

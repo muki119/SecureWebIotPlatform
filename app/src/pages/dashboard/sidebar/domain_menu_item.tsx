@@ -1,3 +1,4 @@
+import { EllipsisVerticalIcon } from "lucide-react";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -5,12 +6,22 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-	SidebarMenuItem,
-	SidebarMenuButton,
 	SidebarMenuAction,
+	SidebarMenuButton,
+	SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { EllipsisVerticalIcon } from "lucide-react";
 
+type DomainMenuItemProps = {
+	id: string;
+	name: string;
+	isCurrent?: boolean;
+	onSelect: () => void;
+	setLeaveDomainId: React.Dispatch<React.SetStateAction<string | null>>;
+	setSelectedInfoDomain: React.Dispatch<React.SetStateAction<string | null>>;
+	setSelectedViewDetailsDomain: React.Dispatch<
+		React.SetStateAction<string | null>
+	>;
+};
 export default function DomainMenuItem({
 	id,
 	name,
@@ -19,11 +30,17 @@ export default function DomainMenuItem({
 	setLeaveDomainId,
 	setSelectedInfoDomain,
 	setSelectedViewDetailsDomain,
-}) {
+}: DomainMenuItemProps) {
 	return (
 		<SidebarMenuItem>
-			<SidebarMenuButton onClick={onSelect} isActive={isCurrent} size="lg">
-				<span className="text-sm font-medium truncate w-full">{name}</span>
+			<SidebarMenuButton
+				onClick={onSelect}
+				isActive={isCurrent}
+				size="lg"
+			>
+				<span className="text-sm font-medium truncate w-full">
+					{name}
+				</span>
 			</SidebarMenuButton>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
@@ -32,8 +49,12 @@ export default function DomainMenuItem({
 					</SidebarMenuAction>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent side="right" align="start">
-					<DropdownMenuItem onClick={onSelect}>View Domain</DropdownMenuItem>
-					<DropdownMenuItem onClick={() => setSelectedViewDetailsDomain(id)}>
+					<DropdownMenuItem onClick={onSelect}>
+						View Domain
+					</DropdownMenuItem>
+					<DropdownMenuItem
+						onClick={() => setSelectedViewDetailsDomain(id)}
+					>
 						Domain Details
 					</DropdownMenuItem>
 					<DropdownMenuItem onClick={() => setSelectedInfoDomain(id)}>

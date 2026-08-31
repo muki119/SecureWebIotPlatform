@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -7,7 +8,6 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import { useNavigate } from "react-router";
 
 export default function SuccessfulResetCard() {
 	const navigate = useNavigate();
@@ -18,8 +18,8 @@ export default function SuccessfulResetCard() {
 			</CardHeader>
 			<CardContent>
 				<CardDescription>
-					Your password has been successfully reset. You can now log in with your
-					new password.
+					Your password has been successfully reset. You can now log
+					in with your new password.
 				</CardDescription>
 			</CardContent>
 			<CardFooter>

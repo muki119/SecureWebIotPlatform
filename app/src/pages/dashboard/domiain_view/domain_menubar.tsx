@@ -1,10 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+
+type DomainMenuBarProps = {
+	setAddDeviceDialogOpen: (open: boolean) => void;
+	setAddUserDialogOpen: (open: boolean) => void;
+	setIsDomainTransactionsDialogOpen: (open: boolean) => void;
+};
 export default function DomainMenuBar({
 	setAddDeviceDialogOpen,
 	setAddUserDialogOpen,
 	setIsDomainTransactionsDialogOpen,
-}) {
+}: DomainMenuBarProps) {
 	return (
 		<Card className="w-full mb-2">
 			<CardContent>
