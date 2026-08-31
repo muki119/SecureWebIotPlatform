@@ -7,6 +7,13 @@
 
 export type TAuthState = {
 	isAuthenticated: boolean;
-	user: Record<string, string | number | boolean | Date> | null;
+	user: UserInfo | null;
 	accessToken: string | null;
+};
+
+
+export type UserInfo = {
+	userId: string;
+	email: string;
+	name: string;
 };

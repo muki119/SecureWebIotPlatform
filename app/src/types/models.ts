@@ -15,10 +15,13 @@ export interface ITransactionModel {
 }
 
 export type Role = (typeof ROLES)[keyof typeof ROLES];
+
 export type User = {
 	userId: string;
 	role: Role;
-	[key: string]: unknown;
+	name: string;
+	email: string;
+	dateJoined: string;
 };
 
 export type Domain = {

@@ -41,11 +41,15 @@ export default function LeaveDomainAlertDialog({
 				<AlertDialogFooter>
 					<FieldGroup>
 						<Field>
-							<AlertDialogCancel onClick={() => setLeaveDomainId(null)}>
+							<AlertDialogCancel
+								onClick={() => setLeaveDomainId(null)}
+							>
 								Cancel
 							</AlertDialogCancel>
 							<AlertDialogAction
-								onClick={() => domainId && leaveDomain(domainId)}
+								onClick={() =>
+									domainId && leaveDomain(domainId)
+								}
 							>
 								Leave
 							</AlertDialogAction>

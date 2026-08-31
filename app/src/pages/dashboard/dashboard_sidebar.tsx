@@ -48,8 +48,9 @@ export default function DashboardSidebar() {
 	const [updateDomainUserSuccess, setUpdateDomainUserSuccess] = useState<
 		[boolean, string | null]
 	>([false, null]);
-	const [selectedViewDetailsDomain, setSelectedViewDetailsDomain] =
-		useState(null);
+	const [selectedViewDetailsDomain, setSelectedViewDetailsDomain] = useState<
+		string | null
+	>(null);
 
 	const createDomain = async (domainName: string) => {
 		try {
@@ -187,7 +188,10 @@ export default function DashboardSidebar() {
 					...prev,
 					[domainId]: { ...prev[domainId], ...newDomain },
 				}));
-				setUpdateDomainSuccess([true, "Domain name updated successfully"]);
+				setUpdateDomainSuccess([
+					true,
+					"Domain name updated successfully",
+				]);
 			}
 			if (r?.status === 400) {
 				setUpdateDomainSuccess([false, r.data.message]);
