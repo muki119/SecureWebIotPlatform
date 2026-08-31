@@ -38,7 +38,7 @@ export default function DashboardSidebar() {
 	const [leaveDomainSuccess, setLeaveDomainSuccess] = useState<
 		[boolean, string | null]
 	>([false, null]);
-	const [leaveDomainId, setLeaveDomainId] = useState(null);
+	const [leaveDomainId, setLeaveDomainId] = useState<string | null>(null);
 	const [selectedInfoDomain, setSelectedInfoDomain] = useState<string | null>(
 		null,
 	);
@@ -187,10 +187,7 @@ export default function DashboardSidebar() {
 					...prev,
 					[domainId]: { ...prev[domainId], ...newDomain },
 				}));
-				setUpdateDomainSuccess([
-					true,
-					"Domain name updated successfully",
-				]);
+				setUpdateDomainSuccess([true, "Domain name updated successfully"]);
 			}
 			if (r?.status === 400) {
 				setUpdateDomainSuccess([false, r.data.message]);

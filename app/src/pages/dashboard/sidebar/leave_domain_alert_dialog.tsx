@@ -16,12 +16,18 @@ import {
 	FieldGroup,
 } from "@/components/ui/field";
 
+type LeaveDomainAlertDialogProps = {
+	domainId: string | null;
+	leaveDomain: (domainId: string) => void;
+	setLeaveDomainId: React.Dispatch<React.SetStateAction<string | null>>;
+	leaveDomainSuccess: [boolean, string | null];
+};
 export default function LeaveDomainAlertDialog({
 	domainId,
 	leaveDomain,
 	setLeaveDomainId,
 	leaveDomainSuccess,
-}) {
+}: LeaveDomainAlertDialogProps) {
 	return (
 		<AlertDialog open={domainId !== null}>
 			<AlertDialogTrigger asChild></AlertDialogTrigger>
@@ -38,7 +44,9 @@ export default function LeaveDomainAlertDialog({
 							<AlertDialogCancel onClick={() => setLeaveDomainId(null)}>
 								Cancel
 							</AlertDialogCancel>
-							<AlertDialogAction onClick={() => leaveDomain(domainId)}>
+							<AlertDialogAction
+								onClick={() => domainId && leaveDomain(domainId)}
+							>
 								Leave
 							</AlertDialogAction>
 						</Field>
