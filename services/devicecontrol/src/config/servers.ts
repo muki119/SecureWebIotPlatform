@@ -5,7 +5,7 @@
 import { createServer } from "node:http";
 import express from "express";
 import { Server } from "socket.io";
-import { CreateRedisAdapter } from "./";
+import { CreateRedisAdapter } from "./redis_adapter";
 
 export const app = express();
 export const httpServer = createServer(app);

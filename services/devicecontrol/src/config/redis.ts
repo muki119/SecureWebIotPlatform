@@ -1,4 +1,4 @@
 import { ConnectToServiceRedis } from "@services/common/config";
-import { logger } from "./";
+import { logger } from "./logger";
 
 export const RedisClient = await ConnectToServiceRedis(logger);
