@@ -27,7 +27,7 @@ import type {
 } from "../../types/models";
 import DashboardSidebar from "./dashboard_sidebar";
 import DeviceView from "./device_view";
-import DomainView from "./domiain_view/domain_view";
+import DomainView from "./domain_view/domain_view";
 
 export default function Dashboard() {
 	const [domains, setDomains] = useState<Domains>({}); // going to do a key value where the key is the domain id and the value is the domain data
