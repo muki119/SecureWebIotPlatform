@@ -2,6 +2,11 @@
 	"$schema": "https://biomejs.dev/schemas/2.5.9/schema.json",
 	"root": false,
 	"extends": ["../biome.json"],
+	"linter": {
+		"domains": {
+			"react": "recommended"
+		}
+	},
 	"overrides": [
 		{
 			"includes": ["src/components/ui/**"],
@@ -9,20 +14,10 @@
 				"enabled": false
 			},
 			"formatter": {
-				"enabled": false,
-				"formatWithErrors": true
+				"enabled": false
 			},
 			"assist": {
 				"enabled": false
-			},
-			"css": {
-				"parser": {
-					"cssModules": true,
-					"tailwindDirectives": true
-				},
-				"formatter": {
-					"enabled": true
-				}
 			}
 		}
 	]
