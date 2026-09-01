@@ -17,6 +17,7 @@ export interface ITransactionModel {
 export type Role = (typeof ROLES)[keyof typeof ROLES];
 
 export type User = {
+	id: string;
 	userId: string;
 	role: Role;
 	name: string;
@@ -24,6 +25,11 @@ export type User = {
 	dateJoined: string;
 };
 
+export interface IProfile {
+	userId: string;
+	email: string;
+	name: string;
+}
 export type Domain = {
 	id: string;
 	name: string;

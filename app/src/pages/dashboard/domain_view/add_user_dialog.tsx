@@ -21,16 +21,25 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import useDebounce from "@/hooks/use-debounce";
+import type { User } from "@/types/models";
+import type { Result } from "@/types/result";
+
+type AddUserDialogProps = {
+	isOpen: boolean;
+	onOpenChange: (open: boolean) => void;
+	addUser: (id: string) => Promise<Result<boolean>>;
+	userSearch: (query: string) => Promise<User[]>;
+};
 export default function AddUserDialog({
 	isOpen,
 	onOpenChange,
 	addUser,
 	userSearch,
-}) {
+}: AddUserDialogProps) {
 	const [inputValue, setInputValue] = useState("");
-	const [results, setResults] = useState([]);
+	const [results, setResults] = useState<User[]>([]);
 
-	const handleAddUser = async (id) => {
+	const handleAddUser = async (id: string) => {
 		const [success, message] = await addUser(id);
 		if (success) {
 			toast.success("User added successfully");
@@ -47,7 +56,7 @@ export default function AddUserDialog({
 		userSearch(value).then((res) => setResults(res ?? []));
 	}, 300);
 
-	const handleInputChange = (e) => {
+	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
 		setInputValue(value); // update display immediately
 		debouncedSearch(value); // fire search after delay

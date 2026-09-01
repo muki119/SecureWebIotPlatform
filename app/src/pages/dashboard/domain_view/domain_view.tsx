@@ -20,7 +20,8 @@ import {
 import { API_ROUTES } from "@/constants/api_routes";
 import { AuthContext } from "@/contexts/auth_context";
 import { AuthClientRequest } from "@/helpers/client_request";
-import type { DeviceManagementInfo, IDevice } from "@/types/models";
+import type { DeviceManagementInfo, IDevice, User } from "@/types/models";
+import type { Result } from "@/types/result";
 import { DashboardContext } from "../../../contexts/dashboard_context";
 import AddDeviceDialog from "./add_device_dialog";
 import AddUserDialog from "./add_user_dialog";
@@ -158,8 +159,10 @@ export default function DomainView() {
 		return null;
 	};
 
-	const addUser = async (id: string) => {
-		if (!current) return;
+	const addUser: (id: string) => Promise<Result<boolean>> = async (
+		id: string,
+	) => {
+		if (!current) return [false, "No domain selected"];
 		const [r, err] = await authClientRequest.current.post(
 			API_ROUTES.DOMAIN.ADD_USER(current).path,
 			{ id },
@@ -178,7 +181,7 @@ export default function DomainView() {
 					err === AuthClientRequest.ErrInvalidRefreshToken
 				) {
 					logout();
-					return;
+					return [false, "Unauthorized"];
 				}
 				if (err === AuthClientRequest.ErrServerError) {
 					toast.error("Server error while adding user to domain", {
@@ -196,7 +199,9 @@ export default function DomainView() {
 		}
 		return [false, "Failed to add user to domain"];
 	};
-	const userSearch = async (email: string) => {
+	const userSearch: (email: string) => Promise<User[]> = async (
+		email: string,
+	) => {
 		const [r, err] = await authClientRequest.current.get(
 			API_ROUTES.PROFILE.SEARCH_USERS.path,
 			{
