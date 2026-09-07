@@ -43,7 +43,8 @@ var server = app.listen(Port, async (err) => {
 	}
 	logger.info(`Authentication Service is running on port ${Port}`);
 });
-process.on("SIGINT", () => {
+
+const shutdown = () => {
 	if (server) {
 		server.close(async () => {
 			logger.info("Authentication Service has been stopped.");
@@ -56,7 +57,9 @@ process.on("SIGINT", () => {
 		});
 	}
 	logger.info(`Shutting down , with grace...`);
-});
+}
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
 // for functions that require the return values to be difinitive like a hash validity check , they will return their specified values and only log the errors
 // otherwise all other functions will throw errors with the original error as the cause and the caller functions will log the errors and handle them accordingly
