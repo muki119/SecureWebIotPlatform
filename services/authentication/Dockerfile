@@ -40,7 +40,10 @@ RUN npm install --production
 
 ENV NODE_ENV=production
 ENV PORT=2556
+ENV OTEL_SERVICE_NAME=authentication
+ENV OTEL_PROMETHEUS_PORT=9464
 EXPOSE 2556
+EXPOSE 9464
 
 
-CMD [ "node","dist/index.js" ]
+CMD [ "node", "--import", "./dist/instrumentation.js", "dist/index.js" ]

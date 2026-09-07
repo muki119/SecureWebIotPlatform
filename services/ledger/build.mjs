@@ -5,7 +5,11 @@ import esbuild from "esbuild";
 console.log("Starting build process...");
 console.log(dirname(fileURLToPath(import.meta.url)));
 await esbuild.build({
-	entryPoints: ["./index.ts", "./src/bus/ledger_service_worker.ts"],
+	entryPoints: [
+		"./index.ts",
+		"./instrumentation.ts",
+		"./src/bus/ledger_service_worker.ts",
+	],
 	bundle: true,
 	platform: "node",
 	target: "esNext",
