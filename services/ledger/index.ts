@@ -1,12 +1,21 @@
+import { CreateHealthChecks } from "@services/common/config";
 import { GetEnvNumber } from "@services/common/utilities";
 import cookieParser from "cookie-parser";
 import express from "express";
 import { rateLimit } from "express-rate-limit";
 import { EventBusInstance, logger } from "./src/config";
 import { ErrorHandlerMiddleware } from "./src/middleware";
+import { TransactionModelInstance } from "./src/models/transactions_model";
 import { LedgerRouter } from "./src/routes";
 
 const app = express();
+
+app.use(
+	CreateHealthChecks([
+		{ name: "postgres", isReady: () => TransactionModelInstance.ready },
+		{ name: "event_bus", isReady: () => EventBusInstance.ready },
+	]),
+);
 
 const limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
