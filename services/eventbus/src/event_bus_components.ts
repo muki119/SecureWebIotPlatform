@@ -121,6 +121,10 @@ export class EventSender {
 			);
 		}
 	}
+
+	public get ready() {
+		return this.conn.isReady;
+	}
 	public async close() {
 		await this.conn.quit();
 	}
@@ -222,7 +226,7 @@ export class EventListener {
 		}
 	}
 
-	public isListening(): boolean {
+	public get isListening(): boolean {
 		return this.listening;
 	}
 
@@ -393,6 +397,14 @@ export class EventListener {
 				cause: error instanceof Error ? error : undefined,
 			});
 		}
+	}
+
+	public get ready(): boolean {
+		return (
+			this.nonBlockingConn.isReady &&
+			this.listenerConn.isReady &&
+			this.isListening
+		);
 	}
 
 	/**
