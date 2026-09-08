@@ -14,6 +14,7 @@ import { authRoutes } from "./src/routes/auth_routes";
 
 const app = express();
 
+app.set("trust proxy", true);
 const limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
 	limit: 100,
@@ -57,7 +58,7 @@ const shutdown = () => {
 		});
 	}
 	logger.info(`Shutting down , with grace...`);
-}
+};
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 

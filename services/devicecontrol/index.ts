@@ -8,6 +8,7 @@ import EventBusInstance from "./src/config/event_bus";
 import { ErrorHandler, ValidSocketSessionMiddleware } from "./src/middleware";
 import { DeviceRouter, MqttRoutes, SocketRoutes } from "./src/routes";
 
+app.set("trust proxy", true);
 const limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
 	limit: 100,
