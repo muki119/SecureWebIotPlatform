@@ -1,4 +1,8 @@
-import { GetEnvNumber } from "@services/common/utilities";
+import { CreateHealthChecks } from "@services/common/config";
+import {
+	CheckPostgresModelReady,
+	GetEnvNumber,
+} from "@services/common/utilities";
 import cookieParser from "cookie-parser";
 import express from "express";
 import { rateLimit } from "express-rate-limit";
@@ -10,9 +14,19 @@ import {
 	ErrorHandlerMiddleware,
 	RequestMetricsMiddleware,
 } from "./src/middleware";
+
+import { userModel } from "./src/models/user_model";
 import { authRoutes } from "./src/routes/auth_routes";
 
 const app = express();
+
+app.use(
+	CreateHealthChecks([
+		{ name: "postgres", isReady: () => CheckPostgresModelReady(userModel) },
+		{ name: "redis", isReady: () => RedisClient.isOpen },
+		{ name: "event_sender", isReady: () => EventSenderInstance.ready },
+	]),
+);
 
 const limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,

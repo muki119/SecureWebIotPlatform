@@ -138,6 +138,19 @@ export abstract class BasePostgresModel<T extends ModelSchema> {
 		}
 	}
 
+	// checks if the model is ready by verifying the connection and
+	public get ready(): Promise<boolean> {
+		return Promise.race([
+			this.db
+				.query("SELECT 1")
+				.then(() => true)
+				.catch(() => false),
+			new Promise<boolean>((resolve) =>
+				setTimeout(() => resolve(false), 5000),
+			),
+		]);
+	}
+
 	/**
 	 *
 	 * @param operation  - the db operation to be performed ,
@@ -263,6 +276,10 @@ export abstract class BaseMongoModel<T extends ModelSchema> {
 	constructor(db: Connection, schema: Schema<T>, modelName: string) {
 		this.db = db;
 		this.model = this.db.model<T>(modelName, schema);
+	}
+
+	public get ready(): boolean {
+		return this.db.readyState === 1; // 1 indicates connected
 	}
 
 	async createUpdateObject(

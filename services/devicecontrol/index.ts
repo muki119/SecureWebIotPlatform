@@ -1,12 +1,31 @@
-import { GetEnvNumber } from "@services/common/utilities";
+import { CreateHealthChecks } from "@services/common/config";
+import { CheckMongoModelReady, GetEnvNumber } from "@services/common/utilities";
 import cookieParser from "cookie-parser";
 import express from "express";
 import { rateLimit } from "express-rate-limit";
 import { logger } from "./src/config";
 import { app, httpServer, io } from "./src/config/";
 import EventBusInstance from "./src/config/event_bus";
+import { MqttClientInstance } from "./src/config/mqtt";
+import { RedisClient } from "./src/config/redis";
 import { ErrorHandler, ValidSocketSessionMiddleware } from "./src/middleware";
+import { DeviceModelInstance } from "./src/models/device_model";
 import { DeviceRouter, MqttRoutes, SocketRoutes } from "./src/routes";
+
+app.use(
+	CreateHealthChecks([
+		{
+			name: "mongodb",
+			isReady: () => CheckMongoModelReady(DeviceModelInstance),
+		},
+		{
+			name: "redis",
+			isReady: () => RedisClient.ping().then((res) => res === "PONG"),
+		},
+		{ name: "mqtt", isReady: () => MqttClientInstance.connected },
+		{ name: "event_bus", isReady: () => EventBusInstance.ready },
+	]),
+);
 
 const limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,

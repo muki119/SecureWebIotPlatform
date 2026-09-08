@@ -155,6 +155,10 @@ export class EventBus {
 		this.logger.info("Starting listener manager");
 	}
 
+	public get ready(): boolean {
+		return !!(this.listenerProcess && this.isListening);
+	}
+
 	/**
 	 *
 	 * @returns nothing lol
