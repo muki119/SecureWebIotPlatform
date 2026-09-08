@@ -123,7 +123,7 @@ export class EventSender {
 	}
 
 	public get ready() {
-		return this.conn.isReady;
+		return this.conn?.isReady ?? false;
 	}
 	public async close() {
 		await this.conn.quit();
