@@ -1,5 +1,10 @@
 import { CreateHealthChecks } from "@services/common/config";
-import { CheckMongoModelReady, GetEnvNumber } from "@services/common/utilities";
+import { HttpRouteAttributeMiddleware } from "@services/common/middleware";
+import {
+	CheckMongoModelReady,
+	GetEnvNumber,
+	GetEnvString,
+} from "@services/common/utilities";
 import cookieParser from "cookie-parser";
 import express from "express";
 import { rateLimit } from "express-rate-limit";
@@ -27,7 +32,7 @@ app.use(
 	]),
 );
 
-app.set("trust proxy", true);
+app.set("trust proxy", GetEnvString("TRUST_PROXY", "loopback"));
 const limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
 	limit: 100,
@@ -36,6 +41,7 @@ const limiter = rateLimit({
 	},
 });
 
+app.use(HttpRouteAttributeMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

@@ -44,6 +44,10 @@ if (!sdkDisabled) {
 				"@opentelemetry/instrumentation-redis": { enabled: false },
 				// -mongodb already covers the underlying queries.
 				"@opentelemetry/instrumentation-mongoose": { enabled: false },
+				// dns + tcp spans fire on every outbound connection and just
+				// clutter the trace waterfall.
+				"@opentelemetry/instrumentation-dns": { enabled: false },
+				"@opentelemetry/instrumentation-net": { enabled: false },
 			}),
 		],
 	});
