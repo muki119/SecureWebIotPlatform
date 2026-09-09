@@ -74,7 +74,19 @@ export class EventBus {
 
 	async init() {
 		await this.sender.init();
-		this.listenerProcess = fork(this.workerFile, [], { env: process.env });
+		const execArgv = [...process.execArgv];
+		for (let index = execArgv.length - 1; index >= 0; index--) {
+			if (
+				execArgv[index] === "--import" &&
+				execArgv[index + 1]?.includes("instrumentation")
+			) {
+				execArgv.splice(index, 2);
+			}
+		}
+		this.listenerProcess = fork(this.workerFile, [], {
+			env: process.env,
+			execArgv,
+		});
 		if (!this.listenerProcess) {
 			throw new Error("Listener process not initialized");
 		}
