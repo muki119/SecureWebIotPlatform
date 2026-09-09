@@ -17,6 +17,7 @@ import { EventListener } from "@services/eventbus";
 export const MessageFlags = {
 	CREATE: "CREATE",
 	START: "START",
+	READY: "READY",
 	STOP: "STOP",
 	STOPPED: "STOPPED",
 	PROC_ERROR: "PROC_ERROR", // FOR PROCESS ERRORS
@@ -135,12 +136,16 @@ export abstract class BaseWorker {
 							});
 							return;
 						}
-						this.listenerInstance.listen().catch((error) => {
-							process.send?.({
-								flag: MessageFlags.ERROR,
-								value: error.message,
+						this.listenerInstance
+							.listen(() => {
+								process.send?.({ flag: MessageFlags.READY });
+							})
+							.catch((error) => {
+								process.send?.({
+									flag: MessageFlags.ERROR,
+									value: error.message,
+								});
 							});
-						});
 						break;
 					case MessageFlags.STOP:
 						this.stop();

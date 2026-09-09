@@ -87,7 +87,7 @@ export class EventBus {
 			(message: { flag: string; value?: unknown }) => {
 				// find if error
 				switch (
-					message.flag // this just creates some listner handlers - once this is set up then you dont have to add additional listeners
+					message.flag // this just creates some listener handlers - once this is set up then you dont have to add additional listeners
 				) {
 					case MessageFlags.PROC_ERROR:
 						this.logger.error(
@@ -112,7 +112,10 @@ export class EventBus {
 							);
 						}
 						break;
-
+					case MessageFlags.READY:
+						this.isListening = true;
+						this.logger.info("Listener process is ready");
+						break;
 					case MessageFlags.STOPPED:
 						this.logger.info("Listener process has stopped");
 						this.isListening = false;
@@ -151,7 +154,6 @@ export class EventBus {
 			return;
 		}
 		this.listenerProcess.send({ flag: MessageFlags.START });
-		this.isListening = true;
 		this.logger.info("Starting listener manager");
 	}
 

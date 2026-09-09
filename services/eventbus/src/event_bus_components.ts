@@ -284,11 +284,14 @@ export class EventListener {
 	/**
 	 * @description - begins listening for messages on the registered streams
 	 */
-	public async listen() {
+	public async listen(onReady?: () => void) {
 		try {
 			await this.init(); // wait for initial things to be ready
 
 			this.listening = true;
+			if (onReady && typeof onReady === "function") {
+				onReady();
+			}
 			const streams = Array.from(this.handlerTable.keys()).map(
 				(stream) => ({
 					key: stream,
