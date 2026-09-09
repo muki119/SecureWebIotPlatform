@@ -3,6 +3,7 @@ export {
 	CONSUMER_GROUPS,
 	STREAMS,
 } from "./event_bus";
+export { CreateHealthChecks } from "./health_checks";
 export {
 	CreateLogger,
 	CreateServiceLogger,

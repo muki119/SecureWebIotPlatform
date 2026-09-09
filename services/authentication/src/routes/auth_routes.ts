@@ -8,7 +8,6 @@ import {
 	GetUserController,
 	LoginController,
 	LogoutController,
-	MetricsController,
 	RefreshController,
 	RegisterController,
 	ResetPasswordController,
@@ -44,7 +43,6 @@ authRoutes.patch(
 ); // should be dynamic based on what credential is being changed, for example if email is being changed then we need to send a verification email to the new email address and if password is being changed then we need to send a verification email to the old email address
 authRoutes.get("/me", validSessionMiddleware, GetUserController);
 authRoutes.delete("/me", validSessionMiddleware, DeleteUserController);
-authRoutes.get("/metrics", MetricsController);
 // login - returns access token, refresh token, xsrf token in cookie and header
 // logout - no need for xsrf token, just need to clear the cookie
 // token refresh - access token, refresh token , needs a xsrf token in header and cookie  - will only be accesed when access token is expired and frontend will automatically call this

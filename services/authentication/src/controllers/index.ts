@@ -4,7 +4,6 @@ export { default as ForgotPasswordController } from "./forgot_password_controlle
 export { default as GetUserController } from "./get_user_controller";
 export { default as LoginController } from "./login_controller";
 export { default as LogoutController } from "./logout_controller";
-export { default as MetricsController } from "./metrics_controller";
 export { default as RefreshController } from "./refresh_controller";
 export { default as RegisterController } from "./register_controller";
 export { default as ResetPasswordController } from "./reset_password_controller";

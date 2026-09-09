@@ -1,15 +1,25 @@
-import { GetEnvNumber } from "@services/common/utilities";
+import { CreateHealthChecks } from "@services/common/config";
+import { HttpRouteAttributeMiddleware } from "@services/common/middleware";
+import { GetEnvNumber, GetEnvString } from "@services/common/utilities";
 import cookieParser from "cookie-parser";
 import express from "express";
 import { rateLimit } from "express-rate-limit";
 import EventBusInstance from "./src/config/event_bus";
 import logger from "./src/config/logger";
 import { ErrorHandlerMiddleware } from "./src/middleware";
+import { DomainModelInstance } from "./src/models/domain_model";
 import DomainProfileRouter from "./src/routes";
 
 const app = express();
 
-app.set("trust proxy", true);
+app.use(
+	CreateHealthChecks([
+		{ name: "postgres", isReady: () => DomainModelInstance.ready },
+		{ name: "event_bus", isReady: () => EventBusInstance.ready },
+	]),
+);
+
+app.set("trust proxy", GetEnvString("TRUST_PROXY", "loopback"));
 const limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
 	limit: 100,
@@ -18,6 +28,7 @@ const limiter = rateLimit({
 	},
 });
 
+app.use(HttpRouteAttributeMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

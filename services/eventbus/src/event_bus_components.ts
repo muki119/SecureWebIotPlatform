@@ -121,6 +121,10 @@ export class EventSender {
 			);
 		}
 	}
+
+	public get ready() {
+		return this.conn?.isReady ?? false;
+	}
 	public async close() {
 		await this.conn.quit();
 	}
@@ -222,7 +226,7 @@ export class EventListener {
 		}
 	}
 
-	public isListening(): boolean {
+	public get isListening(): boolean {
 		return this.listening;
 	}
 
@@ -280,11 +284,14 @@ export class EventListener {
 	/**
 	 * @description - begins listening for messages on the registered streams
 	 */
-	public async listen() {
+	public async listen(onReady?: () => void) {
 		try {
 			await this.init(); // wait for initial things to be ready
 
 			this.listening = true;
+			if (onReady && typeof onReady === "function") {
+				onReady();
+			}
 			const streams = Array.from(this.handlerTable.keys()).map(
 				(stream) => ({
 					key: stream,
@@ -393,6 +400,14 @@ export class EventListener {
 				cause: error instanceof Error ? error : undefined,
 			});
 		}
+	}
+
+	public get ready(): boolean {
+		return (
+			this.nonBlockingConn.isReady &&
+			this.listenerConn.isReady &&
+			this.isListening
+		);
 	}
 
 	/**

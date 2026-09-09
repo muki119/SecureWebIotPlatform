@@ -5,7 +5,7 @@ import esbuild from "esbuild";
 console.log("Starting build process...");
 
 await esbuild.build({
-	entryPoints: ["index.ts"],
+	entryPoints: ["index.ts", "instrumentation.ts"],
 	bundle: true,
 	platform: "node",
 	target: "esNext",

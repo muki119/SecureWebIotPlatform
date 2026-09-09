@@ -1,4 +1,10 @@
-import { GetEnvNumber } from "@services/common/utilities";
+import { CreateHealthChecks } from "@services/common/config";
+import { HttpRouteAttributeMiddleware } from "@services/common/middleware";
+import {
+	CheckPostgresModelReady,
+	GetEnvNumber,
+	GetEnvString,
+} from "@services/common/utilities";
 import cookieParser from "cookie-parser";
 import express from "express";
 import { rateLimit } from "express-rate-limit";
@@ -6,15 +12,22 @@ import EventSenderInstance from "./src/config/event_sender";
 import logger from "./src/config/logger";
 import { PostgresPool } from "./src/config/postgres";
 import { RedisClient } from "./src/config/redis";
-import {
-	ErrorHandlerMiddleware,
-	RequestMetricsMiddleware,
-} from "./src/middleware";
+import { ErrorHandlerMiddleware } from "./src/middleware";
+
+import { userModel } from "./src/models/user_model";
 import { authRoutes } from "./src/routes/auth_routes";
 
 const app = express();
 
-app.set("trust proxy", true);
+app.use(
+	CreateHealthChecks([
+		{ name: "postgres", isReady: () => CheckPostgresModelReady(userModel) },
+		{ name: "redis", isReady: () => RedisClient.isOpen },
+		{ name: "event_sender", isReady: () => EventSenderInstance.ready },
+	]),
+);
+
+app.set("trust proxy", GetEnvString("TRUST_PROXY", "loopback"));
 const limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
 	limit: 100,
@@ -23,12 +36,12 @@ const limiter = rateLimit({
 	},
 });
 
+app.use(HttpRouteAttributeMiddleware);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.disable("x-powered-by");
 app.use(limiter);
-app.use(RequestMetricsMiddleware);
 
 app.use("/api/v1/auth", authRoutes);
 
