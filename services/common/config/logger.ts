@@ -36,7 +36,7 @@ if (
 			level: options.logLevel,
 			options: {
 				resourceAttributes: {
-					"service.name": options.serviceName,
+"service.name": GetEnvString("OTEL_SERVICE_NAME", options.serviceName),
 					"service.version": GetEnvString(
 						"OTEL_SERVICE_VERSION",
 						"0.0.0-dev",
