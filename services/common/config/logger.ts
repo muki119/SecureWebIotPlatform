@@ -27,16 +27,16 @@ export function CreateLogger(options: ILoggerOptions) {
 		},
 	];
 
-if (
-		otlpEndpoint &&
-		GetEnvString("OTEL_SDK_DISABLED", "") !== "true"
-	) {
+	if (otlpEndpoint && GetEnvString("OTEL_SDK_DISABLED", "") !== "true") {
 		targets.push({
 			target: "pino-opentelemetry-transport",
 			level: options.logLevel,
 			options: {
 				resourceAttributes: {
-"service.name": GetEnvString("OTEL_SERVICE_NAME", options.serviceName),
+					"service.name": GetEnvString(
+						"OTEL_SERVICE_NAME",
+						options.serviceName,
+					),
 					"service.version": GetEnvString(
 						"OTEL_SERVICE_VERSION",
 						"0.0.0-dev",

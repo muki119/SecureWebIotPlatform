@@ -24,7 +24,7 @@ if (!sdkDisabled) {
 	// Traces/logs are only shipped when a collector endpoint is configured.
 	// Without one, turn the exporters off so the SDK does not retry a dead
 	// localhost:4318.
-process.env.OTEL_LOGS_EXPORTER = "none";
+	process.env.OTEL_LOGS_EXPORTER = "none";
 	if (!otlpEndpoint) {
 		process.env.OTEL_TRACES_EXPORTER ??= "none";
 	}

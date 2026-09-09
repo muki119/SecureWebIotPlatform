@@ -19,7 +19,9 @@ export function CreateHealthChecks(dependencies: HealthCheckDependency[]) {
 			dependencies.map(async (dep) => ({
 				name: dep.name,
 				ready: await Promise.race([
-Promise.resolve().then(dep.isReady).catch(() => false),
+					Promise.resolve()
+						.then(dep.isReady)
+						.catch(() => false),
 					new Promise((resolve) =>
 						setTimeout(() => resolve(false), 5000),
 					),
