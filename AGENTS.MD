@@ -126,6 +126,12 @@ cd app && npm run build
   - Variables & Parameters: `camelCase`.
 - **Shared Package Consumption**:
   - Backend services import shared code via `@services/common` and `@services/eventbus`.
+- **Commits & Pull Request Titles**:
+  - Follow the [Conventional Commits](https://www.conventionalcommits.org/) spec: `type(scope): summary` (e.g. `feat(authentication): add refresh token rotation`, `fix(devicecontrol): correct MQTT topic parsing`).
+  - Allowed types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`, `chore`, `revert`. Scope is the affected service/package: `authentication`, `domain`, `devicecontrol`, `ledger`, `eventbus`, `common`, `app`.
+  - Breaking changes use a `!` after the type/scope or a `BREAKING CHANGE:` footer.
+  - PRs are **squash-merged**, so the PR title must itself be a valid Conventional Commit — it becomes the commit on `main`.
+  - These messages drive automated semantic-versioning: `fix` → patch, `feat` → minor, breaking → major, per service. Each release cuts a `<service>-vX.Y.Z` git tag and builds/pushes that service's container image. A missing or wrong type means a release is skipped or mis-sized.
 - **Stateless Authentication**:
   - Services verify user identity and roles via JWT tokens and stateless session verification. Avoid introducing cross-service direct database queries.
 - **Testing Rule**:

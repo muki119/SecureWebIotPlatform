@@ -1,6 +1,6 @@
 # Secure Web IoT Platform
 
-Final Year CompSci project 2026
+Final Year CompSci project 2026 - Turned into a personal project for exploring and implementing SWE practices.
 
 ## Description
 
