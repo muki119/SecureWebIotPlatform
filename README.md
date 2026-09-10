@@ -39,4 +39,3 @@ The system also utilises software such as:
 Individual services can be run by navigating to their directories and running them.
 
 **For further details on the services, please look at the services directory.**
-

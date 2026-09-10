@@ -11,6 +11,7 @@ The **Secure Web IoT Platform** is a multi-tenant, microservices-based web appli
 > **Project context**: This is a personal project the maintainer works on for learning, fun, and applying their knowledge. It is not academic/coursework and has no submission deadline. Favour sound engineering, sensible scope, and approaches worth learning from; there is no grade or marking scheme to optimise for.
 
 ### Technology Stack
+
 - **Runtimes & Languages**: Node.js (v22+), TypeScript (ESNext), React 19.
 - **Backend Architecture**: Microservices inside an npm workspace (`services/`), built with Express 5, OpenTelemetry, Redis pub/sub (`services/eventbus`), Socket.io, and MQTT (EMQX broker).
 - **Databases**:
@@ -25,7 +26,7 @@ The **Secure Web IoT Platform** is a multi-tenant, microservices-based web appli
 
 ## 2. Repository Layout
 
-```
+``` text
 SecureWebIotPlatform/
 ├── .github/
 │   ├── copilot-instructions.md       # Copilot cloud agent instructions
@@ -59,6 +60,7 @@ SecureWebIotPlatform/
 ## 3. Validated Command Reference
 
 ### Bootstrapping Dependencies
+
 ```bash
 # Backend services (must run from services/ to link workspace packages)
 cd services && npm ci
@@ -68,7 +70,9 @@ cd app && npm ci
 ```
 
 ### Code Quality & Linting
+>
 > **Note**: CI uses **Biome** for linting/formatting (`npx biome ci ...`). While `app/package.json` still contains an ESLint-based `npm run lint` script, Biome is the preferred workflow.
+
 ```bash
 # CI verification (matches GitHub Actions)
 npx biome ci app
@@ -79,7 +83,9 @@ npx biome check --write
 ```
 
 ### Running Tests
+>
 > **Crucial**: Run Vitest inside individual service directories. Do NOT run `npm test` from the `services/` root directory because `services/eventbus` spawns worker processes using directory-relative paths.
+
 ```bash
 # 1. Common shared utilities & middleware tests
 cd services/common && npx vitest run
@@ -98,6 +104,7 @@ cd app && npx vitest run
 ```
 
 ### Building Packages
+
 ```bash
 # Build backend microservices with esbuild
 cd services/authentication && npm run build
