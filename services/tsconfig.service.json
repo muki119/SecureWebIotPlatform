@@ -5,7 +5,8 @@
 		"moduleResolution": "bundler",
 		"lib": ["esnext"],
 		"paths": {
-			"@services/common/*": ["./services/common/*"]
+			"@services/common/*": ["./common/*"],
+			"@services/eventbus": ["./eventbus/src/index.ts"]
 		},
 		"noEmit": true,
 		"isolatedModules": true,
