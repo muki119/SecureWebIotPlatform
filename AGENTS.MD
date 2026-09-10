@@ -66,7 +66,7 @@ cd app && npm ci
 ```
 
 ### Code Quality & Linting
-> **Note**: Do NOT use `npm run lint` inside `app/` (ESLint configuration is deprecated in favor of Biome). Always use Biome.
+> **Note**: CI uses **Biome** for linting/formatting (`npx biome ci ...`). While `app/package.json` still contains an ESLint-based `npm run lint` script, Biome is the preferred workflow.
 ```bash
 # CI verification (matches GitHub Actions)
 npx biome ci app
