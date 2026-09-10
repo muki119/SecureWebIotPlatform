@@ -8,6 +8,8 @@ This document provides essential instructions, architecture maps, and validated 
 
 The **Secure Web IoT Platform** is a multi-tenant, microservices-based web application for managing and controlling IoT devices securely over MQTT and WebSockets, with domain-scoped RBAC, JWT session management, real-time telemetry, and audit logging.
 
+> **Project context**: This is a personal project the maintainer works on for learning, fun, and applying their knowledge. It is not academic/coursework and has no submission deadline. Favour sound engineering, sensible scope, and approaches worth learning from; there is no grade or marking scheme to optimise for.
+
 ### Technology Stack
 - **Runtimes & Languages**: Node.js (v22+), TypeScript (ESNext), React 19.
 - **Backend Architecture**: Microservices inside an npm workspace (`services/`), built with Express 5, OpenTelemetry, Redis pub/sub (`services/eventbus`), Socket.io, and MQTT (EMQX broker).

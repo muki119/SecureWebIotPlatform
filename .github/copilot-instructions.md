@@ -5,6 +5,7 @@ Trust the instructions below as the primary reference for working with this repo
 ## Project Overview
 
 - **Purpose**: A secure, microservices-based web IoT management platform allowing users to securely manage and control IoT devices, monitor real-time telemetry, manage domain/role-based access, and maintain audit ledgers.
+- **Project context**: A personal project built for learning, fun, and applying knowledge — not academic/coursework, no submission deadline or marking scheme. Favour sound engineering and sensible scope.
 - **Languages & Runtimes**: TypeScript (ESNext), Node.js (v22+), React 19.
 - **Backend Architecture**: Modular microservices inside an npm workspace (`services/`), communicating over HTTP REST (Express 5), Redis EventBus (`services/eventbus`), Socket.io, and MQTT (EMQX).
 - **Databases & Infrastructure**: PostgreSQL (auth, domain, ledger), MongoDB (device states/telemetry), Redis (event bus, cache, socket adapter), EMQX (MQTT broker), Nginx (reverse proxy).
