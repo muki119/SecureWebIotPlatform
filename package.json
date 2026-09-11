@@ -1,0 +1,6 @@
+{
+	"name": "secure-web-iot-platform",
+	"private": true,
+	"type": "module",
+	"description": "Repo-root manifest — not a workspace root. Backend services live under services/, the frontend under app/. Exists so root-level ESM files (release.config.base.js, scripts/*) resolve without warnings."
+}

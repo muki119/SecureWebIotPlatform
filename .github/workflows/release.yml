@@ -1,0 +1,116 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    uses: ./.github/workflows/run_tests.yml
+
+  # Validates every package's release.config.js the same way a real release
+  # would (plugin resolution, repositoryUrl, GitHub auth, commit-path
+  # filtering) without touching Docker or GHCR: `--dry-run` runs
+  # verifyConditions for every plugin but skips publish. This is what caught
+  # app's missing `repositoryUrl` before it ever reached GHCR. Only once this
+  # passes does the `release` job run the real thing.
+  dry-run:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include: &release-packages
+          - name: authentication
+            workspace: services
+            dir: services/authentication
+          - name: domain
+            workspace: services
+            dir: services/domain
+          - name: devicecontrol
+            workspace: services
+            dir: services/devicecontrol
+          - name: ledger
+            workspace: services
+            dir: services/ledger
+          - name: app
+            workspace: app
+            dir: app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # semantic-release-monorepo needs full history to filter commits by path
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ${{ matrix.workspace }}/package-lock.json
+
+      - name: Install ${{ matrix.workspace }} workspace dependencies
+        working-directory: ${{ matrix.workspace }}
+        run: npm ci
+
+      - name: Dry-run semantic-release for ${{ matrix.name }}
+        working-directory: ${{ matrix.dir }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release --dry-run
+
+  release:
+    needs: dry-run
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # semantic-release pushes the <pkg>-vX.Y.Z tag
+      issues: write # @semantic-release/github comments on referenced issues
+      pull-requests: write # @semantic-release/github comments on referenced PRs
+      packages: write # push images to GHCR
+    strategy:
+      fail-fast: false # one package's release failing shouldn't block the others
+      matrix:
+        include: *release-packages
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # semantic-release-monorepo needs full history to filter commits by path
+          persist-credentials: true # lets semantic-release push the release tag
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: ${{ matrix.workspace }}/package-lock.json
+
+      - name: Install ${{ matrix.workspace }} workspace dependencies
+        working-directory: ${{ matrix.workspace }}
+        run: npm ci
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release ${{ matrix.name }}
+        working-directory: ${{ matrix.dir }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release

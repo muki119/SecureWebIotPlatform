@@ -2,6 +2,11 @@
 #
 # Build context: this directory (app/).
 #   docker build -f app/Dockerfile app
+#
+# This image does NOT run a server. It only carries the built static SPA.
+# The infra repo owns nginx and serves this content directly — consume this
+# image as an init container: mount a shared volume, run it, and it copies
+# the build output into $OUTPUT_DIR before the nginx container starts.
 
 ######## build: compile the SPA with Vite ########
 FROM node:24-bookworm-slim AS build
@@ -23,15 +28,14 @@ COPY . .
 # so build the assets directly. Restore `npm run build` once that is fixed.
 RUN npx vite build
 
-######## production: static assets served by nginx ########
-FROM nginx:1.27-alpine AS production
+######## production: static assets only, no server ########
+FROM busybox:1.36 AS production
 ARG VERSION=0.0.0
 LABEL org.opencontainers.image.title="app" \
-      org.opencontainers.image.description="Frontend SPA for the Secure Web IoT Platform" \
+      org.opencontainers.image.description="Built static assets for the Secure Web IoT Platform frontend (consumed by the infra repo's nginx, not self-serving)" \
       org.opencontainers.image.source="https://github.com/muki119/SecureWebIotPlatform" \
       org.opencontainers.image.version="${VERSION}"
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist /usr/share/nginx/html
-
-EXPOSE 80
+COPY --from=build /app/dist /dist
+ENV OUTPUT_DIR=/output
+CMD ["sh", "-c", "mkdir -p \"$OUTPUT_DIR\" && cp -r /dist/. \"$OUTPUT_DIR\"/"]
