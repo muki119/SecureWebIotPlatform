@@ -1,9 +1,10 @@
-name: Run Codebase Tests (Vitest) 
+name: Run Codebase Tests (Vitest)
 on:
   pull_request:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_call: # lets release.yml gate a release on this same test suite
 
 jobs:
   build:

@@ -1,0 +1,18 @@
+# Build context is the `services/` workspace root.
+# Keep it to source + manifests; everything below is regenerated inside the image
+# or must never be shipped.
+
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+**/*.test.ts
+**/tests/
+**/__tests__/
+**/coverage/
+**/*.tsbuildinfo
+**/*.log
+**/.DS_Store
+**/biome.json
+**/README.md
+.git/
