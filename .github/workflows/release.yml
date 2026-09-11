@@ -26,7 +26,10 @@ jobs:
     needs: verify
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      # semantic-release's verifyConditions runs a real `git push --dry-run`
+      # as a permission probe even in --dry-run mode; it needs actual write
+      # access to succeed, not just read.
+      contents: write
     strategy:
       fail-fast: false
       matrix:
