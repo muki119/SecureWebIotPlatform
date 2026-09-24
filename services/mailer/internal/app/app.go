@@ -131,11 +131,7 @@ func (a *App) initializeServices() (*services.Services, error) {
 
 func (a *App) initializeLogger() error { // creates otel logger that exports on otlp
 	ctx := context.Background()
-	exporter, err := otlploghttp.New(ctx,
-		otlploghttp.WithEndpointURL(
-			utilities.GetEnvStringWithDefault("OTEL_EXPORTER_OTLP_LOGS_ENDPOINT", ""),
-		),
-	)
+	exporter, err := otlploghttp.New(ctx) // uses the OTEL_EXPORTER_OTLP_LOGS_ENDPOINT env var to determine where to send logs
 	if err != nil {
 		return err
 	}
@@ -156,11 +152,7 @@ func (a *App) initializeLogger() error { // creates otel logger that exports on 
 
 func (a *App) initializeTracer() error { // creates otel tracer that exports spans on otlp
 	ctx := context.Background()
-	exporter, err := otlptracehttp.New(ctx,
-		otlptracehttp.WithEndpointURL(
-			utilities.GetEnvStringWithDefault("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", ""),
-		),
-	)
+	exporter, err := otlptracehttp.New(ctx) // uses the OTEL_EXPORTER_OTLP_TRACES_ENDPOINT env var to determine where to send traces
 	if err != nil {
 		return err
 	}
