@@ -44,3 +44,20 @@ jobs:
           TEST_REDIS_DB: 0
         run: |
           npx vitest run
+
+  go:
+    name: Go tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.1"
+          cache-dependency-path: services/mailer/go.sum
+
+      - name: Run mailer tests
+        working-directory: services/mailer
+        run: go test ./...
