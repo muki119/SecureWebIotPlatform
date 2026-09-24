@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"log/slog"
-	"mailer/internal/services"
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -15,11 +14,16 @@ import (
 // this file defines the handlers struct for the mailer service
 // should hold all the dependencies for all handlers in the mailer service - like the service struct
 // also all handlers will be methods on this struct
+
+type IServices interface {
+	UserCreatedService(name string, email string) error
+	UserDeletedService(name string, email string) error
+}
 type Handlers struct {
 	// here lies the dependencies for the handlers
-	Services *services.Services
-	Logger *slog.Logger
-	Tracer trace.Tracer
+	Services IServices // should take the services struct as a dep - using an interface for easier mocking in tests
+	Logger   *slog.Logger
+	Tracer   trace.Tracer
 
 	HandledCounter  metric.Int64Counter
 	HandlerDuration metric.Float64Histogram
@@ -58,4 +62,3 @@ func (h *Handlers) WithInstrumentation(name string, next EventHandler) EventHand
 		return err
 	}
 }
-

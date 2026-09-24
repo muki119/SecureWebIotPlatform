@@ -17,6 +17,9 @@ func (s *Services) UserDeletedService(name string, email string) error {
 	if err != nil {
 		return err
 	}
-	s.Mailer.SendMail(email, *mailContent)
+	err = s.Mailer.SendMail(email, *mailContent)
+	if err != nil {
+		return err
+	}
 	return nil
 }

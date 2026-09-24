@@ -4,7 +4,7 @@ type userCreatedData struct {
 	Name string
 }
 
-func (s *Services) UserCreatedService(name string, email string ) error {
+func (s *Services) UserCreatedService(name string, email string) error {
 	if name == "" {
 		return ErrInvalidName
 	}
@@ -18,6 +18,9 @@ func (s *Services) UserCreatedService(name string, email string ) error {
 	if err != nil {
 		return err
 	}
-	s.Mailer.SendMail(email, *mailContent)
+	err = s.Mailer.SendMail(email, *mailContent)
+	if err != nil {
+		return err
+	}
 	return nil
 }
