@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"syscall"
 )
+
 func main() {
 	App := &app.App{}
 	errChan, err := App.Start()
@@ -24,7 +25,8 @@ func main() {
 		exitSignal := make(chan os.Signal, 1)
 		signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
 		<-exitSignal
-		err:=App.Stop()
+		App.Logger.Info("Shutting down...")
+		err := App.Stop()
 		if err != nil {
 			fmt.Println("Error stopping the app: ", err)
 			os.Exit(1) // exit with error code if there was an error stopping the app
@@ -32,6 +34,7 @@ func main() {
 		close(shutdownChan)
 	}()
 
+	App.Logger.Info("Mailer service started successfully")
 	if err := <-errChan; err != nil {
 		fmt.Println("Error from the app: ", err)
 	}

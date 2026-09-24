@@ -6,6 +6,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"mailer/internal/constants"
 	"mailer/internal/handlers"
@@ -13,6 +14,8 @@ import (
 	"mailer/internal/services"
 	"mailer/internal/utilities"
 	"net/http"
+	"os"
+	"runtime"
 	"time"
 
 	eventBus "github.com/muki119/go-slim-event-bus/v2"
@@ -25,6 +28,7 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/sdk/log"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -34,7 +38,9 @@ type App struct {
 	eventBus *eventBus.StreamsEventBus
 	handlers *handlers.Handlers
 
-	logger         *slog.Logger
+	resource *resource.Resource // shared identity attached to all logs, traces and metrics
+
+	Logger         *slog.Logger
 	loggerProvider *log.LoggerProvider
 
 	tracer         trace.Tracer
@@ -46,6 +52,9 @@ type App struct {
 }
 
 func (a *App) Start() (chan error, error) {
+	if err := a.initializeResource(); err != nil {
+		return nil, err
+	}
 	if err := a.initializeLogger(); err != nil {
 		return nil, err
 	}
@@ -56,6 +65,11 @@ func (a *App) Start() (chan error, error) {
 		return nil, err
 	}
 
+	consumerGroup := utilities.GetEnvStringWithDefault("EVENT_BUS_CONSUMER_GROUP", "MAILER_SERVICE")
+	hostName, err := os.Hostname()
+	if err != nil {
+		return nil, err
+	}
 	eventBusConfig := eventBus.EventBusConfig{
 		ConnectionConfig: &redis.Options{
 			Addr:     utilities.GetEnvStringWithDefault("EVENT_BUS_REDIS_HOST", "localhost") + ":" + utilities.GetEnvStringWithDefault("EVENT_BUS_REDIS_PORT", "6379"),
@@ -63,9 +77,14 @@ func (a *App) Start() (chan error, error) {
 			Password: utilities.GetEnvStringWithDefault("EVENT_BUS_REDIS_PASSWORD", ""),
 			DB:       utilities.GetEnvIntWithDefault("EVENT_BUS_REDIS_DB", 0),
 		},
+		ConsumerName:  fmt.Sprintf("%s:%s", consumerGroup, hostName),
+		ConsumerGroup: consumerGroup,
+		MaxCount:      1000,            // max messages per stream
+		Timeout:       5 * time.Second, // max duration a message can be processed before timing out
+		MaxConcurrent: int64(runtime.NumCPU() * 10),
 	}
 	a.eventBus = eventBusConfig.NewFromConfig()
-	err := a.initializeHandlers()
+	err = a.initializeHandlers()
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +116,7 @@ func (a *App) initializeHandlers() error {
 
 	a.handlers = &handlers.Handlers{
 		Services: services,
-		Logger:   a.logger,
+		Logger:   a.Logger,
 		Tracer:   a.tracer,
 
 		HandledCounter:  handledCounter,
@@ -129,6 +148,31 @@ func (a *App) initializeServices() (*services.Services, error) {
 	return services, nil
 }
 
+func (a *App) initializeResource() error { // detects host/os/process info so every signal says where it came from
+	res, err := resource.New(
+		context.Background(),
+		resource.WithFromEnv(), // OTEL_SERVICE_NAME and OTEL_RESOURCE_ATTRIBUTES
+		resource.WithTelemetrySDK(),
+		resource.WithHost(),
+		resource.WithHostID(),
+		resource.WithOS(),
+		// individual process detectors instead of WithProcess() so command args (which could hold secrets) aren't exported
+		resource.WithProcessPID(),
+		resource.WithProcessExecutableName(),
+		resource.WithProcessExecutablePath(),
+		resource.WithProcessOwner(),
+		resource.WithProcessRuntimeName(),
+		resource.WithProcessRuntimeVersion(),
+		resource.WithProcessRuntimeDescription(),
+	)
+	// a detector failing (e.g. no /etc/machine-id in a slim container) still returns the rest of the resource, so don't crash on it
+	if err != nil && !errors.Is(err, resource.ErrPartialResource) {
+		return err
+	}
+	a.resource = res
+	return nil
+}
+
 func (a *App) initializeLogger() error { // creates otel logger that exports on otlp
 	ctx := context.Background()
 	exporter, err := otlploghttp.New(ctx) // uses the OTEL_EXPORTER_OTLP_LOGS_ENDPOINT env var to determine where to send logs
@@ -139,13 +183,14 @@ func (a *App) initializeLogger() error { // creates otel logger that exports on 
 
 	provider := log.NewLoggerProvider(
 		log.WithProcessor(processor),
+		log.WithResource(a.resource),
 	)
 	logger := otelslog.NewLogger(
 		utilities.GetEnvStringWithDefault("OTEL_SERVICE_NAME", "mailer"),
 		otelslog.WithLoggerProvider(provider),
 	)
 
-	a.logger = logger
+	a.Logger = logger
 	a.loggerProvider = provider
 	return nil
 }
@@ -159,6 +204,7 @@ func (a *App) initializeTracer() error { // creates otel tracer that exports spa
 
 	provider := sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exporter),
+		sdktrace.WithResource(a.resource),
 	)
 
 	a.tracerProvider = provider
@@ -174,22 +220,25 @@ func (a *App) initializeMetrics() error { // creates the otel meter and serves i
 
 	provider := sdkmetric.NewMeterProvider(
 		sdkmetric.WithReader(exporter),
+		sdkmetric.WithResource(a.resource),
 	)
 
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 	a.metricsServer = &http.Server{
-		Addr:    ":" + utilities.GetEnvStringWithDefault("OTEL_PROMETHEUS_PORT", "9464"),
+		Addr:    ":" + utilities.GetEnvStringWithDefault("OTEL_PROMETHEUS_PORT", "9468"),
 		Handler: mux,
 	}
 	go func() {
-		if err := a.metricsServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			a.logger.Error("metrics server stopped unexpectedly", "error", err)
+		err := a.metricsServer.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			a.Logger.Error("metrics server stopped unexpectedly", "error", err)
 		}
 	}()
 
 	a.meterProvider = provider
 	a.meter = provider.Meter(utilities.GetEnvStringWithDefault("OTEL_SERVICE_NAME", "mailer"))
+	a.Logger.Info("Metrics server started successfully", "port", utilities.GetEnvStringWithDefault("OTEL_PROMETHEUS_PORT", "9468"))
 	return nil
 }
 
