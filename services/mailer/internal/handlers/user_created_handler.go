@@ -1,10 +1,14 @@
 package handlers
 
-import "context"
-
-// needs to adhere to the event handler interface
+import (
+	"context"
+)
 
 func (h *Handlers) HandleUserCreated(ctx context.Context, message map[string]interface{}) error {
+	name, email, err := validateUserMessage(message)
+	if err != nil {
+		return err
+	}
 
-	return nil
+	return h.Services.UserCreatedService(name, email)
 }

@@ -6,8 +6,35 @@ package main
 
 import (
 	"fmt"
+	"mailer/internal/app"
+	"os"
+	"os/signal"
+	"syscall"
 )
 func main() {
-	fmt.Println("Mailer service started")
-	fmt.Println("Listening on port 8080")
+	App := &app.App{}
+	errChan, err := App.Start()
+	if err != nil {
+		fmt.Println("Error starting the app: ", err)
+		return
+	}
+
+	shutdownChan := make(chan struct{})
+	go func() { // listen for shutdown signals and close the shutdown channel when recieved
+		exitSignal := make(chan os.Signal, 1)
+		signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
+		<-exitSignal
+		err:=App.Stop()
+		if err != nil {
+			fmt.Println("Error stopping the app: ", err)
+			os.Exit(1) // exit with error code if there was an error stopping the app
+		}
+		close(shutdownChan)
+	}()
+
+	if err := <-errChan; err != nil {
+		fmt.Println("Error from the app: ", err)
+	}
+	<-shutdownChan
+
 }
