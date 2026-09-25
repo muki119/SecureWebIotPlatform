@@ -18,14 +18,14 @@ export function CreateHealthChecks(dependencies: HealthCheckDependency[]) {
 		return Promise.all(
 			dependencies.map(async (dep) => ({
 				name: dep.name,
-				ready: await Promise.race([
+				ready: (await Promise.race([
 					Promise.resolve()
 						.then(dep.isReady)
 						.catch(() => false),
 					new Promise((resolve) =>
 						setTimeout(() => resolve(false), 5000),
 					),
-				]) as boolean,
+				])) as boolean,
 			})),
 		);
 	};
