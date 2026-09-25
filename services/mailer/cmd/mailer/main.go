@@ -1,7 +1,7 @@
 package main
 
 // This is the main entry point of the mailer service
-// will use the event bus to receive mail data and send emails sccordingly
+// will use the event bus to receive mail data and send emails accordingly
 // probably means that in the auth service - it should save if the user wants emails
 
 import (
@@ -21,7 +21,7 @@ func main() {
 	}
 
 	shutdownChan := make(chan struct{})
-	go func() { // listen for shutdown signals and close the shutdown channel when recieved
+	go func() { // listen for shutdown signals and close the shutdown channel when received
 		exitSignal := make(chan os.Signal, 1)
 		signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
 		<-exitSignal
@@ -37,6 +37,7 @@ func main() {
 	App.Logger.Info("Mailer service started successfully")
 	if err := <-errChan; err != nil {
 		fmt.Println("Error from the app: ", err)
+		close(shutdownChan) // close the shutdown channel so it doesn't hang forever
 	}
 	<-shutdownChan
 
