@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"mailer/internal/constants"
 	"mailer/internal/handlers"
+	"mailer/internal/helpers"
 	config "mailer/internal/helpers"
 	"mailer/internal/services"
 	"mailer/internal/utilities"
@@ -49,6 +50,8 @@ type App struct {
 	meter         metric.Meter
 	meterProvider *sdkmetric.MeterProvider
 	metricsServer *http.Server
+
+	healthCheckServer *http.Server
 }
 
 func (a *App) Start() (chan error, error) {
@@ -62,6 +65,9 @@ func (a *App) Start() (chan error, error) {
 		return nil, err
 	}
 	if err := a.initializeMetrics(); err != nil {
+		return nil, err
+	}
+	if err := a.initializeHealthChecks(); err != nil {
 		return nil, err
 	}
 
@@ -129,7 +135,7 @@ func (a *App) initializeHandlers() error {
 }
 
 func (a *App) initializeServices() (*services.Services, error) {
-	// create the services sttuct and dependencies and return it
+	// create the servicesInstance struct and dependencies and return it
 
 	mailerClient, err := config.CreateMailer(
 		utilities.GetEnvString("SMTP_HOST"),
@@ -141,11 +147,11 @@ func (a *App) initializeServices() (*services.Services, error) {
 	if err != nil {
 		return nil, err
 	}
-	services := &services.Services{
+	servicesInstance := &services.Services{
 		Mailer:            mailerClient,
 		CreateMailContent: services.CreateMailContent,
 	}
-	return services, nil
+	return servicesInstance, nil
 }
 
 func (a *App) initializeResource() error { // detects host/os/process info so every signal says where it came from
@@ -242,6 +248,33 @@ func (a *App) initializeMetrics() error { // creates the otel meter and serves i
 	return nil
 }
 
+func (a *App) initializeHealthChecks() error {
+	// makes the health check web server and returns the http server
+
+	healthCheckMux := helpers.CreateHealthCheckHandler(
+		&helpers.HealthCheckDependencies{
+			Name: "EventBus",
+			IsReady: func() bool {
+				return a.eventBus.Listening.Load()
+			},
+		},
+	)
+
+	a.healthCheckServer = &http.Server{
+		Addr:    ":" + utilities.GetEnvStringWithDefault("HEALTH_CHECK_PORT", "2560"),
+		Handler: healthCheckMux,
+	}
+
+	go func() {
+		err := a.healthCheckServer.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			a.Logger.Error("health check server stopped unexpectedly", "error", err)
+		}
+	}()
+
+	return nil
+}
+
 func (a *App) Stop() error {
 	a.eventBus.Close()
 
@@ -250,6 +283,7 @@ func (a *App) Stop() error {
 
 	return errors.Join(
 		a.metricsServer.Shutdown(ctx),
+		a.healthCheckServer.Shutdown(ctx),
 		a.tracerProvider.Shutdown(ctx),
 		a.meterProvider.Shutdown(ctx),
 		a.loggerProvider.Shutdown(ctx),

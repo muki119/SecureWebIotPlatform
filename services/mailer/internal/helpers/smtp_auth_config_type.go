@@ -1,10 +1,9 @@
-package config
+package helpers
 
 import (
 	"bytes"
 	"net/smtp"
 )
-
 
 type Mailer struct {
 	Host string // host is in format smtp.example.com
@@ -27,8 +26,6 @@ func CreateMailer(host, port, user, pass, from string) (*Mailer, error) {
 	mailer.auth = &auth
 	return mailer, nil
 }
-
-
 
 func (s *Mailer) SendMail(recipient string, content bytes.Buffer) error {
 	return smtp.SendMail(s.Host+":"+s.Port, *s.auth, s.From, []string{recipient}, []byte(content.Bytes()))
