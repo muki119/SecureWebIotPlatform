@@ -161,6 +161,7 @@ export class EventListener {
 	private maxCount: number;
 	private semaphore: semaphore; // to limit the number of concurrent message processing to maxCount
 	private blockMs = 2 * 1000;
+	private sdk: NodeSDK | undefined;
 	constructor(config: EventBusConfig) {
 		this.config = config;
 		this.consumerGroup = config.consumerGroup;
@@ -243,6 +244,7 @@ export class EventListener {
 			],
 		});
 		sdk.start();
+		this.sdk = sdk;
 	}
 
 	private async processPendingMessages(): Promise<void> {
@@ -502,9 +504,9 @@ export class EventListener {
 		await this.semaphore.wait(); // wait for all processing to finish
 		this.listenerConn.destroy(); // interrupt the blocking xReadGroup call
 		await this.nonBlockingConn.quit();
+		if (this.sdk) await this.sdk.shutdown();
 	}
 }
-
 /**
  * @description Just a semaphore implementation because NodeJs doesnt have any built in atomics
  */
