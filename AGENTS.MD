@@ -165,6 +165,7 @@ cd services/mailer && go build ./...
   - Variables & Parameters (TS): `camelCase`. Go follows standard Go casing: exported identifiers `PascalCase`, unexported `camelCase`.
 - **Shared Package Consumption**:
   - Backend TS services import shared code via `@services/common` and `@services/eventbus`. The Go mailer service is intentionally standalone — it talks to the same Redis event bus directly (`github.com/muki119/go-slim-event-bus/v2`) rather than importing anything from `services/common`.
+  - `go-slim-event-bus` is also maintained by Muki. Treat it as owned project code that may be changed when needed to support this platform, while preserving compatibility and adding appropriate tests.
 - **Commits & Pull Request Titles**:
   - Follow the [Conventional Commits](https://www.conventionalcommits.org/) spec: `type(scope): summary` (e.g. `feat(authentication): add refresh token rotation`, `fix(devicecontrol): correct MQTT topic parsing`).
   - Allowed types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`, `chore`, `revert`. Scope is optional; when used it's the affected area: `authentication`, `domain`, `devicecontrol`, `ledger`, `eventbus`, `common`, `mailer`, `app`, `demo`, `release`.
