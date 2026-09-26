@@ -6,50 +6,59 @@ import (
 )
 
 func TestValidateUserMessage(t *testing.T) {
-	tests := []struct {
-		name    string
-		message map[string]interface{}
-		wantErr bool
-	}{
-		{
-			name:    "valid message",
-			message: map[string]interface{}{"name": "Ada", "email": "ada@example.com"},
-		},
-		{
-			name:    "missing name",
-			message: map[string]interface{}{"email": "ada@example.com"},
-			wantErr: true,
-		},
-		{
-			name:    "missing email",
-			message: map[string]interface{}{"name": "Ada"},
-			wantErr: true,
-		},
-		{
-			name:    "wrong field types",
-			message: map[string]interface{}{"name": 42, "email": "ada@example.com"},
-			wantErr: true,
-		},
-		{
-			name:    "empty field",
-			message: map[string]interface{}{"name": "Ada", "email": ""},
-			wantErr: true,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			_, _, err := validateUserMessage(test.message)
-			if test.wantErr {
-				if !errors.Is(err, errInvalidUserMessage) {
-					t.Fatalf("expected invalid user message error, got %v", err)
-				}
-				return
-			}
-
-			if err != nil {
-				t.Fatalf("validateUserMessage returned unexpected error: %v", err)
-			}
+	t.Run("returns the name and email for a valid message", func(t *testing.T) {
+		name, email, err := validateUserMessage(map[string]interface{}{
+			"name":  "Ada",
+			"email": "ada@example.com",
 		})
-	}
+
+		if err != nil {
+			t.Fatalf("validateUserMessage returned unexpected error: %v", err)
+		}
+		if name != "Ada" || email != "ada@example.com" {
+			t.Fatalf("expected name and email to be returned, got (%q, %q)", name, email)
+		}
+	})
+
+	t.Run("returns errInvalidUserMessage when the name is missing", func(t *testing.T) {
+		_, _, err := validateUserMessage(map[string]interface{}{
+			"email": "ada@example.com",
+		})
+
+		if !errors.Is(err, errInvalidUserMessage) {
+			t.Fatalf("expected invalid user message error, got %v", err)
+		}
+	})
+
+	t.Run("returns errInvalidUserMessage when the email is missing", func(t *testing.T) {
+		_, _, err := validateUserMessage(map[string]interface{}{
+			"name": "Ada",
+		})
+
+		if !errors.Is(err, errInvalidUserMessage) {
+			t.Fatalf("expected invalid user message error, got %v", err)
+		}
+	})
+
+	t.Run("returns errInvalidUserMessage when a field has the wrong type", func(t *testing.T) {
+		_, _, err := validateUserMessage(map[string]interface{}{
+			"name":  42,
+			"email": "ada@example.com",
+		})
+
+		if !errors.Is(err, errInvalidUserMessage) {
+			t.Fatalf("expected invalid user message error, got %v", err)
+		}
+	})
+
+	t.Run("returns errInvalidUserMessage when a field is empty", func(t *testing.T) {
+		_, _, err := validateUserMessage(map[string]interface{}{
+			"name":  "Ada",
+			"email": "",
+		})
+
+		if !errors.Is(err, errInvalidUserMessage) {
+			t.Fatalf("expected invalid user message error, got %v", err)
+		}
+	})
 }
