@@ -26,7 +26,7 @@ type DTOHealthCheck struct {
 	Uptime    int64  `json:"uptime_ms"`
 	// going to be milliseconds
 
-	Dependencies []*ReadyDependency
+	Dependencies []*ReadyDependency `json:"dependencies"`
 }
 
 type DTOReadyCheck struct {
@@ -100,7 +100,11 @@ func CreateHealthCheckHandler(deps ...*HealthCheckDependencies) http.Handler {
 			Timestamp:    time.Now().UnixMilli(),
 		}
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
+		if isHealthy {
+			w.WriteHeader(http.StatusOK)
+		} else {
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}
 		_ = json.NewEncoder(w).Encode(readyCheck)
 	})
 	return mux
