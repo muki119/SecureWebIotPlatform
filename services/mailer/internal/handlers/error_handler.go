@@ -10,7 +10,7 @@ import (
 )
 
 func (h *Handlers) HandleError(ctx context.Context, err error, message map[string]interface{}) {
-	h.Logger.Error("event bus error", "error", err, "message", message)
+	h.Logger.Error("event bus error", "error", err)
 
 	fmt.Println(ctx)
 	_, errTracer := h.Tracer.Start(ctx, "HandleError")
