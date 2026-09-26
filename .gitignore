@@ -145,3 +145,11 @@ meta.json
 auth-built-in-db-bootstrap.csv
 *.crt
 *.key
+services/.idea/.gitignore
+services/.idea/modules.xml
+services/.idea/services.iml
+services/.idea/vcs.xml
+services/mailer/.idea/.gitignore
+services/mailer/.idea/mailer.iml
+services/mailer/.idea/modules.xml
+services/mailer/.idea/vcs.xml

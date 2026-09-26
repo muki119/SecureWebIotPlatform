@@ -18,14 +18,14 @@ export function CreateHealthChecks(dependencies: HealthCheckDependency[]) {
 		return Promise.all(
 			dependencies.map(async (dep) => ({
 				name: dep.name,
-				ready: await Promise.race([
+				ready: (await Promise.race([
 					Promise.resolve()
 						.then(dep.isReady)
 						.catch(() => false),
 					new Promise((resolve) =>
 						setTimeout(() => resolve(false), 5000),
 					),
-				]),
+				])) as boolean,
 			})),
 		);
 	};
@@ -37,7 +37,7 @@ export function CreateHealthChecks(dependencies: HealthCheckDependency[]) {
 
 		const dependenciesStatus = deps.map((dep) => ({
 			name: dep.name,
-			ready: dep.ready ? "UP" : "DOWN",
+			ready: dep.ready,
 		}));
 
 		const status = {
@@ -64,7 +64,7 @@ export function CreateHealthChecks(dependencies: HealthCheckDependency[]) {
 		const allDependenciesReady = dependenciesArr.every((dep) => dep.ready);
 		const dependenciesStatus = dependenciesArr.map((dep) => ({
 			name: dep.name,
-			ready: dep.ready ? "UP" : "DOWN",
+			ready: dep.ready,
 		}));
 		if (allDependenciesReady) {
 			res.status(200).json({

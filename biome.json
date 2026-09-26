@@ -42,5 +42,10 @@
 				"organizeImports": "on"
 			}
 		}
+	},
+	"html": {
+		"parser": {
+			"interpolation": true
+		}
 	}
 }

@@ -1,8 +1,12 @@
+import { STREAMS } from "@services/common/config";
 import type { Result } from "@services/common/types";
-import { CreateResetToken } from "../helpers/password_reset_helpers";
-import { SendResetTokenEmail } from "../helpers/send_email_helpers";
+import { GetEnvString } from "@services/common/utilities";
+import eventSender from "../config/event_sender";
+import {
+	CreateResetToken,
+	RESET_TOKEN_TTL_MS,
+} from "../helpers/password_reset_helpers";
 import { userModel } from "../models/user_model";
-
 export default async function ForgotpasswordService(
 	email: string,
 ): Promise<Result<null>> {
@@ -21,8 +25,17 @@ export default async function ForgotpasswordService(
 			return [null, null]; // dont want to give away if the email exists or not for security reasons
 		}
 		const resetToken = await CreateResetToken(user.id);
-		await SendResetTokenEmail(user.email, resetToken);
-		// email the token to the user - to be added - for right now just returns the token (testing)
+		const resetUrl = `${GetEnvString("FRONTEND_URL", "http://localhost")}/reset-password?token=${resetToken}`;
+		const expiresInMinutes = String(RESET_TOKEN_TTL_MS / 60_000);
+
+		await eventSender.send(STREAMS.AUTH_SERVICE.PASSWORD_RESET_REQUESTED, {
+			email: user.email,
+			resetUrl,
+			expiresInMinutes,
+			timestamp: new Date().toISOString(),
+		});
+
+		// the mailer service picks this event up and sends the reset email
 		return [null, null];
 	} catch (error) {
 		throw new Error("Error in forgot password service", { cause: error });
