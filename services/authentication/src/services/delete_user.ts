@@ -21,6 +21,8 @@ export default async function DeleteUserService(
 		await userModel.delete(userId);
 		await EventSenderInstance.send(STREAMS.AUTH_SERVICE.USER_DELETED, {
 			userId,
+			email: user.email,
+			name: `${user.forename} ${user.surname.charAt(0)}`,
 			timestamp: new Date().toISOString(),
 		} as EventMessage);
 
