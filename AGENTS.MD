@@ -58,7 +58,7 @@ SecureWebIotPlatform/
 │       ├── cmd/mailer/main.go        # Entry point; wires signal handling to graceful App.Stop()
 │       ├── internal/app/             # App struct: wires event bus, OTel logger/tracer/meter, handlers
 │       ├── internal/handlers/        # Event bus handlers (one per stream) + WithInstrumentation wrapper
-│       ├── internal/services/        # Business logic; Sender/CreateMailContent are injectable fields for testing
+│       ├── internal/services/        # Business logic; Mailer/CreateMailContent are injectable fields for testing
 │       ├── internal/helpers/         # SMTP auth/send (Mailer type)
 │       ├── internal/templates/       # html/template email bodies (user_created, user_deleted, password_reset)
 │       ├── internal/constants/       # Event bus stream name constants
@@ -192,4 +192,4 @@ cd services/mailer && go build ./...
 1. **Lint Check**: `npx biome ci app && npx biome ci services` passes without errors. For `services/mailer`, run `go vet ./...` instead (no Biome coverage for Go).
 2. **Test Check**: `npx vitest run` in affected packages (`services/common`, `services/authentication`, `services/devicecontrol`, `app`); `go test ./...` in `services/mailer` if touched. Ensure newly proposed easily testable modules have unit tests written and passing.
 3. **Build Check**: `npm run build` succeeds in all modified TS service directories; `go build ./...` succeeds in `services/mailer` if touched.
-4. **Note**: `.github/workflows/run_tests.yml` currently only runs the TS/Vitest matrix — `services/mailer` isn't wired into CI yet, so steps 1–3 above for Go are on the agent/maintainer to run locally, not something CI will catch.
+4. **Note**: `.github/workflows/run_tests.yml` runs the TypeScript Vitest matrix and `go test ./...` for `services/mailer` in its dedicated Go job. Go linting (`go vet ./...`) and builds (`go build ./...`) remain local verification steps unless separately added to CI.
