@@ -75,14 +75,14 @@ describe("CreateHealthChecks", () => {
 		const response = await fetch(`${baseUrl}/status`);
 		const body = (await response.json()) as {
 			status: string;
-			dependencies: { name: string; ready: string }[];
+			dependencies: { name: string; ready: boolean }[];
 		};
 
 		expect(response.status).toBe(200);
 		expect(body.status).toBe("DOWN");
 		expect(body.dependencies).toEqual([
-			{ name: "redis", ready: "UP" },
-			{ name: "postgres", ready: "DOWN" },
+			{ name: "redis", ready: true },
+			{ name: "postgres", ready: false },
 		]);
 	});
 
@@ -94,13 +94,13 @@ describe("CreateHealthChecks", () => {
 		const response = await getHealthResponse(baseUrl, "/readyz");
 		const body = (await response.json()) as {
 			status: string;
-			dependencies: { name: string; ready: string }[];
+			dependencies: { name: string; ready: boolean }[];
 		};
 
 		expect(response.status).toBe(200);
 		expect(body).toEqual({
 			status: "OK",
-			dependencies: [{ name: "redis", ready: "UP" }],
+			dependencies: [{ name: "redis", ready: true }],
 		});
 	});
 
@@ -112,13 +112,13 @@ describe("CreateHealthChecks", () => {
 		const response = await getHealthResponse(baseUrl, "/readyz");
 		const body = (await response.json()) as {
 			status: string;
-			dependencies: { name: string; ready: string }[];
+			dependencies: { name: string; ready: boolean }[];
 		};
 
 		expect(response.status).toBe(503);
 		expect(body).toEqual({
 			status: "Not Ready",
-			dependencies: [{ name: "redis", ready: "DOWN" }],
+			dependencies: [{ name: "redis", ready: false }],
 		});
 	});
 
