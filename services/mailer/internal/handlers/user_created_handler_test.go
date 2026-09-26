@@ -16,6 +16,12 @@ type fakeServices struct {
 	userDeletedName   string
 	userDeletedEmail  string
 	userDeletedErr    error
+
+	passwordResetCalled           bool
+	passwordResetEmail            string
+	passwordResetResetURL         string
+	passwordResetExpiresInMinutes string
+	passwordResetErr              error
 }
 
 func (f *fakeServices) UserCreatedService(ctx context.Context, name string, email string) error {
@@ -30,6 +36,14 @@ func (f *fakeServices) UserDeletedService(ctx context.Context, name string, emai
 	f.userDeletedName = name
 	f.userDeletedEmail = email
 	return f.userDeletedErr
+}
+
+func (f *fakeServices) PasswordResetService(ctx context.Context, email string, resetURL string, expiresInMinutes string) error {
+	f.passwordResetCalled = true
+	f.passwordResetEmail = email
+	f.passwordResetResetURL = resetURL
+	f.passwordResetExpiresInMinutes = expiresInMinutes
+	return f.passwordResetErr
 }
 
 func TestHandleUserCreated(t *testing.T) {

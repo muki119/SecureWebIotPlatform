@@ -45,6 +45,8 @@ func CreateMailContent(ctx context.Context, templateName string, data any) (*byt
 }
 
 var (
-	ErrInvalidName  = errors.New("invalid name")
-	ErrInvalidEmail = errors.New("invalid email")
+	ErrInvalidName             = errors.New("invalid name")
+	ErrInvalidEmail            = errors.New("invalid email")
+	ErrInvalidResetURL         = errors.New("invalid reset url")
+	ErrInvalidExpiresInMinutes = errors.New("invalid expires in minutes")
 )

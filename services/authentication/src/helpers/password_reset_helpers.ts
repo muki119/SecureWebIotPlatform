@@ -4,7 +4,7 @@ import { RedisClient } from "../config/redis"; // going to use this client for t
 // has redis client to set and get tokens for password reset
 
 const RESET_TOKEN_LENGTH = 32;
-const RESET_TOKEN_TTL_MS = 60 * 5 * 1000; // only 5 mins to redeem
+export const RESET_TOKEN_TTL_MS = 60 * 5 * 1000; // only 5 mins to redeem
 
 const TOKEN_TO_USERID = "password-reset-userid"; // used to find the userid for a given token - "the userid for this token is... "
 const USERID_TO_TOKEN = "password-reset-token"; // used to find the token for a given userid  - "the token for this userid is... "

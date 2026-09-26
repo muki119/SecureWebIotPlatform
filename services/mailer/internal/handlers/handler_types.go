@@ -18,6 +18,7 @@ import (
 type IServices interface {
 	UserCreatedService(ctx context.Context, name string, email string) error
 	UserDeletedService(ctx context.Context, name string, email string) error
+	PasswordResetService(ctx context.Context, email string, resetURL string, expiresInMinutes string) error
 }
 type Handlers struct {
 	// here lies the dependencies for the handlers

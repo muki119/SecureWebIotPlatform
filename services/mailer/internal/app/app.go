@@ -131,6 +131,7 @@ func (a *App) initializeHandlers() error {
 	}
 	a.eventBus.StreamHandler(constants.AUTH_USER_CREATED, eventBus.Handler(a.handlers.WithInstrumentation("HandleUserCreated", a.handlers.HandleUserCreated)))
 	a.eventBus.StreamHandler(constants.AUTH_USER_DELETED, eventBus.Handler(a.handlers.WithInstrumentation("HandleUserDeleted", a.handlers.HandleUserDeleted)))
+	a.eventBus.StreamHandler(constants.AUTH_PASSWORD_RESET_REQUESTED, eventBus.Handler(a.handlers.WithInstrumentation("HandlePasswordReset", a.handlers.HandlePasswordReset)))
 	a.eventBus.ErrorHandler(a.handlers.HandleError)
 	return nil
 }
