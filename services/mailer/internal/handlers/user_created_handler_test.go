@@ -18,14 +18,14 @@ type fakeServices struct {
 	userDeletedErr    error
 }
 
-func (f *fakeServices) UserCreatedService(name string, email string) error {
+func (f *fakeServices) UserCreatedService(ctx context.Context, name string, email string) error {
 	f.userCreatedCalled = true
 	f.userCreatedName = name
 	f.userCreatedEmail = email
 	return f.userCreatedErr
 }
 
-func (f *fakeServices) UserDeletedService(name string, email string) error {
+func (f *fakeServices) UserDeletedService(ctx context.Context, name string, email string) error {
 	f.userDeletedCalled = true
 	f.userDeletedName = name
 	f.userDeletedEmail = email

@@ -8,5 +8,5 @@ func (h *Handlers) HandleUserDeleted(ctx context.Context, message map[string]int
 		return err
 	}
 
-	return h.Services.UserDeletedService(name, email)
+	return h.Services.UserDeletedService(ctx, name, email)
 }

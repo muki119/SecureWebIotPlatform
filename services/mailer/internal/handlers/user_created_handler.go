@@ -10,5 +10,5 @@ func (h *Handlers) HandleUserCreated(ctx context.Context, message map[string]int
 		return err
 	}
 
-	return h.Services.UserCreatedService(name, email)
+	return h.Services.UserCreatedService(ctx, name, email)
 }

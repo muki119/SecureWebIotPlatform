@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"testing"
 )
@@ -13,7 +14,7 @@ func TestUserDeletedService(t *testing.T) {
 			CreateMailContent: renderingMailContent("<html>rendered</html>"),
 		}
 
-		err := svc.UserDeletedService("Ada", "ada@example.com")
+		err := svc.UserDeletedService(context.Background(), "Ada", "ada@example.com")
 
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
@@ -33,7 +34,7 @@ func TestUserDeletedService(t *testing.T) {
 			CreateMailContent: renderingMailContent("<html>rendered</html>"),
 		}
 
-		err := svc.UserDeletedService("", "ada@example.com")
+		err := svc.UserDeletedService(context.Background(), "", "ada@example.com")
 
 		if !errors.Is(err, ErrInvalidName) {
 			t.Fatalf("expected %v, got %v", ErrInvalidName, err)
@@ -50,7 +51,7 @@ func TestUserDeletedService(t *testing.T) {
 			CreateMailContent: renderingMailContent("<html>rendered</html>"),
 		}
 
-		err := svc.UserDeletedService("Ada", "")
+		err := svc.UserDeletedService(context.Background(), "Ada", "")
 
 		if !errors.Is(err, ErrInvalidEmail) {
 			t.Fatalf("expected %v, got %v", ErrInvalidEmail, err)
@@ -68,7 +69,7 @@ func TestUserDeletedService(t *testing.T) {
 			CreateMailContent: failingMailContent(renderErr),
 		}
 
-		err := svc.UserDeletedService("Ada", "ada@example.com")
+		err := svc.UserDeletedService(context.Background(), "Ada", "ada@example.com")
 
 		if !errors.Is(err, renderErr) {
 			t.Fatalf("expected %v, got %v", renderErr, err)
@@ -86,7 +87,7 @@ func TestUserDeletedService(t *testing.T) {
 			CreateMailContent: renderingMailContent("<html>rendered</html>"),
 		}
 
-		err := svc.UserDeletedService("Ada", "ada@example.com")
+		err := svc.UserDeletedService(context.Background(), "Ada", "ada@example.com")
 
 		if !errors.Is(err, sendErr) {
 			t.Fatalf("expected %v, got %v", sendErr, err)

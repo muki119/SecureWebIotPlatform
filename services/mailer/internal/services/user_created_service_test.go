@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"testing"
 )
@@ -13,21 +14,21 @@ type fakeMailer struct {
 	err       error
 }
 
-func (f *fakeMailer) SendMail(recipient string, content bytes.Buffer) error {
+func (f *fakeMailer) SendMail(ctx context.Context, recipient string, content bytes.Buffer) error {
 	f.called = true
 	f.recipient = recipient
 	f.content = content
 	return f.err
 }
 
-func renderingMailContent(content string) func(templateDir string, data any) (*bytes.Buffer, error) {
-	return func(templateDir string, data any) (*bytes.Buffer, error) {
+func renderingMailContent(content string) func(ctx context.Context, templateName string, data any) (*bytes.Buffer, error) {
+	return func(ctx context.Context, templateName string, data any) (*bytes.Buffer, error) {
 		return bytes.NewBufferString(content), nil
 	}
 }
 
-func failingMailContent(err error) func(templateDir string, data any) (*bytes.Buffer, error) {
-	return func(templateDir string, data any) (*bytes.Buffer, error) {
+func failingMailContent(err error) func(ctx context.Context, templateName string, data any) (*bytes.Buffer, error) {
+	return func(ctx context.Context, templateName string, data any) (*bytes.Buffer, error) {
 		return nil, err
 	}
 }
@@ -40,7 +41,7 @@ func TestUserCreatedService(t *testing.T) {
 			CreateMailContent: renderingMailContent("<html>rendered</html>"),
 		}
 
-		err := svc.UserCreatedService("Ada", "ada@example.com")
+		err := svc.UserCreatedService(context.Background(), "Ada", "ada@example.com")
 
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
@@ -60,7 +61,7 @@ func TestUserCreatedService(t *testing.T) {
 			CreateMailContent: renderingMailContent("<html>rendered</html>"),
 		}
 
-		err := svc.UserCreatedService("", "ada@example.com")
+		err := svc.UserCreatedService(context.Background(), "", "ada@example.com")
 
 		if !errors.Is(err, ErrInvalidName) {
 			t.Fatalf("expected %v, got %v", ErrInvalidName, err)
@@ -77,7 +78,7 @@ func TestUserCreatedService(t *testing.T) {
 			CreateMailContent: renderingMailContent("<html>rendered</html>"),
 		}
 
-		err := svc.UserCreatedService("Ada", "")
+		err := svc.UserCreatedService(context.Background(), "Ada", "")
 
 		if !errors.Is(err, ErrInvalidEmail) {
 			t.Fatalf("expected %v, got %v", ErrInvalidEmail, err)
@@ -95,7 +96,7 @@ func TestUserCreatedService(t *testing.T) {
 			CreateMailContent: failingMailContent(renderErr),
 		}
 
-		err := svc.UserCreatedService("Ada", "ada@example.com")
+		err := svc.UserCreatedService(context.Background(), "Ada", "ada@example.com")
 
 		if !errors.Is(err, renderErr) {
 			t.Fatalf("expected %v, got %v", renderErr, err)
@@ -113,7 +114,7 @@ func TestUserCreatedService(t *testing.T) {
 			CreateMailContent: renderingMailContent("<html>rendered</html>"),
 		}
 
-		err := svc.UserCreatedService("Ada", "ada@example.com")
+		err := svc.UserCreatedService(context.Background(), "Ada", "ada@example.com")
 
 		if !errors.Is(err, sendErr) {
 			t.Fatalf("expected %v, got %v", sendErr, err)

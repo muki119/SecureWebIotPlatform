@@ -16,8 +16,8 @@ import (
 // also all handlers will be methods on this struct
 
 type IServices interface {
-	UserCreatedService(name string, email string) error
-	UserDeletedService(name string, email string) error
+	UserCreatedService(ctx context.Context, name string, email string) error
+	UserDeletedService(ctx context.Context, name string, email string) error
 }
 type Handlers struct {
 	// here lies the dependencies for the handlers

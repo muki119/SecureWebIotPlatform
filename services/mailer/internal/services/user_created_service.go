@@ -1,10 +1,13 @@
 package services
 
+import "context"
+
 type userCreatedData struct {
-	Name string
+	Name  string
+	Email string
 }
 
-func (s *Services) UserCreatedService(name string, email string) error {
+func (s *Services) UserCreatedService(ctx context.Context, name string, email string) error {
 	if name == "" {
 		return ErrInvalidName
 	}
@@ -12,13 +15,14 @@ func (s *Services) UserCreatedService(name string, email string) error {
 		return ErrInvalidEmail
 	}
 
-	mailContent, err := s.CreateMailContent("templates/user_created.html", userCreatedData{
-		Name: name,
+	mailContent, err := s.CreateMailContent(ctx, "user_created.html", userCreatedData{
+		Name:  name,
+		Email: email,
 	})
 	if err != nil {
 		return err
 	}
-	err = s.Mailer.SendMail(email, *mailContent)
+	err = s.Mailer.SendMail(ctx, email, *mailContent)
 	if err != nil {
 		return err
 	}

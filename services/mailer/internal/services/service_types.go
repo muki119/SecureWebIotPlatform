@@ -6,21 +6,25 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"html/template"
+
+	"mailer/internal/templates"
 )
+
 type IMailer interface {
-    SendMail(recipient string, content bytes.Buffer) error
-} 
+	SendMail(ctx context.Context, recipient string, content bytes.Buffer) error
+}
 
 type Services struct {
 	// here lies the dependencies for the services
-	Mailer IMailer
-	CreateMailContent func(templateDir string, data any) (*bytes.Buffer, error)
+	Mailer            IMailer
+	CreateMailContent func(ctx context.Context, templateName string, data any) (*bytes.Buffer, error)
 }
 
-func CreateMailContent(templateDir string, data any) (*bytes.Buffer, error) {
-	t,err := template.ParseFiles(templateDir)
+func CreateMailContent(ctx context.Context, templateName string, data any) (*bytes.Buffer, error) {
+	t, err := template.ParseFS(templates.FS, templateName)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +34,7 @@ func CreateMailContent(templateDir string, data any) (*bytes.Buffer, error) {
 
 	outBuffer := new(bytes.Buffer)
 	err = t.Execute(
-		outBuffer, 
+		outBuffer,
 		data,
 	)
 	if err != nil {
@@ -40,8 +44,7 @@ func CreateMailContent(templateDir string, data any) (*bytes.Buffer, error) {
 	return outBuffer, nil
 }
 
-
 var (
-	ErrInvalidName = errors.New("invalid name")
+	ErrInvalidName  = errors.New("invalid name")
 	ErrInvalidEmail = errors.New("invalid email")
 )

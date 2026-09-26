@@ -78,16 +78,18 @@ func (a *App) Start() (chan error, error) {
 	}
 	eventBusConfig := eventBus.EventBusConfig{
 		ConnectionConfig: &redis.Options{
-			Addr:     utilities.GetEnvStringWithDefault("EVENT_BUS_REDIS_HOST", "localhost") + ":" + utilities.GetEnvStringWithDefault("EVENT_BUS_REDIS_PORT", "6379"),
-			Username: utilities.GetEnvStringWithDefault("EVENT_BUS_REDIS_USERNAME", ""),
-			Password: utilities.GetEnvStringWithDefault("EVENT_BUS_REDIS_PASSWORD", ""),
-			DB:       utilities.GetEnvIntWithDefault("EVENT_BUS_REDIS_DB", 0),
+			Addr:        utilities.GetEnvStringWithDefault("EVENT_BUS_REDIS_HOST", "localhost") + ":" + utilities.GetEnvStringWithDefault("EVENT_BUS_REDIS_PORT", "6379"),
+			Username:    utilities.GetEnvStringWithDefault("EVENT_BUS_REDIS_USERNAME", ""),
+			Password:    utilities.GetEnvStringWithDefault("EVENT_BUS_REDIS_PASSWORD", ""),
+			DB:          utilities.GetEnvIntWithDefault("EVENT_BUS_REDIS_DB", 0),
+			ReadTimeout: 10 * time.Second,
 		},
 		ConsumerName:  fmt.Sprintf("%s:%s", consumerGroup, hostName),
 		ConsumerGroup: consumerGroup,
 		MaxCount:      1000,            // max messages per stream
 		Timeout:       5 * time.Second, // max duration a message can be processed before timing out
 		MaxConcurrent: int64(runtime.NumCPU() * 10),
+		Tracer:        a.tracer,
 	}
 	a.eventBus = eventBusConfig.NewFromConfig()
 	err = a.initializeHandlers()
@@ -143,6 +145,7 @@ func (a *App) initializeServices() (*services.Services, error) {
 		utilities.GetEnvString("SMTP_USER"),
 		utilities.GetEnvString("SMTP_PASS"),
 		utilities.GetEnvString("SMTP_FROM"),
+		a.tracer,
 	)
 	if err != nil {
 		return nil, err
