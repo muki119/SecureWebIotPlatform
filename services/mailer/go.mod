@@ -3,7 +3,7 @@ module mailer
 go 1.27.1
 
 require (
-	github.com/muki119/go-slim-event-bus/v2 v2.1.2
+	github.com/muki119/go-slim-event-bus/v2 v2.2.0
 	github.com/prometheus/client_golang v1.24.1
 	github.com/redis/go-redis/v9 v9.22.0
 	go.opentelemetry.io/contrib/bridges/otelslog v0.20.1

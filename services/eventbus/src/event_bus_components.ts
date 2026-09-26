@@ -1,5 +1,14 @@
-import type { RedisClientOptions } from "redis";
-import { createClient } from "redis";
+import { context, propagation, trace } from "@opentelemetry/api";
+import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
+import { resourceFromAttributes } from "@opentelemetry/resources";
+import { NodeSDK } from "@opentelemetry/sdk-node";
+import {
+	ATTR_SERVICE_NAME,
+	ATTR_SERVICE_VERSION,
+} from "@opentelemetry/semantic-conventions";
+import { createClient, type RedisClientOptions } from "redis";
+import pckg from "../package.json" with { type: "json" };
+
 export interface RedisConfig {
 	host: string;
 	port: number;
@@ -27,6 +36,10 @@ export type EventMessage = {
 
 export type EventPayload = {
 	id: string;
+	// traceparent/tracestate ride along as regular fields here (Redis Streams
+	// entries are flat, so propagation headers share the same map as business
+	// data) - not a separate top-level property, since that's not where
+	// node-redis actually puts them.
 	message:
 		| {
 				[x: string]: string;
@@ -107,6 +120,12 @@ export class EventSender {
 					},
 				});
 			}
+
+			propagation.inject(context.active(), message, {
+				set: (carrier, key, value) => {
+					carrier[key] = value;
+				},
+			});
 			const id = await this.conn.xAdd(stream, "*", message);
 			if (!id) {
 				throw new Error(`Failed to add message to stream ${stream}`);
@@ -142,6 +161,7 @@ export class EventListener {
 	private maxCount: number;
 	private semaphore: semaphore; // to limit the number of concurrent message processing to maxCount
 	private blockMs = 2 * 1000;
+	private sdk: NodeSDK | undefined;
 	constructor(config: EventBusConfig) {
 		this.config = config;
 		this.consumerGroup = config.consumerGroup;
@@ -158,6 +178,7 @@ export class EventListener {
 	 */
 	private async init(): Promise<void> {
 		try {
+			await this.initializeOpenTelemetry();
 			this.listenerConn = await createConnection(
 				this.config.connectionOptions,
 			);
@@ -191,6 +212,39 @@ export class EventListener {
 				cause: error,
 			});
 		}
+	}
+
+	private async initializeOpenTelemetry() {
+		const probeSpan = trace
+			.getTracer("eventbus-otel-probe")
+			.startSpan("otel-probe");
+		const alreadyInstrumented = probeSpan.isRecording();
+		probeSpan.end();
+		if (alreadyInstrumented) {
+			return;
+		}
+
+		const sdk = new NodeSDK({
+			resource: resourceFromAttributes({
+				[ATTR_SERVICE_NAME]: `eventbus-${this.consumerGroup}`,
+				[ATTR_SERVICE_VERSION]: pckg.version,
+			}),
+			instrumentations: [
+				getNodeAutoInstrumentations({
+					"@opentelemetry/instrumentation-express": {
+						enabled: false,
+					},
+					"@opentelemetry/instrumentation-redis": { enabled: false },
+					"@opentelemetry/instrumentation-mongoose": {
+						enabled: false,
+					},
+					"@opentelemetry/instrumentation-dns": { enabled: false },
+					"@opentelemetry/instrumentation-net": { enabled: false },
+				}),
+			],
+		});
+		sdk.start();
+		this.sdk = sdk;
 	}
 
 	private async processPendingMessages(): Promise<void> {
@@ -365,7 +419,37 @@ export class EventListener {
 			await Promise.all(
 				stream.messages.map(async (message) => {
 					await this.semaphore.acquire(); // wait for a slot to be available for processing
-					return handler(message)
+					const ctx = propagation.extract(
+						context.active(),
+						message?.message,
+						{
+							get: (carrier, key) => {
+								if (!carrier) {
+									return undefined;
+								}
+
+								if (
+									key === "traceparent" ||
+									key === "tracestate"
+								) {
+									return carrier[key];
+								}
+
+								return undefined;
+							},
+							keys: () => ["traceparent", "tracestate"],
+						},
+					);
+
+					const tracer = trace.getTracer("event-bus");
+					const span = tracer.startSpan(
+						`process_message:${message?.id}`,
+						undefined,
+						ctx,
+					);
+					const ctxWithSpan = trace.setSpan(ctx, span);
+					return context
+						.with(ctxWithSpan, () => handler(message))
 						.then(() => {
 							// trying to make this as async as possible -> just handles a message and then releases a semaphore slot-> its async so it will just fire the handler and then go on to a next message , but if no slot left it will hold until
 							if (!message?.id) {
@@ -392,6 +476,7 @@ export class EventListener {
 						})
 						.finally(() => {
 							this.semaphore.release();
+							span.end();
 						});
 				}),
 			);
@@ -419,9 +504,9 @@ export class EventListener {
 		await this.semaphore.wait(); // wait for all processing to finish
 		this.listenerConn.destroy(); // interrupt the blocking xReadGroup call
 		await this.nonBlockingConn.quit();
+		if (this.sdk) await this.sdk.shutdown();
 	}
 }
-
 /**
  * @description Just a semaphore implementation because NodeJs doesnt have any built in atomics
  */
