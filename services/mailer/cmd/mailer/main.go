@@ -17,7 +17,7 @@ func main() {
 	errChan, err := App.Start()
 	if err != nil {
 		fmt.Println("Error starting the app: ", err)
-		return
+		os.Exit(1)
 	}
 
 	shutdownChan := make(chan struct{})
