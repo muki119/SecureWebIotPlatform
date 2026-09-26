@@ -20,6 +20,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err := App.InitializeHealthChecks(); err != nil {
+		fmt.Println("Error initializing health checks: ", err)
+		os.Exit(1)
+	}
+
 	shutdownChan := make(chan struct{})
 	go func() { // listen for shutdown signals and close the shutdown channel when received
 		exitSignal := make(chan os.Signal, 1)

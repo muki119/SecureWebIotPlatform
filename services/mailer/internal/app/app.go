@@ -66,9 +66,6 @@ func (a *App) Start() (chan error, error) {
 	if err := a.initializeMetrics(); err != nil {
 		return nil, err
 	}
-	if err := a.initializeHealthChecks(); err != nil {
-		return nil, err
-	}
 
 	consumerGroup := utilities.GetEnvStringWithDefault("EVENT_BUS_CONSUMER_GROUP", "MAILER_SERVICE")
 	hostName, err := os.Hostname()
@@ -251,7 +248,7 @@ func (a *App) initializeMetrics() error { // creates the otel meter and serves i
 	return nil
 }
 
-func (a *App) initializeHealthChecks() error {
+func (a *App) InitializeHealthChecks() error {
 	// makes the health check web server and returns the http server
 
 	healthCheckMux := helpers.CreateHealthCheckHandler(
