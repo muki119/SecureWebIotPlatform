@@ -10,13 +10,15 @@ import (
 type fakeMailer struct {
 	called    bool
 	recipient string
+	subject   string
 	content   bytes.Buffer
 	err       error
 }
 
-func (f *fakeMailer) SendMail(ctx context.Context, recipient string, content bytes.Buffer) error {
+func (f *fakeMailer) SendMail(ctx context.Context, recipient string, subject string, content bytes.Buffer) error {
 	f.called = true
 	f.recipient = recipient
+	f.subject = subject
 	f.content = content
 	return f.err
 }

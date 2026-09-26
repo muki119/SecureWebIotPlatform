@@ -1,6 +1,8 @@
 package services
 
-import "context"
+import (
+	"context"
+)
 
 type userCreatedData struct {
 	Name  string
@@ -22,7 +24,7 @@ func (s *Services) UserCreatedService(ctx context.Context, name string, email st
 	if err != nil {
 		return err
 	}
-	err = s.Mailer.SendMail(ctx, email, *mailContent)
+	err = s.Mailer.SendMail(ctx, email, "Welcome to SecureWebIotPlatform", *mailContent)
 	if err != nil {
 		return err
 	}

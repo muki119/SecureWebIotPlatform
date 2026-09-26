@@ -3,6 +3,7 @@ package helpers
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/smtp"
 
 	"go.opentelemetry.io/otel/codes"
@@ -33,13 +34,19 @@ func CreateMailer(host, port, user, pass, from string, tracer trace.Tracer) (*Ma
 	return mailer, nil
 }
 
-func (s *Mailer) SendMail(ctx context.Context, recipient string, content bytes.Buffer) error {
+func (s *Mailer) SendMail(ctx context.Context, recipient string, subject string, content bytes.Buffer) error {
 	_, span := s.tracer.Start(
-		context.Background(),
+		ctx,
 		"Mailer.SendMail",
 	)
 	defer span.End()
-	err := smtp.SendMail(s.Host+":"+s.Port, *s.auth, s.From, []string{recipient}, []byte(content.Bytes()))
+
+	message := fmt.Sprintf(
+		"From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=\"UTF-8\"\r\n\r\n%s",
+		s.From, recipient, subject, content.String(),
+	)
+
+	err := smtp.SendMail(s.Host+":"+s.Port, *s.auth, s.From, []string{recipient}, []byte(message))
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())

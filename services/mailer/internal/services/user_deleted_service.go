@@ -21,7 +21,7 @@ func (s *Services) UserDeletedService(ctx context.Context, name string, email st
 	if err != nil {
 		return err
 	}
-	err = s.Mailer.SendMail(ctx, email, *mailContent)
+	err = s.Mailer.SendMail(ctx, email, "Your account has been deleted", *mailContent)
 	if err != nil {
 		return err
 	}

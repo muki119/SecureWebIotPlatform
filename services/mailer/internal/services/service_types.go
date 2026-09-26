@@ -14,7 +14,7 @@ import (
 )
 
 type IMailer interface {
-	SendMail(ctx context.Context, recipient string, content bytes.Buffer) error
+	SendMail(ctx context.Context, recipient string, subject string, content bytes.Buffer) error
 }
 
 type Services struct {
