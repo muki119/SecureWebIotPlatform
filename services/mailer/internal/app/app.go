@@ -11,7 +11,6 @@ import (
 	"mailer/internal/constants"
 	"mailer/internal/handlers"
 	"mailer/internal/helpers"
-	config "mailer/internal/helpers"
 	"mailer/internal/services"
 	"mailer/internal/utilities"
 	"net/http"
@@ -139,7 +138,7 @@ func (a *App) initializeHandlers() error {
 func (a *App) initializeServices() (*services.Services, error) {
 	// create the servicesInstance struct and dependencies and return it
 
-	mailerClient, err := config.CreateMailer(
+	mailerClient, err := helpers.CreateMailer(
 		utilities.GetEnvString("SMTP_HOST"),
 		utilities.GetEnvString("SMTP_PORT"),
 		utilities.GetEnvString("SMTP_USER"),
