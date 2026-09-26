@@ -1,0 +1,8 @@
+{
+	"name": "@services/mailer",
+	"version": "0.0.0",
+	"description": "The mail sending service for the secure web iot platform",
+	"author": "Mugagga Kimera",
+	"license": "ISC",
+	"type": "module"
+}
