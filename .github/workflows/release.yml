@@ -46,6 +46,9 @@ jobs:
           - name: ledger
             workspace: services
             dir: services/ledger
+          - name: mailer
+            workspace: services
+            dir: services/mailer
           - name: app
             workspace: app
             dir: app

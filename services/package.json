@@ -13,7 +13,8 @@
 		"common",
 		"devicecontrol",
 		"domain",
-		"ledger"
+		"ledger",
+		"mailer"
 	],
 	"scripts": {
 		"test": "vitest run",
