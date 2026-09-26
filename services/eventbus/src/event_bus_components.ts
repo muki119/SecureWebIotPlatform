@@ -41,10 +41,10 @@ export type EventPayload = {
 	// data) - not a separate top-level property, since that's not where
 	// node-redis actually puts them.
 	message:
-	| {
-		[x: string]: string;
-	}
-	| EventMessage;
+		| {
+				[x: string]: string;
+		  }
+		| EventMessage;
 	millisElapsedFromDelivery?: number | undefined;
 	deliveriesCounter?: number | undefined;
 } | null;
