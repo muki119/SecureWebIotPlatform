@@ -88,6 +88,10 @@ func (a *App) Start() (chan error, error) {
 		Timeout:       5 * time.Second, // max duration a message can be processed before timing out
 		MaxConcurrent: int64(runtime.NumCPU() * 10),
 		Tracer:        a.tracer,
+		MaxDelay:      10 * time.Second,
+		MinDelay:      250 * time.Millisecond,
+		Multiplier:    2.0,
+		MaxRetries:    5,
 	}
 	a.eventBus = eventBusConfig.NewFromConfig()
 	err = a.initializeHandlers()
