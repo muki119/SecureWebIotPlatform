@@ -41,10 +41,10 @@ export type EventPayload = {
 	// data) - not a separate top-level property, since that's not where
 	// node-redis actually puts them.
 	message:
-		| {
-				[x: string]: string;
-		  }
-		| EventMessage;
+	| {
+		[x: string]: string;
+	}
+	| EventMessage;
 	millisElapsedFromDelivery?: number | undefined;
 	deliveriesCounter?: number | undefined;
 } | null;
@@ -560,5 +560,68 @@ class semaphore {
 				this.waitPromise = resolve;
 			});
 		}
+	}
+}
+
+
+export class ExponentialBackoff {
+
+	static readonly DEFAULT_MIN_DELAY = 100; // 100ms
+	static readonly DEFAULT_MAX_DELAY = 10000; // 10s
+	static readonly DEFAULT_MULTIPLIER = 2;
+	static readonly DEFAULT_RETRY_COUNT = 0; // a retry count of 0 means infinite retries
+
+	private minDelay: number;
+	private maxDelay: number;
+	private multiplier: number;
+	private _currentDelay: number;
+	private _retryCount: number;
+
+	public get currentDelay(): number {
+		return this._currentDelay;
+	}
+
+	public get retryCount(): number {
+		return this._retryCount;
+	}
+
+	constructor(
+		minDelay: number = ExponentialBackoff.DEFAULT_MIN_DELAY,
+		maxDelay: number = ExponentialBackoff.DEFAULT_MAX_DELAY,
+		multiplier: number = ExponentialBackoff.DEFAULT_MULTIPLIER,
+		retryCount: number = ExponentialBackoff.DEFAULT_RETRY_COUNT,
+	) {
+		this.minDelay =
+			minDelay > 0 ? minDelay : ExponentialBackoff.DEFAULT_MIN_DELAY;
+		this.maxDelay =
+			maxDelay > 0
+				? Math.max(maxDelay, this.minDelay)
+				: ExponentialBackoff.DEFAULT_MAX_DELAY;
+		this.multiplier =
+			multiplier >= 1
+				? multiplier
+				: ExponentialBackoff.DEFAULT_MULTIPLIER;
+		this._currentDelay = 0;
+		this._retryCount = retryCount;
+	}
+
+	public nextDelay(): number {
+		if (this._currentDelay === 0) {
+			this._currentDelay = this.minDelay;
+		} else {
+			const newDelay = this._currentDelay * this.multiplier;
+			this._currentDelay = Math.min(newDelay, this.maxDelay);
+		}
+		this._retryCount++;
+
+		const jitter = this._currentDelay * 0.1; // 10% of the current delay
+
+		return this._currentDelay + Math.floor(Math.random() * jitter); // a random jitter thats at most 10% of the current delay to avoid thundering herd problem
+	}
+
+
+	public reset(): void {
+		this._currentDelay = 0;
+		this._retryCount = 0;
 	}
 }
