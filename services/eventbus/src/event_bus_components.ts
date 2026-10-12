@@ -22,6 +22,10 @@ export type EventBusConfig = {
 	consumerName: string;
 	maxCount: number;
 	maxConcurrent: number;
+	minDelay?: number;
+	maxDelay?: number;
+	multiplier?: number;
+	maxRetries?: number;
 };
 
 /**
@@ -57,6 +61,9 @@ export type IncommingStream = {
 export type EventBusHandler = (payload: EventPayload) => Promise<void>;
 export type EventBusErrorHandler = (err: Error, payload?: EventPayload) => void;
 type Stream = string;
+
+const sleep = (delay: number) =>
+	new Promise<void>((resolve) => setTimeout(resolve, delay));
 
 /**
  *
@@ -248,23 +255,48 @@ export class EventListener {
 	}
 
 	private async processPendingMessages(): Promise<void> {
-		try {
-			const streams = Array.from(this.handlerTable.keys()).map(
-				(stream) => ({
-					key: stream,
-					id: "0",
-				}),
-			);
-			for (const stream of streams) {
-				const messages = await this.listenerConn.xAutoClaim(
-					stream.key,
-					this.consumerGroup,
-					this.consumerName,
-					60 * 1000, // claim messages that have been pending for more than 60 seconds
-					stream.id,
-					{ COUNT: this.maxCount },
-				);
-				if (!messages || messages.messages.length === 0) {
+		const streams = Array.from(this.handlerTable.keys()).map((stream) => ({
+			key: stream,
+			id: "0",
+		}));
+		for (const stream of streams) {
+			const backoff = this.createBackoff();
+			while (true) {
+				let messages: Awaited<
+					ReturnType<typeof this.listenerConn.xAutoClaim>
+				>;
+				try {
+					messages = await this.listenerConn.xAutoClaim(
+						stream.key,
+						this.consumerGroup,
+						this.consumerName,
+						60 * 1000, // claim messages that have been pending for more than 60 seconds
+						stream.id,
+						{ COUNT: this.maxCount },
+					);
+					backoff.reset();
+					if (!messages || messages.messages.length === 0) {
+						break;
+					}
+				} catch (error: unknown) {
+					this.errorHandler?.(
+						error instanceof Error
+							? error
+							: new Error("Error processing pending messages", {
+									cause: error,
+								}),
+					);
+					if (
+						this.config.maxRetries !== undefined &&
+						this.config.maxRetries > 0 &&
+						backoff.retryCount >= this.config.maxRetries
+					) {
+						throw new Error(
+							`Giving up claiming pending messages for "${stream.key}" after ${this.config.maxRetries} retries`,
+							{ cause: error },
+						);
+					}
+					await sleep(backoff.nextDelay());
 					continue;
 				}
 
@@ -272,12 +304,17 @@ export class EventListener {
 					name: stream.key,
 					messages: messages.messages,
 				});
+				stream.id = messages.nextId;
 			}
-		} catch (error) {
-			throw new Error(`Error processing pending messages`, {
-				cause: error,
-			});
 		}
+	}
+
+	private createBackoff(): ExponentialBackoff {
+		return new ExponentialBackoff(
+			this.config.minDelay,
+			this.config.maxDelay,
+			this.config.multiplier,
+		);
 	}
 
 	public get isListening(): boolean {
@@ -352,13 +389,39 @@ export class EventListener {
 					id: ">",
 				}),
 			);
+			const backoff = this.createBackoff();
 			while (this.listening) {
-				const incommingStreams = (await this.listenerConn.xReadGroup(
-					this.consumerGroup,
-					this.consumerName,
-					streams,
-					{ COUNT: this.maxCount, BLOCK: this.blockTime },
-				)) as IncommingStream[] | null;
+				let incommingStreams: IncommingStream[] | null;
+				try {
+					incommingStreams = (await this.listenerConn.xReadGroup(
+						this.consumerGroup,
+						this.consumerName,
+						streams,
+						{ COUNT: this.maxCount, BLOCK: this.blockTime },
+					)) as IncommingStream[] | null;
+				} catch (error: unknown) {
+					this.errorHandler?.(
+						error instanceof Error
+							? error
+							: new Error("Error reading from streams", {
+									cause: error,
+								}),
+					);
+					if (
+						this.config.maxRetries !== undefined &&
+						this.config.maxRetries > 0 &&
+						backoff.retryCount >= this.config.maxRetries
+					) {
+						throw new Error(
+							`Giving up reading from streams after ${this.config.maxRetries} retries`,
+							{ cause: error },
+						);
+					}
+					await sleep(backoff.nextDelay());
+					continue;
+				}
+
+				backoff.reset();
 				if (!incommingStreams) {
 					continue;
 				}
