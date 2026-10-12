@@ -45,10 +45,10 @@ export type EventPayload = {
 	// data) - not a separate top-level property, since that's not where
 	// node-redis actually puts them.
 	message:
-	| {
-		[x: string]: string;
-	}
-	| EventMessage;
+		| {
+				[x: string]: string;
+		  }
+		| EventMessage;
 	millisElapsedFromDelivery?: number | undefined;
 	deliveriesCounter?: number | undefined;
 } | null;
@@ -626,9 +626,7 @@ class semaphore {
 	}
 }
 
-
 export class ExponentialBackoff {
-
 	static readonly DEFAULT_MIN_DELAY = 100; // 100ms
 	static readonly DEFAULT_MAX_DELAY = 10000; // 10s
 	static readonly DEFAULT_MULTIPLIER = 2;
@@ -681,7 +679,6 @@ export class ExponentialBackoff {
 
 		return this._currentDelay + Math.floor(Math.random() * jitter); // a random jitter thats at most 10% of the current delay to avoid thundering herd problem
 	}
-
 
 	public reset(): void {
 		this._currentDelay = 0;
